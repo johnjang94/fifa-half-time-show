@@ -17,7 +17,7 @@ export function GuestExperience() {
   }
 
   return (
-    <main className="app-frame page-shell">
+    <main className="home-page page-shell">
       <section className="hero-stage">
         <div className="hero-copy">
           <p className="hero-title">Watch Party</p>

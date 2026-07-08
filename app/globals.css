@@ -38,6 +38,11 @@ button {
   width: min(100%, 440px);
 }
 
+.home-page {
+  width: 100vw;
+  min-height: 100vh;
+}
+
 .page-shell {
   min-height: 100vh;
 }
@@ -49,29 +54,31 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 6px 8px 8px;
+  gap: 0;
+  padding: 0;
+  width: 100%;
 }
 
 .hero-copy,
 .hero-actions {
-  position: relative;
+  position: absolute;
   z-index: 2;
   display: flex;
   justify-content: center;
+  left: 0;
+  right: 0;
 }
 
 .hero-copy {
-  flex: 0 0 auto;
+  top: 8px;
   align-items: flex-start;
 }
 
 .hero-media {
   position: relative;
   z-index: 1;
-  flex: 1 1 auto;
-  min-height: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,8 +112,7 @@ button {
 }
 
 .hero-actions {
-  flex: 0 0 auto;
-  padding-bottom: 0;
+  bottom: 8px;
   flex-direction: column;
   gap: 8px;
 }
@@ -159,12 +165,16 @@ button {
 }
 
 .login-panel {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 68px;
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: -2px;
+  padding: 0 8px;
 }
 
 .login-field {
@@ -543,7 +553,7 @@ button {
 
 @media (max-width: 640px) {
   .hero-stage {
-    padding: 4px 6px 6px;
+    padding: 0;
   }
 
   .hero-title {
