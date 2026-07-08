@@ -26,11 +26,13 @@ export default function RegisterPage() {
           <p className="register-eyebrow">register</p>
         </header>
 
-        <RegisterForm />
+        <div className="register-body">
+          <RegisterForm />
 
-        <Link className="register-back" href="/overview">
-          back to overview
-        </Link>
+          <Link className="register-back" href="/overview">
+            back to overview
+          </Link>
+        </div>
       </section>
     </main>
   );
