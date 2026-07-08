@@ -54,7 +54,7 @@ export default function OverviewPage() {
           ))}
         </section>
 
-        <Link className="signup-button" href="/">
+        <Link className="signup-button" href="/register">
           sign up
         </Link>
       </section>

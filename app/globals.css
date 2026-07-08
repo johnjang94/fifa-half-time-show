@@ -106,9 +106,10 @@ button {
 .hero-actions {
   flex: 0 0 auto;
   padding-bottom: 0;
+  gap: 14px;
 }
 
-.join-button {
+.login-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -126,12 +127,95 @@ button {
   backdrop-filter: blur(18px);
 }
 
-.join-button:hover {
+.login-button:hover {
   border-color: rgba(255, 255, 255, 0.28);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.14));
 }
 
-.join-button:focus-visible {
+.login-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.join-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+  text-decoration-thickness: 1px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.8rem 0;
+}
+
+.join-link:hover {
+  opacity: 0.86;
+}
+
+.join-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.login-panel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: -2px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-field span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+
+.login-field input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 1rem;
+  font: inherit;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.login-field input::placeholder {
+  color: rgba(255, 250, 243, 0.45);
+}
+
+.login-field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.login-submit {
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+  color: var(--text);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.login-submit:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.login-submit:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
@@ -238,6 +322,149 @@ button {
   outline-offset: 4px;
 }
 
+.register-page {
+  min-height: 100vh;
+  padding: clamp(20px, 4vw, 44px);
+  background:
+    radial-gradient(circle at top, rgba(245, 231, 197, 0.1), transparent 30%),
+    linear-gradient(180deg, #05090d 0%, #0a1117 100%);
+}
+
+.register-shell {
+  min-height: calc(100vh - clamp(40px, 8vw, 88px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.register-header {
+  text-align: center;
+}
+
+.register-eyebrow {
+  margin: 0 0 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+}
+
+.register-header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-field span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.72rem;
+}
+
+.register-field input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 1rem;
+  font: inherit;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.register-field input::placeholder {
+  color: rgba(255, 250, 243, 0.45);
+}
+
+.register-field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.register-button {
+  margin-top: 6px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+  color: var(--text);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.register-button:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.register-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.register-back {
+  align-self: center;
+  color: var(--muted);
+  text-decoration: none;
+  text-transform: lowercase;
+  letter-spacing: 0.14em;
+  font-size: 0.84rem;
+}
+
+.register-back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.portal-page {
+  min-height: 100vh;
+  padding: clamp(20px, 4vw, 44px);
+  background:
+    radial-gradient(circle at top, rgba(245, 231, 197, 0.1), transparent 30%),
+    linear-gradient(180deg, #05090d 0%, #0a1117 100%);
+}
+
+.portal-shell {
+  min-height: calc(100vh - clamp(40px, 8vw, 88px));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.portal-eyebrow {
+  margin: 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+}
+
+.portal-shell h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
 @media (max-width: 640px) {
   .hero-stage {
     padding: 10px;
@@ -247,9 +474,17 @@ button {
     max-width: 12ch;
   }
 
-  .join-button {
+  .login-button {
     min-width: 132px;
     padding-inline: 1.5rem;
+  }
+
+  .hero-actions {
+    gap: 10px;
+  }
+
+  .login-panel {
+    gap: 10px;
   }
 
   .overview-page {
@@ -266,5 +501,17 @@ button {
 
   .signup-button {
     min-width: 160px;
+  }
+
+  .register-page {
+    padding: 18px;
+  }
+
+  .register-form {
+    gap: 12px;
+  }
+
+  .portal-page {
+    padding: 18px;
   }
 }
