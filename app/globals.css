@@ -465,6 +465,22 @@ button {
   outline-offset: 4px;
 }
 
+.register-button:disabled {
+  opacity: 0.72;
+  cursor: progress;
+}
+
+.register-status {
+  margin: 2px 2px 0;
+  color: var(--accent);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.register-status-error {
+  color: #ffcdcd;
+}
+
 .register-back {
   align-self: center;
   color: var(--muted);
