@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import heroImage from "../../image.png";
 
 export const metadata = {
   title: "Register | FIFA X BTS Watch Party",
@@ -7,6 +9,17 @@ export const metadata = {
 export default function RegisterPage() {
   return (
     <main className="app-frame register-page">
+      <div className="page-background" aria-hidden="true">
+        <Image
+          alt=""
+          className="page-background-image"
+          fill
+          priority
+          sizes="440px"
+          src={heroImage}
+        />
+        <div className="page-background-overlay" />
+      </div>
       <section className="register-shell">
         <header className="register-header">
           <p className="register-eyebrow">register</p>
@@ -39,6 +52,15 @@ export default function RegisterPage() {
               inputMode="tel"
               name="phoneNumber"
               type="tel"
+            />
+          </label>
+
+          <label className="register-field">
+            <span>profile photo</span>
+            <input
+              accept="image/*"
+              name="profilePhoto"
+              type="file"
             />
           </label>
 

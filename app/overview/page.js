@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import heroImage from "../../image.png";
 import bbqImage from "../../bbq.jpeg";
 import dreamersImage from "../../dreamers.gif";
 import englandImage from "../../england.gif";
@@ -35,6 +36,17 @@ export const metadata = {
 export default function OverviewPage() {
   return (
     <main className="app-frame overview-page">
+      <div className="page-background" aria-hidden="true">
+        <Image
+          alt=""
+          className="page-background-image"
+          fill
+          priority
+          sizes="440px"
+          src={heroImage}
+        />
+        <div className="page-background-overlay" />
+      </div>
       <section className="overview-shell">
         <section className="overview-grid" aria-label="Overview cards">
           {cards.map((card, index) => (
