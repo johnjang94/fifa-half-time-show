@@ -154,8 +154,8 @@ button {
 .overview-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   align-content: start;
 }
 
@@ -167,24 +167,11 @@ button {
   box-shadow: var(--shadow);
 }
 
-.overview-card-1 {
-  grid-column: span 7;
-}
-
-.overview-card-2,
-.overview-card-3 {
-  grid-column: span 5;
-}
-
-.overview-card-4 {
-  grid-column: span 12;
-}
-
 .overview-media {
   position: relative;
-  aspect-ratio: 1 / 1.06;
+  aspect-ratio: 1 / 1.02;
   overflow: hidden;
-  min-height: 280px;
+  min-height: 0;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -220,11 +207,6 @@ button {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-}
-
-.overview-card-1 .overview-media,
-.overview-card-4 .overview-media {
-  aspect-ratio: 16 / 10;
 }
 
 .signup-button {
@@ -276,13 +258,6 @@ button {
 
   .overview-grid {
     grid-template-columns: 1fr;
-  }
-
-  .overview-card-1,
-  .overview-card-2,
-  .overview-card-3,
-  .overview-card-4 {
-    grid-column: auto;
   }
 
   .overview-media {

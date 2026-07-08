@@ -1,22 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
-import fifaImage from "../../image.png";
+import bbqImage from "../../bbq.jpeg";
+import dreamersImage from "../../dreamers.gif";
+import englandImage from "../../england.gif";
 import patioImage from "../../patio.webp";
 
 const cards = [
   {
     title: "watch soccer",
-    src: fifaImage,
-    alt: "FIFA 2026 soccer scene",
+    src: englandImage,
+    alt: "England soccer scene",
   },
   {
     title: "enjoy food",
-    src: fifaImage,
+    src: bbqImage,
     alt: "BBQ food scene",
   },
   {
     title: "watch BTS",
-    src: fifaImage,
+    src: dreamersImage,
     alt: "BTS concert scene",
   },
   {
@@ -36,14 +38,14 @@ export default function OverviewPage() {
       <section className="overview-shell">
         <section className="overview-grid" aria-label="Overview cards">
           {cards.map((card, index) => (
-            <article className={`overview-card overview-card-${index + 1}`} key={card.title}>
+            <article className="overview-card" key={card.title}>
               <div className="overview-media">
                 <Image
                   alt={card.alt}
                   className="overview-image"
                   fill
                   priority={index === 0}
-                  sizes="(max-width: 900px) 100vw, 50vw"
+                  sizes="(max-width: 640px) 100vw, 50vw"
                   src={card.src}
                 />
                 <span className="overview-label">{card.title}</span>
