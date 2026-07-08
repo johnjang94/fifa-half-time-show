@@ -1,12 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
 
 export function RegisterForm() {
-  const [status, setStatus] = useState("");
+  const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -17,7 +18,6 @@ export function RegisterForm() {
     const formData = new FormData(form);
 
     setIsSubmitting(true);
-    setStatus("");
     setError("");
 
     try {
@@ -32,8 +32,9 @@ export function RegisterForm() {
         throw new Error(data.error ?? "Unable to save your registration.");
       }
 
+      const qrToken = data.qrToken ?? data.id;
       form.reset();
-      setStatus("Your registration has been saved.");
+      router.push(`/thank-you?invite=${encodeURIComponent(qrToken)}`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to save your registration.",
@@ -65,7 +66,6 @@ export function RegisterForm() {
         <input accept="image/*" name="profilePhoto" type="file" />
       </label>
 
-      {status ? <p className="register-status">{status}</p> : null}
       {error ? <p className="register-status register-status-error">{error}</p> : null}
 
       <button className="register-button" disabled={isSubmitting} type="submit">
