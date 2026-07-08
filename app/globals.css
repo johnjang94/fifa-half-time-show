@@ -49,8 +49,8 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 4px;
+  padding: 6px 8px 8px;
 }
 
 .hero-copy,
@@ -92,13 +92,14 @@ button {
     radial-gradient(circle at center, rgba(245, 231, 197, 0.1), transparent 58%);
 }
 
-.hero-copy h1 {
+.hero-title {
   margin: 0;
   text-align: center;
-  max-width: 12ch;
-  font-size: clamp(1.3rem, 3.2vw, 2.2rem);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
+  max-width: 100%;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-wrap: balance;
   text-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
 }
@@ -106,7 +107,8 @@ button {
 .hero-actions {
   flex: 0 0 auto;
   padding-bottom: 0;
-  gap: 14px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .login-button {
@@ -144,7 +146,7 @@ button {
   text-decoration-thickness: 1px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.8rem 0;
+  padding: 0.2rem 0 0;
 }
 
 .join-link:hover {
@@ -541,11 +543,11 @@ button {
 
 @media (max-width: 640px) {
   .hero-stage {
-    padding: 10px;
+    padding: 4px 6px 6px;
   }
 
-  .hero-copy h1 {
-    max-width: 12ch;
+  .hero-title {
+    font-size: 12px;
   }
 
   .login-button {
@@ -554,7 +556,7 @@ button {
   }
 
   .hero-actions {
-    gap: 10px;
+    gap: 6px;
   }
 
   .login-panel {
