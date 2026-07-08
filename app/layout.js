@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "FIFA x BTS Half-Time Show",
-  description: "A football-first invite experience with an admin view and Firestore storage.",
+  title: "Welcome to FIFA Half-Time Show Party",
+  description: "FIFA Half-Time Show Party landing page.",
 };
 
 export default function RootLayout({ children }) {
