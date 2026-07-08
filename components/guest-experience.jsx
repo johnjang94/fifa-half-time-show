@@ -17,7 +17,7 @@ export function GuestExperience() {
         <div className="hero-overlay" aria-hidden="true" />
 
         <div className="hero-content">
-          <h1>Welcome to FIFA Half-Time Show Party</h1>
+          <h1>Watch Party</h1>
 
           <Link className="join-button" href="/overview">
             Join

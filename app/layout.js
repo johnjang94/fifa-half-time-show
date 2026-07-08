@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Welcome to FIFA Half-Time Show Party",
+  title: "FIFA X BTS Watch Party",
   description: "FIFA Half-Time Show Party landing page.",
 };
 
