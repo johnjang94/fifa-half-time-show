@@ -32,7 +32,7 @@ export const metadata = {
 
 export default function OverviewPage() {
   return (
-    <main className="overview-page">
+    <main className="app-frame overview-page">
       <section className="overview-shell">
         <section className="overview-grid" aria-label="Overview cards">
           {cards.map((card, index) => (

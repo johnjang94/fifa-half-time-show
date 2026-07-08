@@ -4,7 +4,7 @@ import heroImage from "../image.png";
 
 export function GuestExperience() {
   return (
-    <main className="page-shell">
+    <main className="app-frame page-shell">
       <section className="hero-stage">
         <Image
           alt="FIFA Half-Time Show background"

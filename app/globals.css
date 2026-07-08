@@ -34,9 +34,12 @@ button {
   font: inherit;
 }
 
+.app-frame {
+  width: min(100%, 440px);
+}
+
 .page-shell {
   min-height: 100vh;
-  width: min(100%, 440px);
 }
 
 .hero-stage {
@@ -118,7 +121,6 @@ button {
 
 .overview-page {
   min-height: 100vh;
-  width: min(100%, 440px);
   padding: clamp(20px, 4vw, 44px);
   background:
     radial-gradient(circle at top, rgba(245, 231, 197, 0.1), transparent 30%),
