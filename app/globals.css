@@ -115,6 +115,9 @@ button {
   bottom: 8px;
   flex-direction: column;
   gap: 8px;
+  align-items: center;
+  width: 100%;
+  text-align: center;
 }
 
 .login-button {
@@ -146,6 +149,7 @@ button {
 }
 
 .join-link {
+  display: inline-block;
   color: var(--text);
   text-decoration: underline;
   text-underline-offset: 0.24em;
@@ -567,6 +571,7 @@ button {
 
   .hero-actions {
     gap: 6px;
+    align-items: center;
   }
 
   .login-panel {
