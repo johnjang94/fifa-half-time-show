@@ -44,7 +44,8 @@ button {
 
 .hero-stage {
   position: relative;
-  min-height: 100vh;
+  min-height: 85vh;
+  height: 85vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -54,7 +55,7 @@ button {
 
 .hero-image {
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   z-index: 0;
   transform: scale(1.02);
 }
@@ -71,7 +72,7 @@ button {
 .hero-content {
   position: relative;
   z-index: 2;
-  min-height: calc(100vh - clamp(48px, 8vw, 88px));
+  min-height: calc(85vh - clamp(48px, 8vw, 88px));
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -83,8 +84,8 @@ button {
 .hero-content h1 {
   margin: 0;
   padding-top: clamp(10px, 1vw, 18px);
-  max-width: 12ch;
-  font-size: clamp(2.4rem, 6vw, 5.4rem);
+  max-width: 10ch;
+  font-size: clamp(2rem, 4.6vw, 4.3rem);
   line-height: 0.96;
   letter-spacing: -0.04em;
   text-wrap: balance;
