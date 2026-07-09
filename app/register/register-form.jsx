@@ -10,6 +10,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -34,7 +35,10 @@ export function RegisterForm() {
 
       const qrToken = data.qrToken ?? data.id;
       form.reset();
-      router.push(`/thank-you?invite=${encodeURIComponent(qrToken)}`);
+      setIsSuccess(true);
+      window.setTimeout(() => {
+        router.push(`/thank-you?invite=${encodeURIComponent(qrToken)}`);
+      }, 420);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to save your registration.",
@@ -45,7 +49,7 @@ export function RegisterForm() {
   }
 
   return (
-    <form className="register-form" onSubmit={handleSubmit}>
+    <form className={`register-form ${isSuccess ? "is-fading-out" : ""}`} onSubmit={handleSubmit}>
       <label className="register-field">
         <span>first name</span>
         <input autoComplete="given-name" name="firstName" required type="text" />
@@ -68,8 +72,8 @@ export function RegisterForm() {
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
 
-      <button className="register-button" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "signing up..." : "sign up"}
+      <button className="register-button" disabled={isSubmitting || isSuccess} type="submit">
+        {isSuccess ? "redirecting..." : isSubmitting ? "signing up..." : "sign up"}
       </button>
     </form>
   );
