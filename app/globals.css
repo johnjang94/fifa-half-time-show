@@ -102,13 +102,7 @@ button {
   flex-direction: column;
   gap: 12px;
   padding: 18px 16px 24px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(108, 56, 206, 0.52) 0%,
-      rgba(35, 18, 72, 0.8) 42%,
-      #04080c 100%
-    );
+  background: #04080c;
 }
 
 .hero-title {
@@ -141,7 +135,8 @@ button {
   border-radius: 999px;
   padding: 0.9rem 1.6rem;
   min-width: min(220px, 88vw);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+  background:
+    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
   color: var(--text);
   font-size: 1rem;
   letter-spacing: 0.16em;
@@ -152,7 +147,8 @@ button {
 
 .login-button:hover {
   border-color: rgba(255, 255, 255, 0.28);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.14));
+  background:
+    linear-gradient(180deg, rgba(145, 94, 237, 0.95) 0%, rgba(66, 32, 126, 0.98) 58%, rgba(4, 8, 12, 1) 100%);
 }
 
 .login-button:focus-visible {
