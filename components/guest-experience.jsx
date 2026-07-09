@@ -15,7 +15,7 @@ export function GuestExperience() {
 
   function handleLoginSubmit(event) {
     event.preventDefault();
-    router.push("/portal");
+    router.push(`/portal?invite=${encodeURIComponent(digitsOnly)}`);
   }
 
   return (

@@ -686,7 +686,7 @@ button {
   min-height: 100svh;
   padding: clamp(20px, 4vw, 44px);
   background:
-    radial-gradient(circle at top, rgba(245, 231, 197, 0.1), transparent 30%),
+    radial-gradient(circle at top, rgba(245, 231, 197, 0.12), transparent 30%),
     linear-gradient(180deg, #05090d 0%, #0a1117 100%);
 }
 
@@ -694,25 +694,188 @@ button {
   min-height: calc(100svh - clamp(40px, 8vw, 88px));
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 12px;
+  gap: 22px;
   text-align: center;
 }
 
-.portal-eyebrow {
+.portal-header {
+  width: 100%;
+  padding-top: clamp(10px, 6vh, 56px);
+}
+
+.portal-header h1 {
   margin: 0;
+  font-size: clamp(2rem, 4.6vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.portal-qr-area {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.qr-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.qr-caption {
+  margin: 0;
+  max-width: 24ch;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.portal-accordion {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.portal-details {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.portal-details summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1rem 1rem 1.1rem;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+}
+
+.portal-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.portal-details p {
+  margin: 0;
+  padding: 0 1.1rem 1.1rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.faq-inline-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.faq-page {
+  min-height: 100svh;
+  padding: clamp(20px, 4vw, 44px);
+  background:
+    radial-gradient(circle at top, rgba(245, 231, 197, 0.12), transparent 28%),
+    linear-gradient(180deg, #05090d 0%, #0a1117 100%);
+}
+
+.faq-shell {
+  min-height: calc(100svh - clamp(40px, 8vw, 88px));
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.faq-header {
+  text-align: center;
+  padding-top: clamp(10px, 6vh, 56px);
+}
+
+.faq-eyebrow {
+  margin: 0 0 10px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.3em;
   font-size: 0.72rem;
 }
 
-.portal-shell h1 {
+.faq-header h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(2rem, 4.6vw, 3rem);
   line-height: 1;
   letter-spacing: -0.04em;
+}
+
+.chatbot-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
+}
+
+.chatbot-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 280px;
+}
+
+.chatbot-message {
+  max-width: 88%;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  line-height: 1.5;
+}
+
+.chatbot-message-assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chatbot-message-user {
+  align-self: flex-end;
+  background: rgba(126, 70, 224, 0.24);
+}
+
+.chatbot-form {
+  display: flex;
+  gap: 10px;
+}
+
+.chatbot-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  padding: 0.95rem 1rem;
+  font: inherit;
+}
+
+.chatbot-form button {
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  padding: 0.95rem 1.25rem;
+  background: linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.chatbot-form button:focus-visible,
+.chatbot-form input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {
@@ -772,6 +935,24 @@ button {
 
   .portal-page {
     padding: 18px;
+  }
+
+  .portal-shell,
+  .faq-shell {
+    gap: 16px;
+  }
+
+  .portal-header,
+  .faq-header {
+    padding-top: clamp(8px, 4vh, 32px);
+  }
+
+  .chatbot-shell {
+    padding: 14px;
+  }
+
+  .chatbot-form {
+    flex-direction: column;
   }
 
   .thank-you-page {
