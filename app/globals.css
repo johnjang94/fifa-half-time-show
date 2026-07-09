@@ -419,13 +419,13 @@ button {
 .overview-track {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 82%;
+  grid-auto-columns: min(82%, 520px);
   gap: 14px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 10vw;
-  padding: 12px 0 18px;
+  scroll-padding-inline: max(10vw, 20px);
+  padding: 12px max(10vw, 20px) 18px;
   width: 100%;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -448,6 +448,8 @@ button {
 .overview-slide {
   display: grid;
   gap: 16px;
+  justify-items: center;
+  width: 100%;
 }
 
 .overview-track::-webkit-scrollbar {
@@ -457,6 +459,7 @@ button {
 .overview-card {
   scroll-snap-align: center;
   min-width: 0;
+  width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   overflow: hidden;
@@ -551,7 +554,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.55rem;
-  width: min(calc(100% - 12px), 460px);
+  width: min(100%, 460px);
   min-height: 38px;
   margin: 2px auto 0;
   padding: 0.12rem 0.2rem 0;
@@ -606,7 +609,7 @@ button {
 }
 
 .overview-signup {
-  margin-top: 2px;
+  margin: 2px auto 0;
   transition:
     transform 360ms ease,
     border-color 220ms ease,
