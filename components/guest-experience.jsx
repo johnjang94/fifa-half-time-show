@@ -3,18 +3,65 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import heroImage from "../image.png";
+
+const SESSION_KEY = "fifa-half-time-show-session";
+const LOGOUT_REASON_KEY = "fifa-half-time-show-logout-reason";
+const controlBaseUrl =
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
+
+async function recordActivity(eventType, extra = {}) {
+  const sessionId = sessionStorage.getItem(SESSION_KEY);
+
+  if (!sessionId) {
+    return;
+  }
+
+  try {
+    await fetch(`${controlBaseUrl}/api/activity`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType,
+        sessionId,
+        pathname: window.location.pathname,
+        userAgent: window.navigator.userAgent,
+        ...extra,
+      }),
+    });
+  } catch {
+    // Best effort logging only.
+  }
+}
 
 export function GuestExperience() {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [logoutNotice, setLogoutNotice] = useState("");
   const digitsOnly = phoneNumber.replace(/\D/g, "");
   const isPhoneNumberComplete = digitsOnly.length === 10;
 
+  useEffect(() => {
+    const reason = sessionStorage.getItem(LOGOUT_REASON_KEY);
+
+    if (reason === "idle") {
+      setLogoutNotice("You were signed out after 15 minutes of inactivity.");
+      sessionStorage.removeItem(LOGOUT_REASON_KEY);
+    }
+  }, []);
+
   function handleLoginSubmit(event) {
     event.preventDefault();
+    const sessionId = String(Date.now());
+    sessionStorage.setItem(SESSION_KEY, sessionId);
+    void recordActivity("login", {
+      phoneNumber: digitsOnly,
+      inviteToken: digitsOnly,
+    });
     router.push(`/portal?invite=${encodeURIComponent(digitsOnly)}`);
   }
 
@@ -35,6 +82,12 @@ export function GuestExperience() {
 
         <div className="hero-content">
           <div className="cta-band">
+            {logoutNotice ? (
+              <p className="login-status" role="status">
+                {logoutNotice}
+              </p>
+            ) : null}
+
             <div className={`auth-switch ${isLoginOpen ? "is-open" : ""}`}>
               <div className="auth-state auth-state-login" aria-hidden={isLoginOpen}>
                 <button

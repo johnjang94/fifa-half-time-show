@@ -1,5 +1,39 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
+
+const SESSION_KEY = "fifa-half-time-show-session";
+const controlBaseUrl =
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
+
+async function recordActivity(eventType, extra = {}) {
+  const sessionId = sessionStorage.getItem(SESSION_KEY);
+
+  if (!sessionId) {
+    return;
+  }
+
+  try {
+    await fetch(`${controlBaseUrl}/api/activity`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        eventType,
+        sessionId,
+        pathname: window.location.pathname,
+        userAgent: window.navigator.userAgent,
+        ...extra,
+      }),
+    });
+  } catch {
+    // Best effort logging only.
+  }
+}
 
 function sanitizeToken(value) {
   if (Array.isArray(value)) {
@@ -9,12 +43,24 @@ function sanitizeToken(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "guest";
 }
 
-export const metadata = {
-  title: "You are going | FIFA X BTS Watch Party",
-};
-
 export default function PortalPage({ searchParams }) {
+  const router = useRouter();
   const inviteToken = sanitizeToken(searchParams?.invite);
+
+  useEffect(() => {
+    if (!sessionStorage.getItem(SESSION_KEY)) {
+      router.replace("/");
+      return;
+    }
+
+    void recordActivity("portal-view", {
+      inviteToken: inviteToken,
+    });
+  }, [router]);
+
+  if (typeof window !== "undefined" && !sessionStorage.getItem(SESSION_KEY)) {
+    return null;
+  }
 
   return (
     <main className="app-frame portal-page">
