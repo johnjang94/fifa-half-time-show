@@ -32,39 +32,41 @@ export function GuestExperience() {
         </div>
 
         <div className="hero-content">
-          <div className="hero-actions">
-            <button
-              className="login-button"
-              onClick={() => setIsLoginOpen(true)}
-              type="button"
-            >
-              Login
-            </button>
-            <Link className="join-link" href="/overview">
-              join the watch party
-            </Link>
-          </div>
-
-          {isLoginOpen ? (
-            <form className="login-panel" onSubmit={handleLoginSubmit}>
-              <label className="login-field">
-                <span>phone number</span>
-                <input
-                  autoComplete="tel"
-                  inputMode="tel"
-                  name="phoneNumber"
-                  onChange={(event) => setPhoneNumber(event.target.value)}
-                  placeholder="Enter phone number"
-                  type="tel"
-                  value={phoneNumber}
-                />
-              </label>
-
-              <button className="login-submit" type="submit">
+          <div className="cta-band">
+            <div className="hero-actions">
+              <button
+                className="login-button"
+                onClick={() => setIsLoginOpen(true)}
+                type="button"
+              >
                 Login
               </button>
-            </form>
-          ) : null}
+              <Link className="join-link" href="/overview">
+                join the watch party
+              </Link>
+            </div>
+
+            {isLoginOpen ? (
+              <form className="login-panel" onSubmit={handleLoginSubmit}>
+                <label className="login-field">
+                  <span>phone number</span>
+                  <input
+                    autoComplete="tel"
+                    inputMode="tel"
+                    name="phoneNumber"
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    placeholder="Enter phone number"
+                    type="tel"
+                    value={phoneNumber}
+                  />
+                </label>
+
+                <button className="login-submit" type="submit">
+                  Login
+                </button>
+              </form>
+            ) : null}
+          </div>
         </div>
       </section>
     </main>
