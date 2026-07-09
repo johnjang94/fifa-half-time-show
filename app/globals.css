@@ -143,10 +143,12 @@ button {
 }
 
 .auth-state-form {
+  width: 100%;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transform: translateY(8px);
+  align-items: stretch;
 }
 
 .auth-switch.is-open .auth-state-form {
@@ -240,6 +242,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .login-field span {
@@ -271,11 +274,13 @@ button {
 }
 
 .login-submit {
+  width: 100%;
   border: 1px solid var(--edge);
   border-radius: 999px;
   padding: 1rem 1.5rem;
   min-height: 48px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
   color: var(--text);
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -285,6 +290,18 @@ button {
 
 .login-submit:hover {
   border-color: rgba(255, 255, 255, 0.28);
+}
+
+.login-submit:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.login-submit:disabled:hover {
+  border-color: var(--edge);
+  background:
+    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
 }
 
 .login-submit:focus-visible {

@@ -10,6 +10,8 @@ export function GuestExperience() {
   const router = useRouter();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const digitsOnly = phoneNumber.replace(/\D/g, "");
+  const isPhoneNumberComplete = digitsOnly.length === 10;
 
   function handleLoginSubmit(event) {
     event.preventDefault();
@@ -61,7 +63,11 @@ export function GuestExperience() {
                   />
                 </label>
 
-                <button className="login-submit" type="submit">
+                <button
+                  className="login-submit"
+                  disabled={!isPhoneNumberComplete}
+                  type="submit"
+                >
                   enter the party
                 </button>
               </form>
