@@ -75,6 +75,17 @@ export function OverviewCarousel({ cards }) {
                 src={card.src}
               />
             </div>
+
+            <div className="overview-caption" aria-hidden="true">
+              <span className="overview-caption-icon">
+                {index === 0 ? "✦" : index === 1 ? "✿" : index === 2 ? "✧" : "♡"}
+              </span>
+              <span className="overview-caption-text">{card.caption}</span>
+              <span className="overview-caption-arrow">
+                {card.arrows?.left ? "←" : ""}
+                {card.arrows?.right ? "→" : ""}
+              </span>
+            </div>
           </article>
         ))}
       </div>

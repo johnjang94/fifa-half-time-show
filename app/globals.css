@@ -540,6 +540,38 @@ button {
   opacity: 0.64;
 }
 
+.overview-caption {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: fit-content;
+  max-width: calc(100% - 20px);
+  margin: 10px auto 0;
+  padding: 0.34rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(14px);
+}
+
+.overview-caption-icon,
+.overview-caption-arrow {
+  font-size: 0.64rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.overview-caption-text {
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
 .signup-button {
   display: inline-flex;
   align-items: center;

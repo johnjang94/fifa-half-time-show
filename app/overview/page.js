@@ -10,21 +10,29 @@ import { OverviewCarousel } from "./overview-carousel";
 const cards = [
   {
     title: "watch soccer",
+    caption: "watch final",
+    arrows: { left: false, right: true },
     src: englandImage,
     alt: "England soccer scene",
   },
   {
     title: "enjoy food",
+    caption: "eat food",
+    arrows: { left: true, right: true },
     src: bbqImage,
     alt: "BBQ food scene",
   },
   {
     title: "watch BTS",
+    caption: "watch bts",
+    arrows: { left: true, right: true },
     src: dreamersImage,
     alt: "BTS concert scene",
   },
   {
     title: "at the patio",
+    caption: "at the patio",
+    arrows: { left: true, right: false },
     src: patioImage,
     alt: "Patio scene",
   },
