@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const SESSION_KEY = "fifa-half-time-show-session";
 const LOGOUT_REASON_KEY = "fifa-half-time-show-logout-reason";
 const IDLE_LIMIT_MS = 15 * 60 * 1000;
-const PROTECTED_ROUTES = ["/portal"];
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
 
@@ -38,13 +37,9 @@ async function recordActivity(eventType, extra = {}) {
 
 export function SessionGuard() {
   const router = useRouter();
-  const pathname = usePathname();
   const timeoutRef = useRef(null);
 
   useEffect(() => {
-    const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
-      pathname?.startsWith(route),
-    );
     const lastActiveAt = Number(sessionStorage.getItem(SESSION_KEY));
     const hasSession = Number.isFinite(lastActiveAt) && lastActiveAt > 0;
     const isExpired = hasSession && Date.now() - lastActiveAt >= IDLE_LIMIT_MS;
@@ -73,12 +68,11 @@ export function SessionGuard() {
       resetIdleTimer();
     }
 
-    if (isProtectedRoute && (!hasSession || isExpired)) {
+    if (!hasSession || isExpired) {
       if (isExpired) {
         clearSessionAndRedirect();
         return undefined;
       }
-
       router.replace("/");
       return undefined;
     }
@@ -108,7 +102,7 @@ export function SessionGuard() {
       window.removeEventListener("touchstart", handleActivity);
       window.removeEventListener("scroll", handleActivity);
     };
-  }, [pathname, router]);
+  }, [router]);
 
   return null;
 }

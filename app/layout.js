@@ -1,5 +1,4 @@
 import "./globals.css";
-import { SessionGuard } from "../components/session-guard";
 
 export const metadata = {
   title: "FIFA X BTS Watch Party",
@@ -10,7 +9,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <SessionGuard />
         {children}
       </body>
     </html>

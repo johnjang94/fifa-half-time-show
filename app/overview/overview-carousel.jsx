@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useEffect, useRef, useState } from "react";
 
 export function OverviewCarousel({ cards }) {
@@ -77,13 +78,19 @@ export function OverviewCarousel({ cards }) {
             </div>
 
             <div className="overview-caption" aria-hidden="true">
-              <span className="overview-caption-icon">
-                {index === 0 ? "✦" : index === 1 ? "✿" : index === 2 ? "✧" : "♡"}
+              <span className="overview-caption-left">
+                <span className="overview-caption-icon">
+                  {index === 0 ? "✦" : index === 1 ? "✿" : index === 2 ? "✧" : "♡"}
+                </span>
+                <span className="overview-caption-arrow">
+                  {card.arrows?.left ? <FiChevronLeft aria-hidden="true" /> : null}
+                </span>
               </span>
               <span className="overview-caption-text">{card.caption}</span>
-              <span className="overview-caption-arrow">
-                {card.arrows?.left ? "←" : ""}
-                {card.arrows?.right ? "→" : ""}
+              <span className="overview-caption-right">
+                <span className="overview-caption-arrow">
+                  {card.arrows?.right ? <FiChevronRight aria-hidden="true" /> : null}
+                </span>
               </span>
             </div>
           </article>

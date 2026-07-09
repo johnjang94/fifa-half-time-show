@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
+import { SessionGuard } from "../../components/session-guard";
 
 const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
@@ -64,6 +65,7 @@ export default function PortalPage({ searchParams }) {
 
   return (
     <main className="app-frame portal-page">
+      <SessionGuard />
       <section className="portal-shell">
         <header className="portal-header">
           <h1>You are going</h1>
