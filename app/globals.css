@@ -51,26 +51,32 @@ button {
 
 .hero-stage {
   position: relative;
-  min-height: 100svh;
+  min-height: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 20px);
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 24px);
   width: 100%;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(86, 44, 147, 0.28) 0%,
+      rgba(34, 18, 58, 0.6) 36%,
+      #04080c 100%
+    );
 }
 
 .hero-media {
   position: relative;
   z-index: 1;
   width: 100%;
-  min-height: min(78svh, 900px);
-  height: 78svh;
-  max-height: 900px;
+  min-height: 100svh;
+  height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 10px 0;
+  padding: 10px;
   flex: 0 0 auto;
 }
 
@@ -97,6 +103,13 @@ button {
   flex-direction: column;
   gap: 12px;
   padding: 18px 16px 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 8, 28, 0.12) 0%,
+      rgba(9, 7, 18, 0.42) 18%,
+      #04080c 100%
+    );
 }
 
 .hero-title {
@@ -263,13 +276,13 @@ button {
 
 @media (max-width: 640px) {
   .hero-stage {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 18px);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
   }
 
   .hero-media {
-    min-height: 72svh;
-    height: 72svh;
-    padding: 8px 8px 0;
+    min-height: 100svh;
+    height: 100svh;
+    padding: 8px;
   }
 
   .hero-image {
@@ -280,14 +293,6 @@ button {
   .hero-content {
     padding-inline: 12px;
     padding-top: 16px;
-  }
-
-  .hero-actions {
-    gap: 8px;
-  }
-
-  .login-panel {
-    gap: 10px;
   }
 
   .login-button,
