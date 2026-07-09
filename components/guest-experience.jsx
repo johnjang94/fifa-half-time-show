@@ -33,21 +33,21 @@ export function GuestExperience() {
 
         <div className="hero-content">
           <div className="cta-band">
-            <div className="hero-actions">
-              <button
-                className="login-button"
-                onClick={() => setIsLoginOpen(true)}
-                type="button"
-              >
-                Login
-              </button>
-              <Link className="join-link" href="/overview">
-                join the watch party
-              </Link>
-            </div>
+            <div className={`auth-switch ${isLoginOpen ? "is-open" : ""}`}>
+              <div className="auth-state auth-state-login" aria-hidden={isLoginOpen}>
+                <button
+                  className="login-button"
+                  onClick={() => setIsLoginOpen(true)}
+                  type="button"
+                >
+                  Login
+                </button>
+              </div>
 
-            {isLoginOpen ? (
-              <form className="login-panel" onSubmit={handleLoginSubmit}>
+              <form
+                className="auth-state auth-state-form"
+                onSubmit={handleLoginSubmit}
+              >
                 <label className="login-field">
                   <span>phone number</span>
                   <input
@@ -62,10 +62,14 @@ export function GuestExperience() {
                 </label>
 
                 <button className="login-submit" type="submit">
-                  Login
+                  enter the party
                 </button>
               </form>
-            ) : null}
+            </div>
+
+            <Link className="join-link" href="/overview">
+              join the watch party
+            </Link>
           </div>
         </div>
       </section>
