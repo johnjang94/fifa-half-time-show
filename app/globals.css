@@ -754,6 +754,13 @@ button {
   outline-offset: 2px;
 }
 
+.register-field-error {
+  margin-top: -2px;
+  color: #ff7f7f;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .register-field input[type="file"] {
   padding: 0.7rem 0.8rem;
 }
