@@ -58,24 +58,25 @@ export function OverviewCarousel({ cards }) {
     <section className="overview-carousel" aria-label="Overview cards">
       <div className="overview-track" ref={trackRef}>
         {cards.map((card, index) => (
-          <article
-            aria-current={index === activeIndex ? "true" : undefined}
-            className={`overview-card ${index === activeIndex ? "is-active" : ""}`}
-            key={card.title}
-            ref={(node) => {
-              cardRefs.current[index] = node;
-            }}
-          >
-            <div className="overview-media">
-              <Image
-                alt={card.alt}
-                className="overview-image"
-                fill
-                priority={index === 0}
-                sizes="(max-width: 640px) 88vw, 520px"
-                src={card.src}
-              />
-            </div>
+          <div className="overview-slide" key={card.title}>
+            <article
+              aria-current={index === activeIndex ? "true" : undefined}
+              className={`overview-card ${index === activeIndex ? "is-active" : ""}`}
+              ref={(node) => {
+                cardRefs.current[index] = node;
+              }}
+            >
+              <div className="overview-media">
+                <Image
+                  alt={card.alt}
+                  className="overview-image"
+                  fill
+                  priority={index === 0}
+                  sizes="(max-width: 640px) 88vw, 520px"
+                  src={card.src}
+                />
+              </div>
+            </article>
 
             <div className="overview-caption" aria-hidden="true">
               <span className="overview-caption-left">
@@ -93,7 +94,7 @@ export function OverviewCarousel({ cards }) {
                 </span>
               </span>
             </div>
-          </article>
+          </div>
         ))}
       </div>
     </section>
