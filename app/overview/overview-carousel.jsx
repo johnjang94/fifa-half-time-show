@@ -54,6 +54,8 @@ export function OverviewCarousel({ cards }) {
     };
   }, []);
 
+  const isReadyForSignup = activeIndex === cards.length - 1;
+
   return (
     <section className="overview-carousel" aria-label="Overview cards">
       <div className="overview-track" ref={trackRef}>
@@ -97,6 +99,12 @@ export function OverviewCarousel({ cards }) {
           </div>
         ))}
       </div>
+
+      {isReadyForSignup ? (
+        <a className="signup-button overview-signup is-visible" href="/register">
+          sign up
+        </a>
+      ) : null}
     </section>
   );
 }

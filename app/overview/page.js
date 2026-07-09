@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import heroImage from "../../image.png";
 import bbqImage from "../../bbq.jpeg";
 import dreamersImage from "../../dreamers.gif";
@@ -58,10 +57,6 @@ export default function OverviewPage() {
       </div>
       <section className="overview-shell">
         <OverviewCarousel cards={cards} />
-
-        <Link className="signup-button" href="/register">
-          sign up
-        </Link>
       </section>
     </main>
   );
