@@ -19,10 +19,6 @@ export function GuestExperience() {
   return (
     <main className="home-page page-shell">
       <section className="hero-stage">
-        <div className="hero-copy">
-          <p className="hero-title">Watch Party</p>
-        </div>
-
         <div className="hero-media">
           <Image
             alt="FIFA Half-Time Show background"
@@ -44,7 +40,7 @@ export function GuestExperience() {
             Login
           </button>
           <Link className="join-link" href="/overview">
-            Join
+            join the watch party
           </Link>
         </div>
 

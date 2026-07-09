@@ -24,10 +24,12 @@ body {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   justify-content: center;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 button {
@@ -40,26 +42,25 @@ button {
 
 .home-page {
   width: 100vw;
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 .page-shell {
-  min-height: 100vh;
+  min-height: 100svh;
 }
 
 .hero-stage {
   position: relative;
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 100svh;
+  height: 100svh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0;
+  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 12px);
   width: 100%;
 }
 
-.hero-copy,
 .hero-actions {
   position: absolute;
   z-index: 2;
@@ -67,11 +68,6 @@ button {
   justify-content: center;
   left: 0;
   right: 0;
-}
-
-.hero-copy {
-  top: 8px;
-  align-items: flex-start;
 }
 
 .hero-media {
@@ -82,12 +78,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 10px;
 }
 
 .hero-image {
-  object-fit: contain;
+  object-fit: cover;
   object-position: center center;
   z-index: 0;
+  border-radius: 28px;
 }
 
 .hero-overlay {
@@ -112,12 +110,13 @@ button {
 }
 
 .hero-actions {
-  bottom: 8px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   width: 100%;
   text-align: center;
+  padding: 0 16px;
 }
 
 .login-button {
@@ -127,8 +126,8 @@ button {
   appearance: none;
   border: 1px solid var(--edge);
   border-radius: 999px;
-  padding: 0.8rem 1.6rem;
-  min-width: 140px;
+  padding: 0.9rem 1.6rem;
+  min-width: min(220px, 88vw);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
   color: var(--text);
   font-size: 1rem;
@@ -154,9 +153,11 @@ button {
   text-decoration: underline;
   text-underline-offset: 0.24em;
   text-decoration-thickness: 1px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 0.2rem 0 0;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  padding: 0.35rem 0 0;
+  min-height: 44px;
+  line-height: 44px;
 }
 
 .join-link:hover {
@@ -172,13 +173,13 @@ button {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 68px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
   z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: -2px;
-  padding: 0 8px;
+  padding: 0 16px;
 }
 
 .login-field {
@@ -219,6 +220,7 @@ button {
   border: 1px solid var(--edge);
   border-radius: 999px;
   padding: 1rem 1.5rem;
+  min-height: 48px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
   color: var(--text);
   letter-spacing: 0.18em;
@@ -237,7 +239,7 @@ button {
 }
 
 .overview-page {
-  min-height: 100vh;
+  min-height: 100svh;
   padding: clamp(20px, 4vw, 44px);
   position: relative;
   overflow: hidden;
@@ -265,8 +267,45 @@ button {
   background: rgba(255, 255, 255, 0.3);
 }
 
+@media (max-width: 640px) {
+  .hero-stage {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .hero-media {
+    padding: 8px;
+  }
+
+  .hero-image {
+    border-radius: 22px;
+  }
+
+  .hero-actions {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
+  .login-panel {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+    padding-inline: 12px;
+  }
+
+  .login-button,
+  .login-submit {
+    width: 100%;
+  }
+
+  .join-link {
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
 .overview-shell {
-  min-height: calc(100vh - clamp(40px, 8vw, 88px));
+  min-height: calc(100svh - clamp(40px, 8vw, 88px));
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -362,7 +401,7 @@ button {
 }
 
 .register-page {
-  min-height: 100vh;
+  min-height: 100svh;
   padding: clamp(20px, 4vw, 44px);
   position: relative;
   overflow: hidden;
@@ -372,7 +411,7 @@ button {
 }
 
 .register-shell {
-  min-height: calc(100vh - clamp(40px, 8vw, 88px));
+  min-height: calc(100svh - clamp(40px, 8vw, 88px));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -523,7 +562,7 @@ button {
 }
 
 .thank-you-page {
-  min-height: 100vh;
+  min-height: 100svh;
   padding: clamp(20px, 4vw, 44px);
   position: relative;
   overflow: hidden;
@@ -574,7 +613,7 @@ button {
 }
 
 .portal-page {
-  min-height: 100vh;
+  min-height: 100svh;
   padding: clamp(20px, 4vw, 44px);
   background:
     radial-gradient(circle at top, rgba(245, 231, 197, 0.1), transparent 30%),
@@ -582,7 +621,7 @@ button {
 }
 
 .portal-shell {
-  min-height: calc(100vh - clamp(40px, 8vw, 88px));
+  min-height: calc(100svh - clamp(40px, 8vw, 88px));
   display: flex;
   flex-direction: column;
   justify-content: center;
