@@ -64,7 +64,7 @@ export function GuestExperience() {
                 </label>
 
                 <button
-                  className="login-submit"
+                  className={`login-submit ${isPhoneNumberComplete ? "is-ready" : ""}`}
                   disabled={!isPhoneNumberComplete}
                   type="submit"
                 >

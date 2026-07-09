@@ -279,13 +279,17 @@ button {
   border-radius: 999px;
   padding: 1rem 1.5rem;
   min-height: 48px;
-  background:
-    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
   color: var(--text);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+}
+
+.login-submit.is-ready {
+  background:
+    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
 }
 
 .login-submit:hover {
@@ -295,13 +299,6 @@ button {
 .login-submit:disabled {
   opacity: 1;
   cursor: not-allowed;
-  pointer-events: auto;
-}
-
-.login-submit:disabled:hover {
-  border-color: var(--edge);
-  background:
-    linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
 }
 
 .login-submit:focus-visible {
