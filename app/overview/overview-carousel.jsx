@@ -60,7 +60,10 @@ export function OverviewCarousel({ cards }) {
     <section className="overview-carousel" aria-label="Overview cards">
       <div className="overview-track" ref={trackRef}>
         {cards.map((card, index) => (
-          <div className="overview-slide" key={card.title}>
+          <div
+            className={`overview-slide ${index === cards.length - 1 ? "is-full-width" : ""}`}
+            key={card.title}
+          >
             <article
               aria-current={index === activeIndex ? "true" : undefined}
               className={`overview-card ${index === activeIndex ? "is-active" : ""}`}

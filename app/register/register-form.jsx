@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const controlBaseUrl =
-  process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 
 export function RegisterForm() {
   const router = useRouter();

@@ -8,7 +8,7 @@ import { SessionGuard } from "../../components/session-guard";
 
 const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
-  process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
@@ -99,7 +99,7 @@ export default function PortalPage({ searchParams }) {
             <summary>FAQ</summary>
             <p>
               Should you have any question, please feel free to reach out to us{" "}
-              <Link className="faq-inline-link" href="/faq">
+              <Link className="faq-inline-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
                 here
               </Link>
               .

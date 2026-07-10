@@ -9,7 +9,7 @@ import heroImage from "../image.png";
 const SESSION_KEY = "fifa-half-time-show-session";
 const LOGOUT_REASON_KEY = "fifa-half-time-show-logout-reason";
 const controlBaseUrl =
-  process.env.NEXT_PUBLIC_CONTROL_URL ?? "http://127.0.0.1:3010";
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
