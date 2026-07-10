@@ -319,6 +319,14 @@ export default function PortalPage({ searchParams }) {
           <Link className="portal-action-button portal-action-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
             questions?
           </Link>
+
+          <button
+            className="portal-action-button portal-logout-button"
+            onClick={() => router.push("/")}
+            type="button"
+          >
+            logout
+          </button>
         </section>
       </section>
     </main>

@@ -24,7 +24,7 @@ function createInitialMessages(firstName) {
   ];
 }
 
-function threadToMessages(thread, customerName = "이름 미확인", customerPhotoUrl = "") {
+function threadToMessages(thread, customerName = "Unknown guest", customerPhotoUrl = "") {
   return thread.map((item) => ({
     role: item.role === "customer" ? "user" : "assistant",
     name: item.role === "customer" ? customerName : "Support",
@@ -115,7 +115,7 @@ function getHistoryCustomerName(inquiry) {
     return name;
   }
 
-  return normalize(inquiry?.customerName ?? "") || "이름 미확인";
+  return normalize(inquiry?.customerName ?? "") || "Unknown guest";
 }
 
 function initialsFromName(value) {
@@ -195,7 +195,7 @@ export function SupportChatbot({ inviteToken }) {
         const photoUrl = normalize(data.invite?.profilePhotoUrl);
 
         setCustomerFirstName(firstName);
-        setCustomerDisplayName(fullName || firstName || "이름 미확인");
+        setCustomerDisplayName(fullName || firstName || "Unknown guest");
         setCustomerPhotoUrl(photoUrl);
         setRequestForm((current) => ({
           ...defaultRequestForm(fullName, phoneNumber, current.message),
@@ -261,6 +261,42 @@ export function SupportChatbot({ inviteToken }) {
       phoneNumber: current.phoneNumber || inviteTokenValue || "",
     }));
   }, [customerFirstName, inviteTokenValue]);
+
+  useEffect(() => {
+    if (!customerDisplayName && !customerPhotoUrl) {
+      return;
+    }
+
+    setMessages((current) => {
+      let changed = false;
+
+      const nextMessages = current.map((message) => {
+        if (message.role !== "user") {
+          return message;
+        }
+
+        const currentName = normalize(message.name);
+        const shouldUpdateName = !currentName || currentName === "You";
+        const nextName = shouldUpdateName
+          ? customerDisplayName || customerFirstName || message.name || "Unknown guest"
+          : message.name;
+        const shouldUpdatePhoto = !normalize(message.photoUrl) && Boolean(customerPhotoUrl);
+
+        if (nextName !== message.name || shouldUpdatePhoto) {
+          changed = true;
+          return {
+            ...message,
+            name: nextName,
+            photoUrl: shouldUpdatePhoto ? customerPhotoUrl : message.photoUrl,
+          };
+        }
+
+        return message;
+      });
+
+      return changed ? nextMessages : current;
+    });
+  }, [customerDisplayName, customerFirstName, customerPhotoUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -497,10 +533,10 @@ export function SupportChatbot({ inviteToken }) {
 
   function goBackToSupport() {
     setViewMode("live");
-    router.replace(
+    router.push(
       inviteTokenValue
-        ? `/support?invite=${encodeURIComponent(inviteTokenValue)}`
-        : "/support",
+        ? `/portal?invite=${encodeURIComponent(inviteTokenValue)}`
+        : "/portal",
     );
   }
 

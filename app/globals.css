@@ -1634,6 +1634,17 @@ button {
   text-decoration: none;
 }
 
+.portal-logout-button {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.portal-logout-button:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .portal-card {
   width: 100%;
   overflow: hidden;
@@ -2075,12 +2086,13 @@ button {
 }
 
 .chatbot-form {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(72px, 2fr);
   gap: 10px;
+  align-items: stretch;
 }
 
 .chatbot-form input {
-  flex: 1;
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
@@ -2091,9 +2103,8 @@ button {
 }
 
 .chatbot-send-button {
-  flex: 0 0 52px;
-  width: 52px;
-  height: 52px;
+  width: 100%;
+  min-height: 52px;
   border: 1px solid var(--edge);
   border-radius: 16px;
   padding: 0;
@@ -2343,7 +2354,8 @@ button {
   }
 
   .chatbot-form {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 7fr) minmax(64px, 3fr);
+    gap: 8px;
   }
 
   .thank-you-page {
