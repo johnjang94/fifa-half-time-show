@@ -5,11 +5,32 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 const SOURCE_OPTIONS = ["Friends", "LinkedIn", "Eventbrite", "Instagram", "X"];
 const YES_NO_OPTIONS = ["Yes", "No"];
 
 function normalize(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readPortalProfile() {
+  if (typeof window === "undefined") {
+    return { phoneNumber: "" };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PORTAL_PROFILE_KEY);
+    if (!raw) {
+      return { phoneNumber: "" };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      phoneNumber: normalize(parsed.phoneNumber),
+    };
+  } catch {
+    return { phoneNumber: "" };
+  }
 }
 
 export default function SurveyPage() {
@@ -27,6 +48,7 @@ function SurveyPageInner() {
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [contactPhoneNumber, setContactPhoneNumber] = useState("");
   const [answers, setAnswers] = useState({
     howDidYouKnow: "",
     referredBy: "",
@@ -36,6 +58,8 @@ function SurveyPageInner() {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setIsVisible(true));
+    const profile = readPortalProfile();
+    setContactPhoneNumber(profile.phoneNumber);
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
@@ -80,6 +104,7 @@ function SurveyPageInner() {
     setError("");
 
     try {
+      const profile = readPortalProfile();
       const response = await fetch(`${controlBaseUrl}/api/survey`, {
         method: "POST",
         headers: {
@@ -87,6 +112,7 @@ function SurveyPageInner() {
         },
         body: JSON.stringify({
           inviteToken,
+          contactPhoneNumber: contactPhoneNumber || profile.phoneNumber || undefined,
           howDidYouKnow: answers.howDidYouKnow,
           referredBy: answers.referredBy,
           dietaryRestrictions: answers.dietaryRestrictions,
