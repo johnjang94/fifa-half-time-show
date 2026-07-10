@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
-const MAX_PROFILE_PHOTO_BYTES = 650 * 1024;
+const MAX_PROFILE_PHOTO_BYTES = 50 * 1024 * 1024;
 const NAME_PATTERN = /^[A-Za-z]{2,}$/;
 const PHONE_PATTERN = /^\d{10}$/;
 const SUPPORTED_PROFILE_PHOTO_TYPES = new Set([
@@ -17,6 +17,11 @@ const SUPPORTED_PROFILE_PHOTO_TYPES = new Set([
 function formatFileSize(bytes) {
   if (!Number.isFinite(bytes) || bytes <= 0) {
     return "0 KB";
+  }
+
+  if (bytes >= 1024 * 1024) {
+    const megabytes = bytes / (1024 * 1024);
+    return `${megabytes >= 10 ? Math.round(megabytes) : megabytes.toFixed(1)} MB`;
   }
 
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import heroImage from "../../image.png";
 import bbqImage from "../../bbq.jpeg";
-import dreamersImage from "../../dreamers.gif";
+import btsImage from "../../bts.gif";
 import englandImage from "../../england.gif";
 import patioImage from "../../patio.webp";
 import { OverviewCarousel } from "./overview-carousel";
@@ -25,7 +25,7 @@ const cards = [
     title: "watch BTS",
     caption: "watch bts",
     arrows: { left: true, right: true },
-    src: dreamersImage,
+    src: btsImage,
     alt: "BTS concert scene",
   },
   {
