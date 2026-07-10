@@ -2,11 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SessionGuard } from "../../components/session-guard";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
-const SESSION_KEY = "fifa-half-time-show-session";
 const SOURCE_OPTIONS = ["Friends", "LinkedIn", "Eventbrite", "Instagram", "X"];
 const YES_NO_OPTIONS = ["Yes", "No"];
 
@@ -44,11 +42,6 @@ function SurveyPageInner() {
   useEffect(() => {
     if (!inviteToken) {
       router.replace("/");
-      return;
-    }
-
-    if (!sessionStorage.getItem(SESSION_KEY)) {
-      router.replace("/");
     }
   }, [inviteToken, router]);
 
@@ -59,7 +52,7 @@ function SurveyPageInner() {
     Boolean(normalize(answers.dietaryRestrictions)) &&
     Boolean(answers.resident);
 
-  if (typeof window !== "undefined" && (!inviteToken || !sessionStorage.getItem(SESSION_KEY))) {
+  if (typeof window !== "undefined" && !inviteToken) {
     return null;
   }
 
@@ -117,7 +110,6 @@ function SurveyPageInner() {
 
   return (
     <main className={`app-frame survey-page ${isVisible ? "is-visible" : ""}`}>
-      <SessionGuard />
       <section className="survey-shell">
         <header className="survey-header">
           <h1>survey</h1>

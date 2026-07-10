@@ -558,6 +558,7 @@ export function SupportChatbot({ inviteToken }) {
         message: trimmed,
         ticketId: ticketId || undefined,
         contactName: supportContactName,
+        contactPhoneNumber: portalProfile.phoneNumber || undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to send support message.");
