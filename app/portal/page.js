@@ -118,21 +118,109 @@ function getPortalTitle(rsvp) {
   return "You are going";
 }
 
-function PanelCard({ title, onClose, children }) {
+function LockedNoticeModal({ onClose }) {
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
-    <article className="portal-card is-open">
-      <div className="portal-card-header">
-        <h2>{title}</h2>
-        <button
-          aria-label={`Close ${title}`}
-          className="portal-card-close"
-          onClick={onClose}
-          type="button"
-        >
-          ×
+    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
+      <article
+        aria-modal="true"
+        className="portal-modal"
+        role="dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className="portal-modal-kicker">things to know</p>
+        <h2>stay tuned for the updates!</h2>
+        <button className="portal-modal-close" onClick={onClose} type="button">
+          close
         </button>
+      </article>
+    </div>
+  );
+}
+
+function ThingsToKnowCard({ onLockedClick }) {
+  const [activeSection, setActiveSection] = useState("venue");
+
+  return (
+    <article className="portal-card portal-things-card is-open">
+      <button className="portal-things-trigger" onClick={onLockedClick} type="button">
+        <span>things to know</span>
+        <span aria-hidden="true" className="portal-things-trigger-lock">
+          🔒
+        </span>
+      </button>
+
+      <div className="portal-card-body portal-things-card-body">
+        <div className="portal-things-tabs" role="tablist" aria-label="Things to know options">
+          <button
+            aria-pressed={activeSection === "bring"}
+            className={`portal-things-tab ${activeSection === "bring" ? "is-active" : ""}`}
+            onClick={() => setActiveSection("bring")}
+            type="button"
+          >
+            what to bring
+          </button>
+          <button
+            aria-pressed={activeSection === "venue"}
+            className={`portal-things-tab ${activeSection === "venue" ? "is-active" : ""}`}
+            onClick={() => setActiveSection("venue")}
+            type="button"
+          >
+            about the venue
+          </button>
+        </div>
+
+        <div className="portal-things-panel-wrap">
+          {activeSection === "bring" ? (
+            <div key="bring" className="portal-things-panel">
+              <p className="portal-card-copy">
+                Bring a drink or snack you are happy to enjoy during the show. If you want to
+                share food, keep it easy to serve and label anything that needs to stay warm or
+                chilled. Water and simple grab-and-go options are always a safe choice.
+              </p>
+              <p className="portal-card-copy">
+                If you are unsure, come with something light and easy. We will make sure the setup
+                is comfortable for both food and beverage items.
+              </p>
+            </div>
+          ) : (
+            <div key="venue" className="portal-things-panel">
+              <a
+                className="portal-venue-photo-link"
+                href={venueMapUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Open Google Maps for ${venueAddress}`}
+              >
+                <Image
+                  alt="The venue lounge"
+                  className="portal-venue-photo"
+                  priority
+                  sizes="(max-width: 720px) 100vw, 420px"
+                  src={loungeImage}
+                />
+              </a>
+              <p className="portal-card-copy portal-venue-copy">
+                We are located{" "}
+                <a className="portal-venue-link" href={venueMapUrl} target="_blank" rel="noreferrer">
+                  here
+                </a>
+                .
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="portal-card-body">{children}</div>
     </article>
   );
 }
@@ -249,6 +337,7 @@ function PortalPageInner() {
   const searchParams = useSearchParams();
   const inviteToken = useMemo(() => readInviteToken(searchParams?.get("invite")), [searchParams]);
   const [activePanel, setActivePanel] = useState(null);
+  const [showLockedNotice, setShowLockedNotice] = useState(false);
   const [invite, setInvite] = useState({
     firstName: "",
     lastName: "",
@@ -371,40 +460,7 @@ function PortalPageInner() {
             </button>
           )}
 
-          {activePanel === "venue" ? (
-            <PanelCard title="about the venue" onClose={() => setActivePanel(null)}>
-              <a
-                className="portal-venue-photo-link"
-                href={venueMapUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open Google Maps for ${venueAddress}`}
-              >
-                <Image
-                  alt="The venue lounge"
-                  className="portal-venue-photo"
-                  priority
-                  sizes="(max-width: 720px) 100vw, 420px"
-                  src={loungeImage}
-                />
-              </a>
-              <p className="portal-card-copy portal-venue-copy">
-                We are located{" "}
-                <a className="portal-venue-link" href={venueMapUrl} target="_blank" rel="noreferrer">
-                  here
-                </a>
-                .
-              </p>
-            </PanelCard>
-          ) : (
-            <button
-              className="portal-action-button"
-              onClick={() => setActivePanel("venue")}
-              type="button"
-            >
-              about the venue
-            </button>
-          )}
+          <ThingsToKnowCard onLockedClick={() => setShowLockedNotice(true)} />
 
           <Link className="portal-action-button portal-action-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
             questions?
@@ -419,6 +475,8 @@ function PortalPageInner() {
           </button>
         </section>
       </section>
+
+      {showLockedNotice ? <LockedNoticeModal onClose={() => setShowLockedNotice(false)} /> : null}
     </main>
   );
 }

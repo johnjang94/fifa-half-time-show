@@ -63,10 +63,10 @@ export default function ThankYouPage({ searchParams }) {
 
             <button
               className={`thank-you-return ${showPortalButton ? "is-visible" : ""}`}
-              onClick={() => router.push(`/portal?invite=${encodeURIComponent(inviteToken)}`)}
+              onClick={() => router.push(`/survey?invite=${encodeURIComponent(inviteToken)}`)}
               type="button"
             >
-              check your ticket
+              take a quick survey
             </button>
           </div>
         ) : null}
