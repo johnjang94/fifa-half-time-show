@@ -11,6 +11,7 @@ import loungeImage from "../../lounge.jpg";
 const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 const venueAddress = "138 Downes Street, Toronto, ON M5E 0E4";
 const venueMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`;
 const RSVP_CHANGE_LOCK_AT = new Date("2026-07-17T00:00:00-04:00");
@@ -63,6 +64,18 @@ function normalize(value) {
 
 function readInviteField(invite, camelKey, snakeKey) {
   return normalize(invite?.[camelKey] ?? invite?.[snakeKey]);
+}
+
+function savePortalProfile(profile) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(PORTAL_PROFILE_KEY, JSON.stringify(profile));
+  } catch {
+    // Best effort only.
+  }
 }
 
 function formatPhoneNumber(value) {
@@ -283,11 +296,22 @@ function PortalPageInner() {
         const data = await response.json();
 
         if (!cancelled && response.ok && data.ok && data.invite) {
+          const firstName = readInviteField(data.invite, "firstName", "first_name");
+          const lastName = readInviteField(data.invite, "lastName", "last_name");
+          const phoneNumber = readInviteField(data.invite, "phoneNumber", "phone_number");
+          const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName || "guest";
+
           setInvite({
-            firstName: readInviteField(data.invite, "firstName", "first_name"),
-            lastName: readInviteField(data.invite, "lastName", "last_name"),
-            phoneNumber: readInviteField(data.invite, "phoneNumber", "phone_number"),
+            firstName,
+            lastName,
+            phoneNumber,
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
+          });
+          savePortalProfile({
+            firstName,
+            lastName,
+            displayName,
+            phoneNumber,
           });
         }
       } catch {

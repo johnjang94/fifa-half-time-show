@@ -1847,7 +1847,11 @@ button {
 
 .support-page {
   min-height: 100svh;
+  display: flex;
+  flex-direction: column;
   padding: clamp(20px, 4vw, 44px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(circle at top, rgba(245, 231, 197, 0.12), transparent 28%),
     linear-gradient(180deg, #05090d 0%, #0a1117 100%);
@@ -1858,6 +1862,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  flex: 1;
+  min-height: 0;
 }
 
 .support-header {
@@ -1889,13 +1895,51 @@ button {
   padding: 16px;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: var(--shadow);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.support-toolbar {
+.support-chat-stage {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.support-live-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+.support-live-panel .chatbot-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.support-top-actions,
+.support-bottom-actions {
+  display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.support-top-actions {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.support-bottom-actions {
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .support-back-button,
@@ -1925,6 +1969,9 @@ button {
 .support-history-panel {
   display: grid;
   gap: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .support-history-header {
@@ -1961,6 +2008,10 @@ button {
 .support-history-list {
   display: grid;
   gap: 10px;
+  max-height: 28vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
 }
 
 .support-history-item {
@@ -2002,6 +2053,9 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.03);
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .support-history-empty {
@@ -2013,7 +2067,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 280px;
+  min-height: 0;
+  flex: 1;
 }
 
 .chatbot-message {
@@ -2160,6 +2215,7 @@ button {
 .chatbot-compose {
   display: grid;
   gap: 12px;
+  flex: 0 0 auto;
 }
 
 .support-finish-button {
@@ -2344,21 +2400,86 @@ button {
 
   .portal-shell,
   .support-shell {
-    gap: 16px;
+    gap: 10px;
   }
 
   .portal-header,
   .support-header {
-    padding-top: clamp(8px, 4vh, 32px);
+    padding-top: clamp(4px, 2vh, 20px);
   }
 
   .chatbot-shell {
-    padding: 14px;
+    padding: 10px;
+  }
+
+  .support-chat-stage {
+    gap: 8px;
+  }
+
+  .support-live-panel {
+    gap: 8px;
+  }
+
+  .support-history-panel {
+    gap: 10px;
+  }
+
+  .support-top-actions,
+  .support-bottom-actions {
+    gap: 8px;
+  }
+
+  .support-back-button,
+  .support-new-chat-button,
+  .support-finish-button,
+  .support-history-button {
+    min-height: 34px;
+    padding: 0.46rem 0.72rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+  }
+
+  .support-back-button,
+  .support-new-chat-button {
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .support-finish-button,
+  .support-history-button {
+    flex: 1 1 calc(50% - 4px);
   }
 
   .chatbot-form {
-    grid-template-columns: minmax(0, 7fr) minmax(64px, 3fr);
+    grid-template-columns: minmax(0, 6fr) minmax(56px, 2fr);
+    gap: 6px;
+  }
+
+  .chatbot-messages {
     gap: 8px;
+  }
+
+  .chatbot-message {
+    max-width: 92%;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .support-history-list {
+    max-height: 24vh;
+  }
+
+  .support-history-thread {
+    padding: 12px;
+  }
+
+  .support-action-panel,
+  .support-request-form {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .support-request-field input,
+  .support-request-field textarea {
+    padding: 0.85rem 0.9rem;
   }
 
   .thank-you-page {

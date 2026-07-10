@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const TICKET_KEY = "fifa-half-time-show-support-ticket";
+const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 
 function createGreeting(firstName) {
   const name = firstName?.trim() || "there";
@@ -36,6 +37,48 @@ function threadToMessages(thread, customerName = "Unknown guest", customerPhotoU
 
 function normalize(value) {
   return String(value ?? "").trim();
+}
+
+function readPortalProfile() {
+  if (typeof window === "undefined") {
+    return {
+      firstName: "",
+      lastName: "",
+      displayName: "",
+      phoneNumber: "",
+      photoUrl: "",
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PORTAL_PROFILE_KEY);
+    if (!raw) {
+      return {
+        firstName: "",
+        lastName: "",
+        displayName: "",
+        phoneNumber: "",
+        photoUrl: "",
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      firstName: normalize(parsed.firstName),
+      lastName: normalize(parsed.lastName),
+      displayName: normalize(parsed.displayName),
+      phoneNumber: normalize(parsed.phoneNumber),
+      photoUrl: normalize(parsed.photoUrl),
+    };
+  } catch {
+    return {
+      firstName: "",
+      lastName: "",
+      displayName: "",
+      phoneNumber: "",
+      photoUrl: "",
+    };
+  }
 }
 
 function isPlaceholderCustomerName(value) {
@@ -110,7 +153,7 @@ function getHistorySnippet(inquiry) {
   return normalize(firstCustomerLine || fallback).slice(0, 72);
 }
 
-function getHistoryCustomerName(inquiry) {
+function getHistoryCustomerName(inquiry, fallbackName = "Unknown guest") {
   const name = [normalize(inquiry?.customer ?? ""), normalize(inquiry?.firstName ?? "")]
     .filter(Boolean)
     .join(" ")
@@ -120,7 +163,7 @@ function getHistoryCustomerName(inquiry) {
     return name;
   }
 
-  return normalize(inquiry?.customerName ?? "") || "Unknown guest";
+  return normalize(inquiry?.customerName ?? "") || normalize(fallbackName) || "Unknown guest";
 }
 
 function initialsFromName(value) {
@@ -149,6 +192,7 @@ export function SupportChatbot({ inviteToken }) {
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerDisplayName, setCustomerDisplayName] = useState("");
   const [customerPhotoUrl, setCustomerPhotoUrl] = useState("");
+  const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
   const [showFoodRequestButton, setShowFoodRequestButton] = useState(false);
   const [showFoodRequestForm, setShowFoodRequestForm] = useState(false);
   const [foodRequestDraft, setFoodRequestDraft] = useState("");
@@ -174,14 +218,28 @@ export function SupportChatbot({ inviteToken }) {
     let cancelled = false;
 
     async function loadInvite() {
+      const storedProfile = readPortalProfile();
+      setPortalProfile(storedProfile);
+
       if (!inviteTokenValue) {
-        setCustomerFirstName("");
-        setCustomerDisplayName("");
-        setCustomerPhotoUrl("");
+        const nextFirstName = storedProfile.firstName;
+        const nextDisplayName =
+          storedProfile.displayName || [storedProfile.firstName, storedProfile.lastName].filter(Boolean).join(" ").trim();
+
+        setCustomerFirstName(nextFirstName);
+        setCustomerDisplayName(nextDisplayName);
+        setCustomerPhotoUrl(storedProfile.photoUrl);
         setRequestForm((current) => ({
           ...current,
-          ...defaultRequestForm("", "", current.message),
+          ...defaultRequestForm(nextFirstName || nextDisplayName, storedProfile.phoneNumber, current.message),
         }));
+        setMessages((current) => {
+          if (!isTicketDefaultGreeting(current)) {
+            return current;
+          }
+
+          return createInitialMessages(nextFirstName || nextDisplayName || "there");
+        });
         return;
       }
 
@@ -200,21 +258,59 @@ export function SupportChatbot({ inviteToken }) {
         const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
         const phoneNumber = normalize(data.invite?.phoneNumber);
         const photoUrl = normalize(data.invite?.profilePhotoUrl);
+        const displayName = fullName || firstName || storedProfile.displayName || storedProfile.firstName || "Unknown guest";
 
         setCustomerFirstName(firstName);
-        setCustomerDisplayName(fullName || firstName || "Unknown guest");
-        setCustomerPhotoUrl(photoUrl);
+        setCustomerDisplayName(displayName);
+        setCustomerPhotoUrl(photoUrl || storedProfile.photoUrl);
+        setPortalProfile({
+          firstName: firstName || storedProfile.firstName,
+          lastName: lastName || storedProfile.lastName,
+          displayName,
+          phoneNumber: phoneNumber || storedProfile.phoneNumber,
+          photoUrl: photoUrl || storedProfile.photoUrl,
+        });
+        window.localStorage.setItem(
+          PORTAL_PROFILE_KEY,
+          JSON.stringify({
+            firstName: firstName || storedProfile.firstName,
+            lastName: lastName || storedProfile.lastName,
+            displayName,
+            phoneNumber: phoneNumber || storedProfile.phoneNumber,
+            photoUrl: photoUrl || storedProfile.photoUrl,
+          }),
+        );
         setRequestForm((current) => ({
-          ...defaultRequestForm(fullName, phoneNumber, current.message),
+          ...defaultRequestForm(displayName, phoneNumber || storedProfile.phoneNumber, current.message),
         }));
         setMessages((current) => {
           if (!isTicketDefaultGreeting(current)) {
             return current;
           }
 
-          return createInitialMessages(firstName || "there");
+          return createInitialMessages(firstName || displayName || "there");
         });
       } catch {
+        const nextFirstName = storedProfile.firstName;
+        const nextDisplayName =
+          storedProfile.displayName || [storedProfile.firstName, storedProfile.lastName].filter(Boolean).join(" ").trim();
+
+        if (!cancelled && (nextFirstName || nextDisplayName || storedProfile.phoneNumber)) {
+          setCustomerFirstName(nextFirstName);
+          setCustomerDisplayName(nextDisplayName);
+          setCustomerPhotoUrl(storedProfile.photoUrl);
+          setRequestForm((current) => ({
+            ...defaultRequestForm(nextDisplayName || nextFirstName, storedProfile.phoneNumber, current.message),
+          }));
+          setMessages((current) => {
+            if (!isTicketDefaultGreeting(current)) {
+              return current;
+            }
+
+            return createInitialMessages(nextFirstName || nextDisplayName || "there");
+          });
+        }
+
         // Best-effort only. The chatbot still works without a lookup result.
       }
     }
@@ -244,7 +340,10 @@ export function SupportChatbot({ inviteToken }) {
           setMessages(
             threadToMessages(
               data.inquiry.thread,
-              data.inquiry.customer || customerDisplayName,
+              data.inquiry.customer ||
+                customerDisplayName ||
+                portalProfile.displayName ||
+                portalProfile.firstName,
               data.inquiry.customerPhotoUrl || customerPhotoUrl,
             ),
           );
@@ -285,7 +384,12 @@ export function SupportChatbot({ inviteToken }) {
         const currentName = normalize(message.name);
         const shouldUpdateName = isPlaceholderCustomerName(currentName);
         const nextName = shouldUpdateName
-          ? customerDisplayName || customerFirstName || message.name || "Unknown guest"
+          ? customerDisplayName ||
+            customerFirstName ||
+            portalProfile.displayName ||
+            portalProfile.firstName ||
+            message.name ||
+            "Unknown guest"
           : message.name;
         const shouldUpdatePhoto = !normalize(message.photoUrl) && Boolean(customerPhotoUrl);
 
@@ -303,7 +407,7 @@ export function SupportChatbot({ inviteToken }) {
 
       return changed ? nextMessages : current;
     });
-  }, [customerDisplayName, customerFirstName, customerPhotoUrl]);
+  }, [customerDisplayName, customerFirstName, customerPhotoUrl, portalProfile.displayName, portalProfile.firstName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -371,7 +475,10 @@ export function SupportChatbot({ inviteToken }) {
       setMessages(
         threadToMessages(
           data.inquiry.thread,
-          data.inquiry.customer || customerDisplayName,
+          data.inquiry.customer ||
+            customerDisplayName ||
+            portalProfile.displayName ||
+            portalProfile.firstName,
           data.inquiry.customerPhotoUrl || customerPhotoUrl,
         ),
       );
@@ -432,7 +539,12 @@ export function SupportChatbot({ inviteToken }) {
       ...messages,
       {
         role: "user",
-        name: customerDisplayName || customerFirstName || "You",
+        name:
+          customerDisplayName ||
+          customerFirstName ||
+          portalProfile.displayName ||
+          portalProfile.firstName ||
+          "You",
         text: trimmed,
         createdAt: new Date().toISOString(),
       },
@@ -445,6 +557,7 @@ export function SupportChatbot({ inviteToken }) {
         inviteToken: inviteTokenValue,
         message: trimmed,
         ticketId: ticketId || undefined,
+        contactName: supportContactName,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to send support message.");
@@ -521,7 +634,11 @@ export function SupportChatbot({ inviteToken }) {
   function startNewChat() {
     setTicketId("");
     window.localStorage.removeItem(TICKET_KEY);
-    setMessages(createInitialMessages(customerFirstName || "there"));
+    setMessages(
+      createInitialMessages(
+        customerFirstName || customerDisplayName || portalProfile.firstName || portalProfile.displayName || "there",
+      ),
+    );
     setValue("");
     setError("");
     setShowFoodRequestButton(false);
@@ -549,19 +666,28 @@ export function SupportChatbot({ inviteToken }) {
 
   const hasHistory = historyItems.length > 0;
   const hasMessageDraft = value.trim().length > 0;
+  const resolvedCustomerName =
+    customerDisplayName ||
+    customerFirstName ||
+    portalProfile.displayName ||
+    portalProfile.firstName ||
+    "Unknown guest";
+  const supportContactName =
+    isPlaceholderCustomerName(resolvedCustomerName) || normalize(resolvedCustomerName) === "guest"
+      ? ""
+      : resolvedCustomerName;
   const activeHistoryMessages = selectedHistory?.thread
     ? threadToMessages(
         selectedHistory.thread,
-        getHistoryCustomerName(selectedHistory),
+        getHistoryCustomerName(selectedHistory, resolvedCustomerName),
         selectedHistory.customerPhotoUrl || customerPhotoUrl,
       )
     : [];
   const liveMessages = messages;
-  const resolvedCustomerName = customerDisplayName || customerFirstName || "Unknown guest";
 
   return (
     <section className="chatbot-shell support-chatbot" aria-label="Support chatbot">
-      <div className="support-toolbar">
+      <div className="support-top-actions">
         <button className="support-back-button" onClick={goBackToSupport} type="button">
           back
         </button>
@@ -570,78 +696,79 @@ export function SupportChatbot({ inviteToken }) {
         </button>
       </div>
 
-      {viewMode === "history" ? (
-        <div className="support-history-panel">
-          <div className="support-history-header">
-            <div>
-              <p className="support-history-eyebrow">your chat history</p>
-              <h2>Past conversations</h2>
+      <div className="support-chat-stage">
+        {viewMode === "history" ? (
+          <div className="support-history-panel">
+            <div className="support-history-header">
+              <div>
+                <p className="support-history-eyebrow">your chat history</p>
+                <h2>Past conversations</h2>
+              </div>
+              <span className="support-history-count">{historyItems.length}</span>
             </div>
-            <span className="support-history-count">{historyItems.length}</span>
-          </div>
 
-          {historyError ? <p className="chatbot-error">{historyError}</p> : null}
+            {historyError ? <p className="chatbot-error">{historyError}</p> : null}
 
-          <div className="support-history-list" role="list">
-            {historyItems.map((item) => (
-              <button
-                className={`support-history-item ${item.id === selectedHistory?.id ? "is-active" : ""}`}
-                key={item.id}
-                onClick={() => {
-                  setSelectedHistoryId(item.id);
-                }}
-                type="button"
-              >
-                <strong>{getHistoryCustomerName(item)}</strong>
-                <time dateTime={item.createdAt}>{formatHistoryDate(item.createdAt)}</time>
-                <span>{getHistorySnippet(item)}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="support-history-thread">
-            {activeHistoryMessages.length ? (
-              activeHistoryMessages.map((message, index) => (
-                <article
-                  className={`chatbot-message chatbot-message-${message.role}`}
-                  key={`${message.role}-${index}`}
+            <div className="support-history-list" role="list">
+              {historyItems.map((item) => (
+                <button
+                  className={`support-history-item ${item.id === selectedHistory?.id ? "is-active" : ""}`}
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedHistoryId(item.id);
+                  }}
+                  type="button"
                 >
-                  <header className="chatbot-message-header">
-                    <div className="chatbot-message-identity">
-                      <span
-                        className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
-                        aria-hidden="true"
-                      >
-                        {message.role === "user" && message.photoUrl ? (
-                          <img alt="" src={message.photoUrl} />
-                        ) : message.role === "user" ? (
-                          initialsFromName(message.name || selectedHistory?.customer || resolvedCustomerName)
-                        ) : (
-                          "S"
-                        )}
-                      </span>
-                      <strong>
-                        {message.role === "user"
-                          ? isPlaceholderCustomerName(message.name)
-                            ? selectedHistory?.customer || resolvedCustomerName || "You"
-                            : message.name
-                          : "Support"}
-                      </strong>
-                    </div>
-                    <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
-                  </header>
-                  {message.text}
-                </article>
-              ))
-            ) : (
-              <p className="support-history-empty">Pick a conversation to review it here.</p>
-            )}
+                  <strong>{getHistoryCustomerName(item, resolvedCustomerName)}</strong>
+                  <time dateTime={item.createdAt}>{formatHistoryDate(item.createdAt)}</time>
+                  <span>{getHistorySnippet(item)}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="support-history-thread">
+              {activeHistoryMessages.length ? (
+                activeHistoryMessages.map((message, index) => (
+                  <article
+                    className={`chatbot-message chatbot-message-${message.role}`}
+                    key={`${message.role}-${index}`}
+                  >
+                    <header className="chatbot-message-header">
+                      <div className="chatbot-message-identity">
+                        <span
+                          className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
+                          aria-hidden="true"
+                        >
+                          {message.role === "user" && message.photoUrl ? (
+                            <img alt="" src={message.photoUrl} />
+                          ) : message.role === "user" ? (
+                            initialsFromName(message.name || selectedHistory?.customer || resolvedCustomerName)
+                          ) : (
+                            "S"
+                          )}
+                        </span>
+                        <strong>
+                          {message.role === "user"
+                            ? isPlaceholderCustomerName(message.name)
+                              ? selectedHistory?.customer || resolvedCustomerName || "You"
+                              : message.name
+                            : "Support"}
+                        </strong>
+                      </div>
+                      <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
+                    </header>
+                    {message.text}
+                  </article>
+                ))
+              ) : (
+                <p className="support-history-empty">Pick a conversation to review it here.</p>
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="chatbot-messages">
-            {liveMessages.map((message, index) => (
+        ) : (
+          <div className="support-live-panel">
+            <div className="chatbot-messages">
+              {liveMessages.map((message, index) => (
                 <article
                   className={`chatbot-message chatbot-message-${message.role}`}
                   key={`${message.role}-${index}`}
@@ -668,110 +795,113 @@ export function SupportChatbot({ inviteToken }) {
                           : "Support"}
                       </strong>
                     </div>
-                  <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
-                </header>
-                {message.text}
-              </article>
-            ))}
-          </div>
-
-          {showFoodRequestButton ? (
-            <div className="support-action-panel">
-              <p>Would you like to pass this along to the host?</p>
-              <button
-                className="support-action-button"
-                onClick={openFoodRequestForm}
-                type="button"
-              >
-                send the request
-              </button>
+                    <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
+                  </header>
+                  {message.text}
+                </article>
+              ))}
             </div>
-          ) : null}
 
-          {showFoodRequestForm ? (
-            <form className="support-request-form" onSubmit={handleFoodRequestSubmit}>
-              <label className="support-request-field">
-                <span>Name</span>
-                <input
-                  autoComplete="name"
-                  name="name"
-                  onChange={(event) =>
-                    setRequestForm((current) => ({ ...current, name: event.target.value }))
-                  }
-                  type="text"
-                  value={requestForm.name}
-                />
-              </label>
-
-              <label className="support-request-field">
-                <span>Phone number</span>
-                <input
-                  autoComplete="tel"
-                  inputMode="numeric"
-                  name="phoneNumber"
-                  onChange={(event) =>
-                    setRequestForm((current) => ({ ...current, phoneNumber: event.target.value }))
-                  }
-                  type="tel"
-                  value={requestForm.phoneNumber}
-                />
-              </label>
-
-              <label className="support-request-field">
-                <span>Message</span>
-                <textarea
-                  name="message"
-                  onChange={(event) =>
-                    setRequestForm((current) => ({ ...current, message: event.target.value }))
-                  }
-                  rows={4}
-                  value={requestForm.message}
-                />
-              </label>
-
-              <button className="support-request-submit" type="submit" disabled={isSubmittingRequest}>
-                {isSubmittingRequest ? "sending..." : "submit"}
-              </button>
-            </form>
-          ) : null}
-
-          {error ? (
-            <p className="chatbot-error" role="status">
-              {error}
-            </p>
-          ) : null}
-
-          <div className="chatbot-compose">
-            <form className="chatbot-form" onSubmit={handleSubmit}>
-              <input
-                aria-label="Ask a question"
-                placeholder="Type your question..."
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                type="text"
-              />
-              <button
-                aria-label="Send message"
-                className={`chatbot-send-button ${hasMessageDraft ? "is-ready" : "is-idle"}`}
-                disabled={isSending || !hasMessageDraft}
-                type="submit"
-              >
-                {isSending ? <span className="chatbot-send-loading">...</span> : <SendMessageIcon />}
-              </button>
-            </form>
-
-            <button className="support-finish-button" onClick={finishTheChat} type="button">
-              finish the chat
-            </button>
-
-            {hasHistory ? (
-              <button className="support-history-button" onClick={openHistory} type="button">
-                your chat history
-              </button>
+            {showFoodRequestButton ? (
+              <div className="support-action-panel">
+                <p>Would you like to pass this along to the host?</p>
+                <button
+                  className="support-action-button"
+                  onClick={openFoodRequestForm}
+                  type="button"
+                >
+                  send the request
+                </button>
+              </div>
             ) : null}
+
+            {showFoodRequestForm ? (
+              <form className="support-request-form" onSubmit={handleFoodRequestSubmit}>
+                <label className="support-request-field">
+                  <span>Name</span>
+                  <input
+                    autoComplete="name"
+                    name="name"
+                    onChange={(event) =>
+                      setRequestForm((current) => ({ ...current, name: event.target.value }))
+                    }
+                    type="text"
+                    value={requestForm.name}
+                  />
+                </label>
+
+                <label className="support-request-field">
+                  <span>Phone number</span>
+                  <input
+                    autoComplete="tel"
+                    inputMode="numeric"
+                    name="phoneNumber"
+                    onChange={(event) =>
+                      setRequestForm((current) => ({ ...current, phoneNumber: event.target.value }))
+                    }
+                    type="tel"
+                    value={requestForm.phoneNumber}
+                  />
+                </label>
+
+                <label className="support-request-field">
+                  <span>Message</span>
+                  <textarea
+                    name="message"
+                    onChange={(event) =>
+                      setRequestForm((current) => ({ ...current, message: event.target.value }))
+                    }
+                    rows={4}
+                    value={requestForm.message}
+                  />
+                </label>
+
+                <button className="support-request-submit" type="submit" disabled={isSubmittingRequest}>
+                  {isSubmittingRequest ? "sending..." : "submit"}
+                </button>
+              </form>
+            ) : null}
+
+            {error ? (
+              <p className="chatbot-error" role="status">
+                {error}
+              </p>
+            ) : null}
+
+            <div className="chatbot-compose">
+              <form className="chatbot-form" onSubmit={handleSubmit}>
+                <input
+                  aria-label="Ask a question"
+                  placeholder="Type your question..."
+                  value={value}
+                  onChange={(event) => setValue(event.target.value)}
+                  type="text"
+                />
+                <button
+                  aria-label="Send message"
+                  className={`chatbot-send-button ${hasMessageDraft ? "is-ready" : "is-idle"}`}
+                  disabled={isSending || !hasMessageDraft}
+                  type="submit"
+                >
+                  {isSending ? <span className="chatbot-send-loading">...</span> : <SendMessageIcon />}
+                </button>
+              </form>
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
+
+      <div className="support-bottom-actions">
+        <button className="support-finish-button" onClick={finishTheChat} type="button">
+          finish the chat
+        </button>
+
+        {hasHistory ? (
+          <button className="support-history-button" onClick={openHistory} type="button">
+            your chat history
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }
