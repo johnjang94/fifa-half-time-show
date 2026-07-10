@@ -11,6 +11,7 @@ export function QrCode({
   token,
   caption = "Unique QR code for your invite",
   barcode = "",
+  showBarcode = true,
   onReady,
 }) {
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -61,7 +62,9 @@ export function QrCode({
         )}
       </div>
       {caption ? <p className="qr-caption">{caption}</p> : null}
-      {barcodeValue ? <p className="qr-barcode">barcode: {barcodeValue}</p> : null}
+      {barcodeValue ? (
+        <p className={`qr-barcode ${showBarcode ? "is-visible" : ""}`}>barcode: {barcodeValue}</p>
+      ) : null}
     </div>
   );
 }

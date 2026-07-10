@@ -1547,7 +1547,7 @@ button {
 .thank-you-shell .qr-code {
   opacity: 0;
   transform: translateY(14px) scale(0.98);
-  animation: qr-reveal 520ms ease 3.55s forwards;
+  animation: qr-reveal 520ms ease forwards;
 }
 
 @keyframes survey-submit-glow {
@@ -1779,6 +1779,16 @@ button {
   letter-spacing: 0.12em;
   text-transform: lowercase;
   font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 320ms ease,
+    transform 320ms ease;
+}
+
+.qr-barcode.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .portal-accordion {

@@ -24,6 +24,7 @@ export default function ThankYouPage({ searchParams }) {
   const [isVisible, setIsVisible] = useState(false);
   const [showCelebration, setShowCelebration] = useState(true);
   const [showQr, setShowQr] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
   const [showPortalButton, setShowPortalButton] = useState(false);
   const [isQrReady, setIsQrReady] = useState(false);
 
@@ -69,8 +70,18 @@ export default function ThankYouPage({ searchParams }) {
       return undefined;
     }
 
-    setShowPortalButton(true);
-    return undefined;
+    const barcodeTimer = window.setTimeout(() => {
+      setShowBarcode(true);
+    }, 220);
+
+    const buttonTimer = window.setTimeout(() => {
+      setShowPortalButton(true);
+    }, 520);
+
+    return () => {
+      window.clearTimeout(barcodeTimer);
+      window.clearTimeout(buttonTimer);
+    };
   }, [isQrReady, showQr]);
 
   const handleCelebrationComplete = useCallback(() => {
@@ -97,16 +108,19 @@ export default function ThankYouPage({ searchParams }) {
               token={inviteToken}
               caption="Unique QR code for your registration"
               barcode={inviteBarcode}
+              showBarcode={showBarcode}
               onReady={handleQrReady}
             />
 
-            <button
-              className={`thank-you-return ${showPortalButton ? "is-visible" : ""}`}
-              onClick={() => router.push(`/survey?invite=${encodeURIComponent(inviteToken)}`)}
-              type="button"
-            >
-              take a quick survey
-            </button>
+            {showPortalButton ? (
+              <button
+                className="thank-you-return is-visible"
+                onClick={() => router.push(`/survey?invite=${encodeURIComponent(inviteToken)}`)}
+                type="button"
+              >
+                take a quick survey
+              </button>
+            ) : null}
           </div>
         ) : null}
       </section>
