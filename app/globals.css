@@ -1869,13 +1869,14 @@ button {
   appearance: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
+  position: relative;
   width: 100%;
   min-height: 58px;
   border: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.95rem 1.1rem;
+  padding: 0.95rem 3rem 0.95rem 1.1rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.05) 100%);
   color: var(--text);
@@ -1887,6 +1888,11 @@ button {
     transform 180ms ease,
     background 180ms ease,
     border-color 180ms ease;
+}
+
+.portal-things-trigger > span:first-child {
+  flex: 1;
+  text-align: center;
 }
 
 .portal-things-card summary.portal-things-trigger {
@@ -1911,6 +1917,8 @@ button {
 
 .portal-things-trigger-lock {
   flex-shrink: 0;
+  position: absolute;
+  right: 1.1rem;
   font-size: 1rem;
   line-height: 1;
   transition: transform 220ms ease;
