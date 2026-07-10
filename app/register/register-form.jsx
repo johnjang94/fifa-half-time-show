@@ -143,6 +143,11 @@ export function RegisterForm() {
     lastName: "",
     phoneNumber: "",
   });
+  const [formValues, setFormValues] = useState({
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -171,6 +176,16 @@ export function RegisterForm() {
       nextFieldErrors,
     };
   }
+
+  function isFormComplete(values) {
+    return (
+      NAME_PATTERN.test(values.firstName.trim()) &&
+      NAME_PATTERN.test(values.lastName.trim()) &&
+      PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, ""))
+    );
+  }
+
+  const isReady = isFormComplete(formValues);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -248,20 +263,54 @@ export function RegisterForm() {
       <div className="register-name-row">
         <label className="register-field">
           <span>first name</span>
-          <input autoComplete="given-name" minLength={2} name="firstName" pattern="[A-Za-z]{2,}" required type="text" />
+          <input
+            autoComplete="given-name"
+            minLength={2}
+            name="firstName"
+            onChange={(event) =>
+              setFormValues((current) => ({ ...current, firstName: event.target.value }))
+            }
+            pattern="[A-Za-z]{2,}"
+            required
+            type="text"
+            value={formValues.firstName}
+          />
           {fieldErrors.firstName ? <p className="register-field-error">{fieldErrors.firstName}</p> : null}
         </label>
 
         <label className="register-field">
           <span>last name</span>
-          <input autoComplete="family-name" minLength={2} name="lastName" pattern="[A-Za-z]{2,}" required type="text" />
+          <input
+            autoComplete="family-name"
+            minLength={2}
+            name="lastName"
+            onChange={(event) =>
+              setFormValues((current) => ({ ...current, lastName: event.target.value }))
+            }
+            pattern="[A-Za-z]{2,}"
+            required
+            type="text"
+            value={formValues.lastName}
+          />
           {fieldErrors.lastName ? <p className="register-field-error">{fieldErrors.lastName}</p> : null}
         </label>
       </div>
 
       <label className="register-field">
         <span>phone number</span>
-        <input autoComplete="tel" inputMode="numeric" maxLength={10} name="phoneNumber" pattern="\d{10}" required type="tel" />
+        <input
+          autoComplete="tel"
+          inputMode="numeric"
+          maxLength={10}
+          name="phoneNumber"
+          onChange={(event) =>
+            setFormValues((current) => ({ ...current, phoneNumber: event.target.value }))
+          }
+          pattern="\d{10}"
+          required
+          type="tel"
+          value={formValues.phoneNumber}
+        />
         {fieldErrors.phoneNumber ? (
           <p className="register-field-error">{fieldErrors.phoneNumber}</p>
         ) : null}
@@ -278,7 +327,11 @@ export function RegisterForm() {
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
 
-      <button className="register-button" disabled={isSubmitting || isSuccess} type="submit">
+      <button
+        className={`register-button ${isReady ? "is-ready" : ""}`}
+        disabled={isSubmitting || isSuccess}
+        type="submit"
+      >
         {isSuccess ? "redirecting..." : isSubmitting ? "signing up..." : "sign up"}
       </button>
     </form>
