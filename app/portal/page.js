@@ -123,54 +123,32 @@ function getPortalTitle(rsvp) {
   return "You are going";
 }
 
-function LockedNoticeModal({ onClose }) {
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
+function ThingsToKnowCard() {
+  const [activeSection, setActiveSection] = useState("bring");
+
+  function handleToggle(event) {
+    if (event.currentTarget.open) {
+      setActiveSection("bring");
     }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }
 
   return (
-    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
-      <article
-        aria-modal="true"
-        className="portal-modal"
-        role="dialog"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <p className="portal-modal-kicker">things to know</p>
-        <h2>stay tuned for the updates!</h2>
-        <button className="portal-modal-close" onClick={onClose} type="button">
-          close
-        </button>
-      </article>
-    </div>
-  );
-}
-
-function ThingsToKnowCard({ onLockedClick }) {
-  const [activeSection, setActiveSection] = useState("venue");
-
-  return (
-    <article className="portal-card portal-things-card is-open">
-      <button className="portal-things-trigger" onClick={onLockedClick} type="button">
+    <details className="portal-card portal-things-card" onToggle={handleToggle}>
+      <summary className="portal-things-trigger">
         <span>things to know</span>
         <span aria-hidden="true" className="portal-things-trigger-lock">
-          🔒
+          ▾
         </span>
-      </button>
+      </summary>
 
       <div className="portal-card-body portal-things-card-body">
         <div className="portal-things-tabs" role="tablist" aria-label="Things to know options">
           <button
             aria-pressed={activeSection === "bring"}
             className={`portal-things-tab ${activeSection === "bring" ? "is-active" : ""}`}
-            onClick={() => setActiveSection("bring")}
+            onClick={() =>
+              setActiveSection((current) => (current === "bring" ? null : "bring"))
+            }
             type="button"
           >
             what to bring
@@ -178,7 +156,9 @@ function ThingsToKnowCard({ onLockedClick }) {
           <button
             aria-pressed={activeSection === "venue"}
             className={`portal-things-tab ${activeSection === "venue" ? "is-active" : ""}`}
-            onClick={() => setActiveSection("venue")}
+            onClick={() =>
+              setActiveSection((current) => (current === "venue" ? null : "venue"))
+            }
             type="button"
           >
             about the venue
@@ -226,7 +206,7 @@ function ThingsToKnowCard({ onLockedClick }) {
           )}
         </div>
       </div>
-    </article>
+    </details>
   );
 }
 
@@ -342,7 +322,6 @@ function PortalPageInner() {
   const searchParams = useSearchParams();
   const inviteToken = useMemo(() => readInviteToken(searchParams?.get("invite")), [searchParams]);
   const [activePanel, setActivePanel] = useState(null);
-  const [showLockedNotice, setShowLockedNotice] = useState(false);
   const [invite, setInvite] = useState({
     firstName: "",
     lastName: "",
@@ -469,7 +448,7 @@ function PortalPageInner() {
             </button>
           )}
 
-          <ThingsToKnowCard onLockedClick={() => setShowLockedNotice(true)} />
+          <ThingsToKnowCard />
 
           <Link className="portal-action-button portal-action-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
             questions?
@@ -484,8 +463,6 @@ function PortalPageInner() {
           </button>
         </section>
       </section>
-
-      {showLockedNotice ? <LockedNoticeModal onClose={() => setShowLockedNotice(false)} /> : null}
     </main>
   );
 }
