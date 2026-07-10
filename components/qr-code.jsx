@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export function QrCode({ token, caption = "Unique QR code for your invite" }) {
+export function QrCode({ token, caption = "Unique QR code for your invite", onReady }) {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
@@ -27,6 +27,9 @@ export function QrCode({ token, caption = "Unique QR code for your invite" }) {
 
       if (isMounted) {
         setQrDataUrl(url);
+        if (typeof onReady === "function") {
+          onReady();
+        }
       }
     }
 
@@ -35,7 +38,7 @@ export function QrCode({ token, caption = "Unique QR code for your invite" }) {
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, [onReady, token]);
 
   return (
     <div className="qr-block">

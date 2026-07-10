@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const steps = {
   ready: 0,
@@ -10,8 +10,9 @@ const steps = {
   reveal: 4,
 };
 
-export function Celebration({ inviteToken }) {
+export function Celebration({ onComplete }) {
   const [step, setStep] = useState(steps.ready);
+  const completionTimerRef = useRef(null);
 
   useEffect(() => {
     const timers = [
@@ -25,21 +26,24 @@ export function Celebration({ inviteToken }) {
   }, []);
 
   useEffect(() => {
-    if (step !== steps.goal) {
+    if (step !== steps.reveal || typeof onComplete !== "function") {
       return undefined;
     }
 
-    window.dispatchEvent(
-      new CustomEvent("fifa-half-time-show:goal", {
-        detail: {
-          inviteToken,
-          step: "goal",
-        },
-      }),
-    );
+    completionTimerRef.current = window.setTimeout(() => {
+      onComplete();
+    }, 520);
 
     return undefined;
-  }, [inviteToken, step]);
+  }, [onComplete, step]);
+
+  useEffect(() => {
+    return () => {
+      if (completionTimerRef.current) {
+        window.clearTimeout(completionTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <section
@@ -113,20 +117,6 @@ export function Celebration({ inviteToken }) {
         <div className={`celebration-trail step-${step}`} />
       </div>
 
-      <div className={`celebration-message step-${step}`}>
-        <p className="celebration-eyebrow">goal confirmed</p>
-        <h1>You are going!</h1>
-        <p className="celebration-copy">
-          {inviteToken
-            ? `Your registration is in. Invite token ${inviteToken} is ready.`
-            : "Your registration is in. We are ready for the party."}
-        </p>
-        <div className="celebration-badges" aria-hidden="true">
-          <span>confirmed</span>
-          <span>queued</span>
-          <span>ready</span>
-        </div>
-      </div>
     </section>
   );
 }

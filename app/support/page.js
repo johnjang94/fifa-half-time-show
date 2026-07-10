@@ -8,10 +8,10 @@ export default function SupportPage({ searchParams }) {
   const inviteToken = typeof searchParams?.invite === "string" ? searchParams.invite : "";
 
   return (
-    <main className="app-frame faq-page">
-      <section className="faq-shell">
-        <header className="faq-header">
-          <p className="faq-eyebrow">support</p>
+    <main className="app-frame support-page">
+      <section className="support-shell">
+        <header className="support-header">
+          <p className="support-eyebrow">support</p>
           <h1>Chat with us</h1>
         </header>
 
