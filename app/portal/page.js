@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
+import loungeImage from "../../lounge.jpg";
 
 const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
-const venueAddress = "138 Downes Street, Toronto, ON";
+const venueAddress = "138 Downes Street, Toronto, ON M5E 0E4";
 const venueMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`;
+const RSVP_CHANGE_LOCK_AT = new Date("2026-07-17T00:00:00-04:00");
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
@@ -50,6 +53,50 @@ function normalize(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function readInviteField(invite, camelKey, snakeKey) {
+  return normalize(invite?.[camelKey] ?? invite?.[snakeKey]);
+}
+
+function formatPhoneNumber(value) {
+  const digits = normalize(value).replace(/\D/g, "");
+
+  if (digits.length !== 10) {
+    return normalize(value);
+  }
+
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+function normalizeRsvp(value) {
+  const normalized = normalize(value).toLowerCase();
+
+  if (normalized === "going") {
+    return "Going";
+  }
+
+  if (normalized === "maybe") {
+    return "maybe";
+  }
+
+  if (normalized === "not going") {
+    return "not going";
+  }
+
+  return "Going";
+}
+
+function getPortalTitle(rsvp) {
+  if (rsvp === "maybe") {
+    return "Are you going?";
+  }
+
+  if (rsvp === "not going") {
+    return "You cant make it";
+  }
+
+  return "You are going";
+}
+
 function PanelCard({ title, onClose, children }) {
   return (
     <article className="portal-card is-open">
@@ -73,52 +120,34 @@ function PortalTicketCard({
   displayName,
   inviteToken,
   phoneNumber,
-  initialRsvp,
+  rsvp,
+  onRsvpChange,
   onClose,
 }) {
-  const [isFolding, setIsFolding] = useState(false);
-  const [rsvp, setRsvp] = useState(initialRsvp || "Going");
-  const [selectedRsvp, setSelectedRsvp] = useState(initialRsvp || "Going");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [showRsvpControls, setShowRsvpControls] = useState(true);
-  const foldTimerRef = useRef(null);
+  const [clockTick, setClockTick] = useState(() => Date.now());
+  const locked = clockTick >= RSVP_CHANGE_LOCK_AT.getTime();
 
   useEffect(() => {
-    const nextRsvp = initialRsvp || "Going";
-    setRsvp(nextRsvp);
-    setSelectedRsvp(nextRsvp);
-    setStatusMessage("");
-    setShowRsvpControls(true);
-    setIsFolding(false);
-  }, [initialRsvp]);
+    const delay = Math.max(0, RSVP_CHANGE_LOCK_AT.getTime() - Date.now());
+    const timer = window.setTimeout(() => {
+      setClockTick(Date.now());
+    }, delay);
 
-  useEffect(() => {
     return () => {
-      if (foldTimerRef.current) {
-        window.clearTimeout(foldTimerRef.current);
-      }
+      window.clearTimeout(timer);
     };
   }, []);
 
-  function handleCheckRsvp() {
-    if (selectedRsvp === "Going") {
+  function handleRsvpChange(nextRsvp) {
+    if (locked) {
       return;
     }
 
-    const nextRsvp = selectedRsvp;
-
-    setRsvp(nextRsvp);
-    setStatusMessage("Your RSVP has been updated!");
-    setIsFolding(true);
-    setShowRsvpControls(false);
-
-    if (foldTimerRef.current) {
-      window.clearTimeout(foldTimerRef.current);
+    if (nextRsvp === rsvp) {
+      return;
     }
 
-    foldTimerRef.current = window.setTimeout(() => {
-      onClose();
-    }, 2000);
+    onRsvpChange(nextRsvp);
 
     void fetch(`${controlBaseUrl}/api/invites`, {
       method: "PATCH",
@@ -131,16 +160,16 @@ function PortalTicketCard({
       .then((response) => response.json())
       .then((data) => {
         if (data?.ok && data.user) {
-          setRsvp(String(data.user.rsvp ?? nextRsvp));
+          onRsvpChange(normalizeRsvp(data.user.rsvp ?? nextRsvp));
         }
       })
       .catch(() => {
-        // Best effort persistence; UI still folds locally.
+        // Best effort persistence; keep the optimistic UI state.
       });
   }
 
   return (
-    <article className={`portal-card is-open ${isFolding ? "is-folding" : ""}`}>
+    <article className="portal-card is-open">
       <div className="portal-card-header">
         <h2>about my ticket</h2>
         <button
@@ -160,11 +189,7 @@ function PortalTicketCard({
           </div>
           <div>
             <dt>Phone</dt>
-            <dd>{phoneNumber || inviteToken}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>Participant</dd>
+            <dd>{formatPhoneNumber(phoneNumber) || inviteToken}</dd>
           </div>
           <div>
             <dt>RSVP</dt>
@@ -172,27 +197,23 @@ function PortalTicketCard({
           </div>
         </dl>
 
-        {statusMessage ? <p className="portal-rsvp-message">{statusMessage}</p> : null}
+        <div className="portal-rsvp-row">
+          <select
+            aria-label="RSVP"
+            className="portal-rsvp-select"
+            value={rsvp}
+            disabled={locked}
+            onChange={(event) => handleRsvpChange(event.target.value)}
+          >
+            <option value="Going">Going</option>
+            <option value="maybe">maybe</option>
+            <option value="not going">not going</option>
+          </select>
+        </div>
 
-        {showRsvpControls ? (
-          <div className="portal-rsvp-row">
-            <label className="portal-rsvp-select">
-              <span>RSVP</span>
-              <select
-                value={selectedRsvp}
-                onChange={(event) => setSelectedRsvp(event.target.value)}
-              >
-                <option value="Going">Going</option>
-                <option value="maybe">maybe</option>
-                <option value="not going">not going</option>
-              </select>
-            </label>
-
-            <button className="portal-rsvp-check" onClick={handleCheckRsvp} type="button">
-              ✓
-            </button>
-          </div>
-        ) : null}
+        <p className="portal-rsvp-note">
+          make sure you finalize whether you can make it or not in 48 hours prior to the event day.
+        </p>
       </div>
     </article>
   );
@@ -208,13 +229,14 @@ export default function PortalPage({ searchParams }) {
     phoneNumber: "",
     rsvp: "Going",
   });
+  const portalTitle = getPortalTitle(invite.rsvp);
 
   const displayName = useMemo(() => {
     const fullName = [normalize(invite.firstName), normalize(invite.lastName)]
       .filter(Boolean)
       .join(" ")
       .trim();
-    return fullName || "Guest";
+    return fullName || "guest";
   }, [invite.firstName, invite.lastName]);
 
   useEffect(() => {
@@ -240,10 +262,10 @@ export default function PortalPage({ searchParams }) {
 
         if (!cancelled && response.ok && data.ok && data.invite) {
           setInvite({
-            firstName: normalize(data.invite.firstName),
-            lastName: normalize(data.invite.lastName),
-            phoneNumber: normalize(data.invite.phoneNumber),
-            rsvp: normalize(data.invite.rsvp) || "Going",
+            firstName: readInviteField(data.invite, "firstName", "first_name"),
+            lastName: readInviteField(data.invite, "lastName", "last_name"),
+            phoneNumber: readInviteField(data.invite, "phoneNumber", "phone_number"),
+            rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
           });
         }
       } catch {
@@ -267,7 +289,7 @@ export default function PortalPage({ searchParams }) {
       <SessionGuard />
       <section className="portal-shell">
         <header className="portal-header">
-          <h1>You are going</h1>
+          <h1>{portalTitle}</h1>
         </header>
 
         <section className="portal-qr-area" aria-label="Your QR code">
@@ -283,7 +305,10 @@ export default function PortalPage({ searchParams }) {
               displayName={displayName}
               inviteToken={inviteToken}
               phoneNumber={invite.phoneNumber}
-              initialRsvp={invite.rsvp}
+              rsvp={invite.rsvp}
+              onRsvpChange={(nextRsvp) =>
+                setInvite((current) => ({ ...current, rsvp: normalizeRsvp(nextRsvp) }))
+              }
               onClose={() => setActivePanel(null)}
             />
           ) : (
@@ -298,12 +323,27 @@ export default function PortalPage({ searchParams }) {
 
           {activePanel === "venue" ? (
             <PanelCard title="about the venue" onClose={() => setActivePanel(null)}>
-              <p className="portal-card-copy">
-                The venue is{" "}
+              <a
+                className="portal-venue-photo-link"
+                href={venueMapUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Open Google Maps for ${venueAddress}`}
+              >
+                <Image
+                  alt="The venue lounge"
+                  className="portal-venue-photo"
+                  priority
+                  sizes="(max-width: 720px) 100vw, 420px"
+                  src={loungeImage}
+                />
+              </a>
+              <p className="portal-card-copy portal-venue-copy">
+                We are located{" "}
                 <a className="portal-venue-link" href={venueMapUrl} target="_blank" rel="noreferrer">
-                  {venueAddress}
+                  here
                 </a>
-                . Tap the address to open Google Maps.
+                .
               </p>
             </PanelCard>
           ) : (
