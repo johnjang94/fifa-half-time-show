@@ -199,10 +199,6 @@ function PortalTicketCard({
             <dt>Phone</dt>
             <dd>{formatPhoneNumber(phoneNumber) || inviteToken}</dd>
           </div>
-          <div>
-            <dt>RSVP</dt>
-            <dd>{rsvp}</dd>
-          </div>
         </dl>
 
         <div className="portal-rsvp-row">
