@@ -66,6 +66,11 @@ function readInviteField(invite, camelKey, snakeKey) {
   return normalize(invite?.[camelKey] ?? invite?.[snakeKey]);
 }
 
+function sanitizeBarcode(value) {
+  const digits = normalize(value).replace(/\D/g, "");
+  return digits.length === 5 ? digits : "";
+}
+
 function savePortalProfile(profile) {
   if (typeof window === "undefined") {
     return;
@@ -343,6 +348,7 @@ function PortalPageInner() {
     lastName: "",
     phoneNumber: "",
     rsvp: "Going",
+    barcode: "",
   });
   const portalTitle = getPortalTitle(invite.rsvp);
 
@@ -388,12 +394,14 @@ function PortalPageInner() {
           const firstName = readInviteField(data.invite, "firstName", "first_name");
           const lastName = readInviteField(data.invite, "lastName", "last_name");
           const phoneNumber = readInviteField(data.invite, "phoneNumber", "phone_number");
+          const barcode = sanitizeBarcode(readInviteField(data.invite, "barcode", "barcode"));
           const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName || "guest";
 
           setInvite({
             firstName,
             lastName,
             phoneNumber,
+            barcode,
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
           });
           savePortalProfile({
@@ -435,6 +443,7 @@ function PortalPageInner() {
           <QrCode
             token={inviteToken}
             caption=""
+            barcode={invite.barcode}
           />
         </section>
 

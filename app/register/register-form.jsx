@@ -220,10 +220,15 @@ export function RegisterForm() {
       }
 
       const qrToken = data.qrToken ?? data.id;
+      const barcode = typeof data.barcode === "string" ? data.barcode : "";
       form.reset();
       setIsSuccess(true);
       window.setTimeout(() => {
-        router.push(`/thank-you?invite=${encodeURIComponent(qrToken)}`);
+        const query = new URLSearchParams({ invite: qrToken });
+        if (barcode) {
+          query.set("barcode", barcode);
+        }
+        router.push(`/thank-you?${query.toString()}`);
       }, 420);
     } catch (err) {
       setError(
