@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
 import loungeImage from "../../lounge.jpg";
@@ -47,6 +47,14 @@ function sanitizeToken(value) {
   }
 
   return typeof value === "string" && value.trim() ? value.trim() : "guest";
+}
+
+function readInviteToken(value) {
+  if (Array.isArray(value)) {
+    return value[0]?.trim() || "";
+  }
+
+  return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
 function normalize(value) {
@@ -219,9 +227,18 @@ function PortalTicketCard({
   );
 }
 
-export default function PortalPage({ searchParams }) {
+export default function PortalPage() {
+  return (
+    <Suspense fallback={null}>
+      <PortalPageInner />
+    </Suspense>
+  );
+}
+
+function PortalPageInner() {
   const router = useRouter();
-  const inviteToken = sanitizeToken(searchParams?.invite);
+  const searchParams = useSearchParams();
+  const inviteToken = useMemo(() => readInviteToken(searchParams?.get("invite")), [searchParams]);
   const [activePanel, setActivePanel] = useState(null);
   const [invite, setInvite] = useState({
     firstName: "",
@@ -240,6 +257,11 @@ export default function PortalPage({ searchParams }) {
   }, [invite.firstName, invite.lastName]);
 
   useEffect(() => {
+    if (!inviteToken) {
+      router.replace("/");
+      return;
+    }
+
     if (!sessionStorage.getItem(SESSION_KEY)) {
       router.replace("/");
       return;
@@ -251,6 +273,10 @@ export default function PortalPage({ searchParams }) {
   }, [inviteToken, router]);
 
   useEffect(() => {
+    if (!inviteToken) {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadInvite() {
@@ -281,6 +307,10 @@ export default function PortalPage({ searchParams }) {
   }, [inviteToken]);
 
   if (typeof window !== "undefined" && !sessionStorage.getItem(SESSION_KEY)) {
+    return null;
+  }
+
+  if (!inviteToken) {
     return null;
   }
 
