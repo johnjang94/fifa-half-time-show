@@ -24,12 +24,13 @@ function createInitialMessages(firstName) {
   ];
 }
 
-function threadToMessages(thread, customerName = "Guest") {
+function threadToMessages(thread, customerName = "이름 미확인", customerPhotoUrl = "") {
   return thread.map((item) => ({
     role: item.role === "customer" ? "user" : "assistant",
     name: item.role === "customer" ? customerName : "Support",
     text: item.message,
     createdAt: item.createdAt,
+    photoUrl: item.role === "customer" ? customerPhotoUrl : "",
   }));
 }
 
@@ -114,7 +115,7 @@ function getHistoryCustomerName(inquiry) {
     return name;
   }
 
-  return normalize(inquiry?.customerName ?? "") || "Guest";
+  return normalize(inquiry?.customerName ?? "") || "이름 미확인";
 }
 
 function initialsFromName(value) {
@@ -142,6 +143,7 @@ export function SupportChatbot({ inviteToken }) {
   const [isSending, setIsSending] = useState(false);
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerDisplayName, setCustomerDisplayName] = useState("");
+  const [customerPhotoUrl, setCustomerPhotoUrl] = useState("");
   const [showFoodRequestButton, setShowFoodRequestButton] = useState(false);
   const [showFoodRequestForm, setShowFoodRequestForm] = useState(false);
   const [foodRequestDraft, setFoodRequestDraft] = useState("");
@@ -190,9 +192,11 @@ export function SupportChatbot({ inviteToken }) {
         const lastName = normalize(data.invite?.lastName);
         const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
         const phoneNumber = normalize(data.invite?.phoneNumber);
+        const photoUrl = normalize(data.invite?.profilePhotoUrl);
 
         setCustomerFirstName(firstName);
-        setCustomerDisplayName(fullName || firstName || "Guest");
+        setCustomerDisplayName(fullName || firstName || "이름 미확인");
+        setCustomerPhotoUrl(photoUrl);
         setRequestForm((current) => ({
           ...defaultRequestForm(fullName, phoneNumber, current.message),
         }));
@@ -230,7 +234,13 @@ export function SupportChatbot({ inviteToken }) {
         const data = await response.json();
 
         if (!cancelled && response.ok && data.ok && data.inquiry?.thread) {
-          setMessages(threadToMessages(data.inquiry.thread, data.inquiry.customer || customerDisplayName));
+          setMessages(
+            threadToMessages(
+              data.inquiry.thread,
+              data.inquiry.customer || customerDisplayName,
+              data.inquiry.customerPhotoUrl || customerPhotoUrl,
+            ),
+          );
         }
       } catch {
         // Best effort hydration only.
@@ -315,7 +325,13 @@ export function SupportChatbot({ inviteToken }) {
     }
 
     if (data.inquiry?.thread) {
-      setMessages(threadToMessages(data.inquiry.thread, data.inquiry.customer || customerDisplayName));
+      setMessages(
+        threadToMessages(
+          data.inquiry.thread,
+          data.inquiry.customer || customerDisplayName,
+          data.inquiry.customerPhotoUrl || customerPhotoUrl,
+        ),
+      );
     } else if (data.inquiry?.answer) {
       setMessages((current) => [
         ...current,
@@ -489,8 +505,13 @@ export function SupportChatbot({ inviteToken }) {
   }
 
   const hasHistory = historyItems.length > 0;
+  const hasMessageDraft = value.trim().length > 0;
   const activeHistoryMessages = selectedHistory?.thread
-    ? threadToMessages(selectedHistory.thread, getHistoryCustomerName(selectedHistory))
+    ? threadToMessages(
+        selectedHistory.thread,
+        getHistoryCustomerName(selectedHistory),
+        selectedHistory.customerPhotoUrl || customerPhotoUrl,
+      )
     : [];
   const liveMessages = messages;
 
@@ -547,9 +568,13 @@ export function SupportChatbot({ inviteToken }) {
                         className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
                         aria-hidden="true"
                       >
-                        {message.role === "user"
-                          ? initialsFromName(message.name || selectedHistory?.customer || customerDisplayName)
-                          : "S"}
+                        {message.role === "user" && message.photoUrl ? (
+                          <img alt="" src={message.photoUrl} />
+                        ) : message.role === "user" ? (
+                          initialsFromName(message.name || selectedHistory?.customer || customerDisplayName)
+                        ) : (
+                          "S"
+                        )}
                       </span>
                       <strong>{message.name || (message.role === "user" ? selectedHistory?.customer || customerDisplayName || "You" : "Support")}</strong>
                     </div>
@@ -567,22 +592,26 @@ export function SupportChatbot({ inviteToken }) {
         <>
           <div className="chatbot-messages">
             {liveMessages.map((message, index) => (
-              <article
-                className={`chatbot-message chatbot-message-${message.role}`}
-                key={`${message.role}-${index}`}
-              >
-                <header className="chatbot-message-header">
-                  <div className="chatbot-message-identity">
-                    <span
-                      className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
-                      aria-hidden="true"
-                    >
-                      {message.role === "user"
-                        ? initialsFromName(message.name || customerDisplayName)
-                        : "S"}
-                    </span>
-                    <strong>{message.name || (message.role === "user" ? customerDisplayName || "You" : "Support")}</strong>
-                  </div>
+                <article
+                  className={`chatbot-message chatbot-message-${message.role}`}
+                  key={`${message.role}-${index}`}
+                >
+                  <header className="chatbot-message-header">
+                    <div className="chatbot-message-identity">
+                      <span
+                        className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
+                        aria-hidden="true"
+                      >
+                        {message.role === "user" && message.photoUrl ? (
+                          <img alt="" src={message.photoUrl} />
+                        ) : message.role === "user" ? (
+                          initialsFromName(message.name || customerDisplayName)
+                        ) : (
+                          "S"
+                        )}
+                      </span>
+                      <strong>{message.name || (message.role === "user" ? customerDisplayName || "You" : "Support")}</strong>
+                    </div>
                   <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
                 </header>
                 {message.text}
@@ -667,8 +696,8 @@ export function SupportChatbot({ inviteToken }) {
               />
               <button
                 aria-label="Send message"
-                className="chatbot-send-button"
-                disabled={isSending}
+                className={`chatbot-send-button ${hasMessageDraft ? "is-ready" : "is-idle"}`}
+                disabled={isSending || !hasMessageDraft}
                 type="submit"
               >
                 {isSending ? <span className="chatbot-send-loading">...</span> : <SendMessageIcon />}

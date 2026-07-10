@@ -2039,10 +2039,18 @@ button {
   color: var(--text);
   font-size: 0.62rem;
   letter-spacing: 0.06em;
+  overflow: hidden;
 }
 
 .chatbot-avatar.is-user {
   background: rgba(126, 70, 224, 0.24);
+}
+
+.chatbot-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .chatbot-message-header strong {
@@ -2089,15 +2097,34 @@ button {
   border: 1px solid var(--edge);
   border-radius: 16px;
   padding: 0;
-  background: linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.55);
   display: grid;
   place-items: center;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.chatbot-send-button.is-ready {
+  background: linear-gradient(180deg, rgba(126, 70, 224, 0.9) 0%, rgba(54, 26, 104, 0.94) 58%, rgba(4, 8, 12, 1) 100%);
+  color: var(--text);
+  border-color: rgba(126, 70, 224, 0.45);
+}
+
+.chatbot-send-button.is-idle {
+  box-shadow: none;
 }
 
 .chatbot-send-button svg {
   width: 18px;
   height: 18px;
+}
+
+.chatbot-send-button.is-ready:hover {
+  transform: translateY(-1px);
 }
 
 .chatbot-send-button:focus-visible,
@@ -2108,6 +2135,7 @@ button {
 
 .chatbot-send-button:disabled {
   opacity: 0.7;
+  transform: none;
 }
 
 .chatbot-send-loading {
