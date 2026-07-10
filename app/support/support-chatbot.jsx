@@ -38,6 +38,11 @@ function normalize(value) {
   return String(value ?? "").trim();
 }
 
+function isPlaceholderCustomerName(value) {
+  const name = normalize(value);
+  return !name || name === "You" || name === "Unknown guest";
+}
+
 function SendMessageIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
@@ -171,6 +176,8 @@ export function SupportChatbot({ inviteToken }) {
     async function loadInvite() {
       if (!inviteTokenValue) {
         setCustomerFirstName("");
+        setCustomerDisplayName("");
+        setCustomerPhotoUrl("");
         setRequestForm((current) => ({
           ...current,
           ...defaultRequestForm("", "", current.message),
@@ -276,7 +283,7 @@ export function SupportChatbot({ inviteToken }) {
         }
 
         const currentName = normalize(message.name);
-        const shouldUpdateName = !currentName || currentName === "You";
+        const shouldUpdateName = isPlaceholderCustomerName(currentName);
         const nextName = shouldUpdateName
           ? customerDisplayName || customerFirstName || message.name || "Unknown guest"
           : message.name;
@@ -550,6 +557,7 @@ export function SupportChatbot({ inviteToken }) {
       )
     : [];
   const liveMessages = messages;
+  const resolvedCustomerName = customerDisplayName || customerFirstName || "Unknown guest";
 
   return (
     <section className="chatbot-shell support-chatbot" aria-label="Support chatbot">
@@ -607,12 +615,18 @@ export function SupportChatbot({ inviteToken }) {
                         {message.role === "user" && message.photoUrl ? (
                           <img alt="" src={message.photoUrl} />
                         ) : message.role === "user" ? (
-                          initialsFromName(message.name || selectedHistory?.customer || customerDisplayName)
+                          initialsFromName(message.name || selectedHistory?.customer || resolvedCustomerName)
                         ) : (
                           "S"
                         )}
                       </span>
-                      <strong>{message.name || (message.role === "user" ? selectedHistory?.customer || customerDisplayName || "You" : "Support")}</strong>
+                      <strong>
+                        {message.role === "user"
+                          ? isPlaceholderCustomerName(message.name)
+                            ? selectedHistory?.customer || resolvedCustomerName || "You"
+                            : message.name
+                          : "Support"}
+                      </strong>
                     </div>
                     <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
                   </header>
@@ -641,12 +655,18 @@ export function SupportChatbot({ inviteToken }) {
                         {message.role === "user" && message.photoUrl ? (
                           <img alt="" src={message.photoUrl} />
                         ) : message.role === "user" ? (
-                          initialsFromName(message.name || customerDisplayName)
+                          initialsFromName(message.name || resolvedCustomerName)
                         ) : (
                           "S"
                         )}
                       </span>
-                      <strong>{message.name || (message.role === "user" ? customerDisplayName || "You" : "Support")}</strong>
+                      <strong>
+                        {message.role === "user"
+                          ? isPlaceholderCustomerName(message.name)
+                            ? resolvedCustomerName || "You"
+                            : message.name
+                          : "Support"}
+                      </strong>
                     </div>
                   <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
                 </header>

@@ -42,14 +42,14 @@ export function QrCode({ token, caption = "Unique QR code for your invite", onRe
 
   return (
     <div className="qr-block">
-      <div className="qr-code" aria-label={caption} role="img">
+      <div className="qr-code" aria-label={caption || "Unique QR code for your invite"} role="img">
         {qrDataUrl ? (
           <img alt="" className="qr-image" src={qrDataUrl} />
         ) : (
           <div className="qr-loading" aria-hidden="true" />
         )}
       </div>
-      <p className="qr-caption">{caption}</p>
+      {caption ? <p className="qr-caption">{caption}</p> : null}
     </div>
   );
 }

@@ -273,7 +273,7 @@ export default function PortalPage({ searchParams }) {
         <section className="portal-qr-area" aria-label="Your QR code">
           <QrCode
             token={inviteToken}
-            caption="This QR code is only valid for the invited number"
+            caption=""
           />
         </section>
 
