@@ -304,8 +304,10 @@ function PortalPageInner() {
     phoneNumber: "",
     rsvp: "Going",
     barcode: "",
+    checkedInAt: "",
   });
   const portalTitle = getPortalTitle(invite.rsvp);
+  const isCheckedIn = Boolean(invite.checkedInAt);
 
   const displayName = useMemo(() => {
     const fullName = [normalize(invite.firstName), normalize(invite.lastName)]
@@ -358,6 +360,7 @@ function PortalPageInner() {
             lastName,
             phoneNumber,
             barcode,
+            checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
           });
           savePortalProfile({
@@ -391,6 +394,10 @@ function PortalPageInner() {
     <main className="app-frame portal-page">
       <SessionGuard />
       <section className="portal-shell">
+        {isCheckedIn ? (
+          <p className="portal-checkin-banner">You have been checked-in</p>
+        ) : null}
+
         <header className="portal-header">
           <h1>{portalTitle}</h1>
         </header>

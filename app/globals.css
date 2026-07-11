@@ -1204,6 +1204,20 @@ button {
   text-align: center;
 }
 
+.portal-checkin-banner {
+  margin: 0;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: rgba(119, 231, 160, 0.12);
+  border: 1px solid rgba(119, 231, 160, 0.24);
+  color: #bdf7d1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .portal-header {
   width: 100%;
   padding-top: clamp(10px, 6vh, 56px);

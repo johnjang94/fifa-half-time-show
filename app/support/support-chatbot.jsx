@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const apiBaseUrl =
@@ -34,6 +34,16 @@ function threadToMessages(thread, customerName = "Unknown guest", customerPhotoU
     createdAt: item.createdAt,
     photoUrl: item.role === "customer" ? customerPhotoUrl : "",
   }));
+}
+
+function threadSignature(thread) {
+  if (!Array.isArray(thread) || !thread.length) {
+    return "";
+  }
+
+  return thread
+    .map((item) => [item.role, item.message, item.createdAt].map((part) => normalize(part)).join("|"))
+    .join("||");
 }
 
 function normalize(value) {
@@ -229,6 +239,7 @@ export function SupportChatbot({ inviteToken }) {
     message: "",
   });
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const lastSyncedThreadSignatureRef = useRef("");
 
   useEffect(() => {
     const savedTicketId = window.localStorage.getItem(TICKET_KEY);
@@ -351,13 +362,14 @@ export function SupportChatbot({ inviteToken }) {
   }, [inviteTokenValue]);
 
   useEffect(() => {
-    if (!ticketId) {
+    if (!ticketId || viewMode !== "live") {
       return undefined;
     }
 
     let cancelled = false;
+    let intervalId = null;
 
-    async function loadTicket() {
+    async function syncTicket() {
       try {
         const response = await fetch(
           `${apiBaseUrl}/api/support/inquiries?ticketId=${encodeURIComponent(ticketId)}`,
@@ -372,11 +384,24 @@ export function SupportChatbot({ inviteToken }) {
         const data = await response.json();
 
         if (response.status === 401 || response.status === 403) {
-          setError("Support access is missing. Please reopen your invite.");
+          if (!cancelled) {
+            setError("Support access is missing. Please reopen your invite.");
+          }
           return;
         }
 
-        if (!cancelled && response.ok && data.ok && data.inquiry?.thread) {
+        if (!response.ok || !data.ok || !data.inquiry?.thread) {
+          return;
+        }
+
+        const nextSignature = threadSignature(data.inquiry.thread);
+        if (!nextSignature || nextSignature === lastSyncedThreadSignatureRef.current) {
+          return;
+        }
+
+        lastSyncedThreadSignatureRef.current = nextSignature;
+
+        if (!cancelled) {
           setMessages(
             threadToMessages(
               data.inquiry.thread,
@@ -393,12 +418,26 @@ export function SupportChatbot({ inviteToken }) {
       }
     }
 
-    void loadTicket();
+    void syncTicket();
+    intervalId = window.setInterval(() => {
+      void syncTicket();
+    }, 4000);
 
     return () => {
       cancelled = true;
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
     };
-  }, [ticketId, supportAccessToken]);
+  }, [
+    ticketId,
+    viewMode,
+    supportAccessToken,
+    customerDisplayName,
+    customerPhotoUrl,
+    portalProfile.displayName,
+    portalProfile.firstName,
+  ]);
 
   useEffect(() => {
     setRequestForm((current) => ({
@@ -533,6 +572,7 @@ export function SupportChatbot({ inviteToken }) {
     }
 
     if (data.inquiry?.thread) {
+      lastSyncedThreadSignatureRef.current = threadSignature(data.inquiry.thread);
       setMessages(
         threadToMessages(
           data.inquiry.thread,
@@ -695,6 +735,7 @@ export function SupportChatbot({ inviteToken }) {
 
   function startNewChat() {
     setTicketId("");
+    lastSyncedThreadSignatureRef.current = "";
     window.localStorage.removeItem(TICKET_KEY);
     setMessages(
       createInitialMessages(
