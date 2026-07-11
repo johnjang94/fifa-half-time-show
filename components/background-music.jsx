@@ -7,9 +7,9 @@ const STORAGE_KEY = "fifa-half-time-show-music-enabled";
 const PLAYER_SCRIPT_ID = "youtube-iframe-api";
 const MAX_RECENT_IDS = 12;
 const PLAYER_VOLUME_START = 1;
-const PLAYER_VOLUME_TARGET = 9;
-const PLAYER_VOLUME_STEP_MS = 2500;
-const PLAYER_VOLUME_RAMP_MS = 75000;
+const PLAYER_VOLUME_TARGET = 50;
+const PLAYER_VOLUME_STEP_MS = 1000;
+const PLAYER_VOLUME_RAMP_MS = 10000;
 
 let youtubeApiPromise = null;
 
@@ -107,6 +107,7 @@ export function BackgroundMusic() {
   const volumeTimerRef = useRef(null);
   const bootstrappingRef = useRef(false);
   const waitingForGestureRef = useRef(false);
+  const volumeTargetReachedRef = useRef(false);
   const destroyedRef = useRef(false);
 
   useEffect(() => {
@@ -124,6 +125,7 @@ export function BackgroundMusic() {
     clearVolumeRamp();
     bootstrappingRef.current = false;
     waitingForGestureRef.current = false;
+    volumeTargetReachedRef.current = false;
     currentTrackRef.current = null;
     recentIdsRef.current = [];
     setStatus("idle");
@@ -193,6 +195,15 @@ export function BackgroundMusic() {
       return;
     }
 
+    if (volumeTargetReachedRef.current) {
+      try {
+        player.setVolume(PLAYER_VOLUME_TARGET);
+      } catch {
+        // Ignore player volume failures.
+      }
+      return;
+    }
+
     const startedAt = Date.now();
 
     const tick = () => {
@@ -203,12 +214,8 @@ export function BackgroundMusic() {
 
       const elapsed = Date.now() - startedAt;
       const progress = Math.min(elapsed / PLAYER_VOLUME_RAMP_MS, 1);
-      const volume = Math.max(
-        PLAYER_VOLUME_START,
-        Math.round(
-          PLAYER_VOLUME_START +
-            progress * (PLAYER_VOLUME_TARGET - PLAYER_VOLUME_START),
-        ),
+      const volume = Math.round(
+        PLAYER_VOLUME_START + progress * (PLAYER_VOLUME_TARGET - PLAYER_VOLUME_START),
       );
 
       try {
@@ -221,6 +228,7 @@ export function BackgroundMusic() {
         volumeTimerRef.current = window.setTimeout(tick, PLAYER_VOLUME_STEP_MS);
       } else {
         volumeTimerRef.current = null;
+        volumeTargetReachedRef.current = true;
       }
     };
 
@@ -295,7 +303,9 @@ export function BackgroundMusic() {
           }
 
           try {
-            playerRef.current?.setVolume?.(PLAYER_VOLUME_START);
+            playerRef.current?.setVolume?.(
+              volumeTargetReachedRef.current ? PLAYER_VOLUME_TARGET : PLAYER_VOLUME_START,
+            );
           } catch {
             // Best effort only.
           }
