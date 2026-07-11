@@ -178,6 +178,7 @@ export function BackgroundMusic() {
   const monitorTimerRef = useRef(null);
   const destroyRequestedRef = useRef(false);
   const waitingForGestureRef = useRef(false);
+  const resumeListenerRef = useRef(null);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -225,6 +226,37 @@ export function BackgroundMusic() {
     }
   }
 
+  function attachResumeListeners() {
+    if (resumeListenerRef.current) {
+      return;
+    }
+
+    const handler = () => {
+      if (!enabledRef.current) {
+        return;
+      }
+
+      resumePlaybackFromGesture();
+    };
+
+    resumeListenerRef.current = handler;
+    window.addEventListener("pointerdown", handler, { passive: true });
+    window.addEventListener("keydown", handler);
+    window.addEventListener("touchstart", handler, { passive: true });
+  }
+
+  function detachResumeListeners() {
+    const handler = resumeListenerRef.current;
+    if (!handler) {
+      return;
+    }
+
+    window.removeEventListener("pointerdown", handler);
+    window.removeEventListener("keydown", handler);
+    window.removeEventListener("touchstart", handler);
+    resumeListenerRef.current = null;
+  }
+
   function resetRuntimeState() {
     clearAllTimers();
     prefetchInFlightRef.current = false;
@@ -235,6 +267,7 @@ export function BackgroundMusic() {
     queuedTrackRef.current = null;
     queuedSlotRef.current = "";
     activeSlotRef.current = "primary";
+    detachResumeListeners();
     setStatus("idle");
   }
 
@@ -549,6 +582,7 @@ export function BackgroundMusic() {
       activePlayer?.playVideo?.();
       standbyPlayer?.playVideo?.();
       waitingForGestureRef.current = false;
+      detachResumeListeners();
       setStatus(crossfadeInProgressRef.current ? "crossfading" : "playing");
     } catch {
       // Best effort only.
@@ -589,6 +623,9 @@ export function BackgroundMusic() {
       if (slot === activeSlot) {
         setStatus(crossfadeInProgressRef.current ? "crossfading" : "playing");
       }
+      if (!waitingForGestureRef.current) {
+        detachResumeListeners();
+      }
       waitingForGestureRef.current = false;
       return;
     }
@@ -615,6 +652,7 @@ export function BackgroundMusic() {
     }
 
     waitingForGestureRef.current = true;
+    attachResumeListeners();
     setStatus("waiting");
   }
 

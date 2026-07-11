@@ -8,6 +8,8 @@ import { Celebration } from "./celebration";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
+const WELCOME_SMS_SENT_PREFIX = "fifa-half-time-show-welcome-sms-sent";
+const welcomeSmsInFlightTokens = new Set();
 
 function sanitizeToken(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "guest";
@@ -31,10 +33,15 @@ function saveSupportAccessToken(token) {
   window.localStorage.setItem(SUPPORT_ACCESS_KEY, safeToken);
 }
 
+function getWelcomeSmsStorageKey(inviteToken) {
+  return `${WELCOME_SMS_SENT_PREFIX}:${inviteToken}`;
+}
+
 export default function ThankYouPage({ searchParams }) {
   const router = useRouter();
   const inviteToken = sanitizeToken(searchParams?.invite);
   const [inviteBarcode, setInviteBarcode] = useState(() => sanitizeBarcode(searchParams?.barcode));
+  const [inviteRecord, setInviteRecord] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [showCelebration, setShowCelebration] = useState(true);
   const [showQr, setShowQr] = useState(false);
@@ -51,7 +58,7 @@ export default function ThankYouPage({ searchParams }) {
   }, []);
 
   useEffect(() => {
-    if (inviteBarcode || !inviteToken) {
+    if (!inviteToken || inviteToken === "guest" || inviteRecord) {
       return undefined;
     }
 
@@ -65,7 +72,10 @@ export default function ThankYouPage({ searchParams }) {
         const data = await response.json();
 
         if (!cancelled && response.ok && data.ok && data.invite) {
-          setInviteBarcode(sanitizeBarcode(data.invite.barcode));
+          setInviteRecord(data.invite);
+          if (!inviteBarcode) {
+            setInviteBarcode(sanitizeBarcode(data.invite.barcode));
+          }
           saveSupportAccessToken(data.supportAccessToken);
         }
       } catch {
@@ -78,7 +88,65 @@ export default function ThankYouPage({ searchParams }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteBarcode, inviteToken]);
+  }, [inviteBarcode, inviteRecord, inviteToken]);
+
+  useEffect(() => {
+    if (!inviteToken || inviteToken === "guest" || typeof window === "undefined" || !inviteRecord) {
+      return undefined;
+    }
+
+    const messageVariant = String(inviteRecord.status ?? "").toLowerCase() === "waitlist" ? "waitlist" : "confirmed";
+    const storageKey = getWelcomeSmsStorageKey(inviteToken);
+
+    try {
+      if (window.localStorage.getItem(storageKey) === "sent") {
+        return undefined;
+      }
+    } catch {
+      // Best effort only.
+    }
+
+    if (welcomeSmsInFlightTokens.has(inviteToken)) {
+      return undefined;
+    }
+
+    welcomeSmsInFlightTokens.add(inviteToken);
+    let cancelled = false;
+
+    async function sendWelcomeSms() {
+      try {
+        const response = await fetch(`${controlBaseUrl}/api/invites/welcome`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            inviteToken,
+            variant: messageVariant,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok && data.ok) {
+          try {
+            window.localStorage.setItem(storageKey, "sent");
+          } catch {
+            // Best effort only.
+          }
+        }
+      } catch {
+        // Best effort only.
+      } finally {
+        welcomeSmsInFlightTokens.delete(inviteToken);
+      }
+    }
+
+    void sendWelcomeSms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteRecord, inviteToken]);
 
   useEffect(() => {
     if (!showQr || !isQrReady) {
