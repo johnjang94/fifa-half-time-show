@@ -2,7 +2,7 @@ import {
   BTS_FALLBACK_TRACKS,
   YOUTUBE_BTS_QUERIES,
   dedupeTracks,
-  looksLikeBtsTrack,
+  looksLikeBtsAudioTrack,
   normalizeText,
 } from "../../../../../lib/bgm/bts-catalog.js";
 
@@ -75,7 +75,7 @@ async function fetchYouTubeSearch(query) {
         publishedAt: normalizeText(item?.snippet?.publishedAt),
         source: "youtube-search",
       }))
-      .filter((track) => track.videoId && looksLikeBtsTrack(track));
+      .filter((track) => track.videoId && looksLikeBtsAudioTrack(track));
   } catch {
     return [];
   } finally {
@@ -90,9 +90,10 @@ async function chooseWithOpenAI(candidates, recentIds) {
   }
 
   const prompt = [
-    "You are selecting one BTS YouTube video for a quiet background music loop.",
+    "You are selecting one BTS YouTube audio track for a quiet background music loop.",
     "Choose exactly one candidate from the JSON array.",
-    "Prefer an official BTS video that is likely safe and recognizable.",
+    "Prefer an official BTS audio upload or lyric audio, not an MV or music video.",
+    "Reject anything that looks like MV, music video, live, performance, teaser, or dance practice.",
     "Avoid any candidate whose videoId appears in the recent history.",
     "Return JSON with only videoId and a short reason.",
     `Recent videoIds: ${JSON.stringify(recentIds)}`,
@@ -112,7 +113,7 @@ async function chooseWithOpenAI(candidates, recentIds) {
         {
           role: "system",
           content:
-            "You select a single BTS video from the provided candidates and respond with JSON only.",
+            "You select a single BTS audio track from the provided candidates and respond with JSON only.",
         },
         {
           role: "user",
@@ -154,15 +155,19 @@ export async function POST(request) {
     candidates.push(...results);
   }
 
-  candidates = dedupeTracks(candidates).filter((track) => isFreshTrack(track, recentIds));
+  candidates = dedupeTracks(candidates)
+    .filter((track) => looksLikeBtsAudioTrack(track))
+    .filter((track) => isFreshTrack(track, recentIds));
   candidates = candidates.slice(0, 15);
 
   if (!candidates.length) {
-    candidates = dedupeTracks(BTS_FALLBACK_TRACKS).filter((track) => isFreshTrack(track, recentIds));
+    candidates = dedupeTracks(BTS_FALLBACK_TRACKS)
+      .filter((track) => looksLikeBtsAudioTrack(track))
+      .filter((track) => isFreshTrack(track, recentIds));
   }
 
   if (!candidates.length) {
-    candidates = dedupeTracks(BTS_FALLBACK_TRACKS);
+    candidates = dedupeTracks(BTS_FALLBACK_TRACKS).filter((track) => looksLikeBtsAudioTrack(track));
   }
 
   const aiChoice = await chooseWithOpenAI(candidates, recentIds);
