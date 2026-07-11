@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
-import { Celebration } from "./celebration";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -48,8 +47,6 @@ export default function ThankYouPage({ searchParams }) {
   const inviteToken = sanitizeToken(searchParams?.invite);
   const [inviteBarcode, setInviteBarcode] = useState(() => sanitizeBarcode(searchParams?.barcode));
   const [isVisible, setIsVisible] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(true);
-  const [showQr, setShowQr] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
   const [showPortalButton, setShowPortalButton] = useState(false);
   const [isQrReady, setIsQrReady] = useState(false);
@@ -207,7 +204,7 @@ export default function ThankYouPage({ searchParams }) {
   }, [inviteToken]);
 
   useEffect(() => {
-    if (!showQr || !isQrReady) {
+    if (!isQrReady) {
       return undefined;
     }
 
@@ -223,12 +220,7 @@ export default function ThankYouPage({ searchParams }) {
       window.clearTimeout(barcodeTimer);
       window.clearTimeout(buttonTimer);
     };
-  }, [isQrReady, showQr]);
-
-  const handleCelebrationComplete = useCallback(() => {
-    setShowCelebration(false);
-    setShowQr(true);
-  }, []);
+  }, [isQrReady]);
 
   const handleQrReady = useCallback(() => {
     setIsQrReady(true);
@@ -241,29 +233,25 @@ export default function ThankYouPage({ searchParams }) {
           <h1>You are going!</h1>
         </header>
 
-        {showCelebration ? <Celebration onComplete={handleCelebrationComplete} /> : null}
+        <div className="thank-you-qr-stack">
+          <QrCode
+            token={inviteToken}
+            caption="Unique QR code for your registration"
+            barcode={inviteBarcode}
+            showBarcode={showBarcode}
+            onReady={handleQrReady}
+          />
 
-        {showQr ? (
-          <div className="thank-you-qr-stack">
-            <QrCode
-              token={inviteToken}
-              caption="Unique QR code for your registration"
-              barcode={inviteBarcode}
-              showBarcode={showBarcode}
-              onReady={handleQrReady}
-            />
-
-            {showPortalButton ? (
-              <button
-                className="thank-you-return is-visible"
-                onClick={() => router.push(`/survey?invite=${encodeURIComponent(inviteToken)}`)}
-                type="button"
-              >
-                take a quick survey
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+          {showPortalButton ? (
+            <button
+              className="thank-you-return is-visible"
+              onClick={() => router.push(`/survey?invite=${encodeURIComponent(inviteToken)}`)}
+              type="button"
+            >
+              take a quick survey
+            </button>
+          ) : null}
+        </div>
       </section>
     </main>
   );
