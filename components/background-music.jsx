@@ -11,7 +11,7 @@ const PLAYER_VOLUME_START = 1;
 const PLAYER_VOLUME_TARGET = 50;
 const PLAYER_VOLUME_STEP_MS = 250;
 const PLAYER_VOLUME_RAMP_MS = 10000;
-const PREFETCH_WINDOW_MS = 7000;
+const PREFETCH_WINDOW_MS = 15000;
 const CROSSFADE_WINDOW_MS = 5000;
 
 let youtubeApiPromise = null;
@@ -167,6 +167,7 @@ export function BackgroundMusic() {
   const currentTrackRef = useRef(null);
   const queuedTrackRef = useRef(null);
   const queuedSlotRef = useRef("");
+  const queuedPlaybackStartedRef = useRef(false);
   const recentIdsRef = useRef([]);
   const initializedRef = useRef(false);
   const prefetchInFlightRef = useRef(false);
@@ -234,6 +235,7 @@ export function BackgroundMusic() {
     currentTrackRef.current = null;
     queuedTrackRef.current = null;
     queuedSlotRef.current = "";
+    queuedPlaybackStartedRef.current = false;
     activeSlotRef.current = "primary";
     setStatus("idle");
   }
@@ -380,14 +382,43 @@ export function BackgroundMusic() {
 
       queuedTrackRef.current = track;
       queuedSlotRef.current = standbySlot;
+      queuedPlaybackStartedRef.current = false;
       rememberTrack(track.videoId);
       const queued = await cueTrackIntoSlot(standbySlot, track, false);
       if (!queued) {
         queuedTrackRef.current = null;
         queuedSlotRef.current = "";
+        queuedPlaybackStartedRef.current = false;
+        return;
       }
+
+      await warmQueuedTrack();
     } finally {
       prefetchInFlightRef.current = false;
+    }
+  }
+
+  async function warmQueuedTrack() {
+    const slot = queuedSlotRef.current;
+    const track = queuedTrackRef.current;
+
+    if (!slot || !track || queuedPlaybackStartedRef.current || destroyRequestedRef.current) {
+      return false;
+    }
+
+    const player = getPlayer(slot);
+    if (!player?.playVideo) {
+      return false;
+    }
+
+    try {
+      player.mute?.();
+      player.setVolume?.(0);
+      player.playVideo();
+      queuedPlaybackStartedRef.current = true;
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -445,6 +476,10 @@ export function BackgroundMusic() {
 
       const remaining = duration - currentTime;
 
+      if (remaining <= PREFETCH_WINDOW_MS / 1000 && queuedTrackRef.current && !queuedPlaybackStartedRef.current) {
+        void warmQueuedTrack();
+      }
+
       if (remaining <= CROSSFADE_WINDOW_MS / 1000 && queuedTrackRef.current) {
         void beginCrossfade();
         return;
@@ -475,10 +510,18 @@ export function BackgroundMusic() {
     setStatus("crossfading");
 
     try {
-      setSlotVolume(toSlot, 0);
-      if (toPlayer.playVideo) {
-        toPlayer.playVideo();
+      if (!queuedPlaybackStartedRef.current) {
+        const warmed = await warmQueuedTrack();
+        if (!warmed) {
+          waitingForGestureRef.current = true;
+          setStatus("waiting");
+          crossfadeInProgressRef.current = false;
+          return;
+        }
       }
+
+      toPlayer.unMute?.();
+      setSlotVolume(toSlot, 0);
     } catch {
       // If autoplay is blocked, the next gesture will resume playback.
       waitingForGestureRef.current = true;
@@ -514,9 +557,9 @@ export function BackgroundMusic() {
       currentTrackRef.current = nextTrack;
       queuedTrackRef.current = null;
       queuedSlotRef.current = "";
+      queuedPlaybackStartedRef.current = false;
       crossfadeInProgressRef.current = false;
       setStatus("playing");
-      startVolumeRamp(toSlot, PLAYER_VOLUME_TARGET, PLAYER_VOLUME_TARGET, 1);
       void prefetchNextTrack();
       startMonitoring();
     };
@@ -525,6 +568,10 @@ export function BackgroundMusic() {
   }
 
   function resumePlaybackFromGesture() {
+    if (!waitingForGestureRef.current) {
+      return;
+    }
+
     const activePlayer = getPlayer(activeSlotRef.current);
     const standbyPlayer = getPlayer(getOtherSlot(activeSlotRef.current));
 
@@ -664,6 +711,7 @@ export function BackgroundMusic() {
 
     destroyRequestedRef.current = false;
     initializedRef.current = false;
+    waitingForGestureRef.current = false;
     void ensurePlayers();
 
     const onGesture = () => {
