@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { BTS_FALLBACK_TRACKS } from "../lib/bgm/bts-catalog.js";
 
 const STORAGE_KEY = "fifa-half-time-show-music-enabled";
+const BGM_SESSION_ID_KEY = "fifa-half-time-show-bgm-session-id";
+const BGM_PLAYED_IDS_KEY = "fifa-half-time-show-bgm-played-video-ids";
 const PLAYER_SCRIPT_ID = "youtube-iframe-api";
-const MAX_RECENT_IDS = 12;
 const PLAYER_VOLUME_START = 1;
 const PLAYER_VOLUME_TARGET = 50;
 const PLAYER_VOLUME_STEP_MS = 1000;
@@ -32,6 +33,55 @@ function savePreference(enabled) {
 
   try {
     window.localStorage.setItem(STORAGE_KEY, enabled ? "true" : "false");
+  } catch {
+    // Best effort only.
+  }
+}
+
+function getOrCreateSessionId() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  try {
+    const existing = window.sessionStorage.getItem(BGM_SESSION_ID_KEY);
+    if (existing) {
+      return existing;
+    }
+
+    const nextId = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.sessionStorage.setItem(BGM_SESSION_ID_KEY, nextId);
+    return nextId;
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function loadPlayedVideoIds() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(BGM_PLAYED_IDS_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string" && value.trim()) : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePlayedVideoIds(videoIds) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(BGM_PLAYED_IDS_KEY, JSON.stringify(videoIds));
   } catch {
     // Best effort only.
   }
@@ -100,6 +150,7 @@ export function BackgroundMusic() {
   const [enabled, setEnabled] = useState(() => loadPreference());
   const [status, setStatus] = useState("idle");
   const enabledRef = useRef(enabled);
+  const sessionIdRef = useRef("");
   const playerMountRef = useRef(null);
   const playerRef = useRef(null);
   const recentIdsRef = useRef([]);
@@ -114,6 +165,11 @@ export function BackgroundMusic() {
     enabledRef.current = enabled;
   }, [enabled]);
 
+  useEffect(() => {
+    sessionIdRef.current = getOrCreateSessionId();
+    recentIdsRef.current = loadPlayedVideoIds();
+  }, []);
+
   function clearVolumeRamp() {
     if (volumeTimerRef.current) {
       window.clearTimeout(volumeTimerRef.current);
@@ -127,7 +183,6 @@ export function BackgroundMusic() {
     waitingForGestureRef.current = false;
     volumeTargetReachedRef.current = false;
     currentTrackRef.current = null;
-    recentIdsRef.current = [];
     setStatus("idle");
   }
 
@@ -155,10 +210,8 @@ export function BackgroundMusic() {
       return;
     }
 
-    recentIdsRef.current = [videoId, ...recentIdsRef.current.filter((id) => id !== videoId)].slice(
-      0,
-      MAX_RECENT_IDS,
-    );
+    recentIdsRef.current = [videoId, ...recentIdsRef.current.filter((id) => id !== videoId)];
+    savePlayedVideoIds(recentIdsRef.current);
   }
 
   async function requestNextTrack() {
@@ -169,6 +222,7 @@ export function BackgroundMusic() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          sessionId: sessionIdRef.current || getOrCreateSessionId(),
           recentVideoIds: recentIdsRef.current,
         }),
       });

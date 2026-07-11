@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 
 const YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search";
 const DEFAULT_MODEL = process.env.OPENAI_BGM_MODEL || "gpt-4o-mini";
-const MAX_RECENT_IDS = 12;
 
 function normalizeRecentIds(input) {
   if (!Array.isArray(input)) {
@@ -19,8 +18,7 @@ function normalizeRecentIds(input) {
 
   return input
     .map((value) => normalizeText(value))
-    .filter(Boolean)
-    .slice(0, MAX_RECENT_IDS);
+    .filter(Boolean);
 }
 
 function isFreshTrack(track, recentIds) {
