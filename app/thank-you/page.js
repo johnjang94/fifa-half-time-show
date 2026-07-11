@@ -7,6 +7,7 @@ import { Celebration } from "./celebration";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 
 function sanitizeToken(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "guest";
@@ -15,6 +16,19 @@ function sanitizeToken(value) {
 function sanitizeBarcode(value) {
   const digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
   return digits.length === 5 ? digits : "";
+}
+
+function saveSupportAccessToken(token) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const safeToken = typeof token === "string" ? token.trim() : "";
+  if (!safeToken) {
+    return;
+  }
+
+  window.localStorage.setItem(SUPPORT_ACCESS_KEY, safeToken);
 }
 
 export default function ThankYouPage({ searchParams }) {
@@ -52,6 +66,7 @@ export default function ThankYouPage({ searchParams }) {
 
         if (!cancelled && response.ok && data.ok && data.invite) {
           setInviteBarcode(sanitizeBarcode(data.invite.barcode));
+          saveSupportAccessToken(data.supportAccessToken);
         }
       } catch {
         // Best effort only.

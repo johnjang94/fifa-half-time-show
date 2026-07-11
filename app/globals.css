@@ -2999,3 +2999,96 @@ button {
     animation: none !important;
   }
 }
+
+.bgm-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(4, 8, 12, 0.76);
+  color: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.bgm-toggle:hover {
+  transform: translateY(-1px);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bgm-toggle.is-on {
+  border-color: rgba(245, 231, 197, 0.24);
+  background: rgba(18, 15, 10, 0.82);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bgm-toggle.is-off {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.bgm-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bgm-toggle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
+.bgm-toggle.is-on .bgm-toggle-dot {
+  background: #f5e7c5;
+  box-shadow: 0 0 0 4px rgba(245, 231, 197, 0.12);
+}
+
+.bgm-shell {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 200px;
+  height: 200px;
+  z-index: 24;
+  overflow: hidden;
+  border-radius: 20px;
+  opacity: 0.006;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.bgm-player {
+  width: 100%;
+  height: 100%;
+}
+
+.bgm-player iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 640px) {
+  .bgm-toggle {
+    right: 14px;
+    bottom: calc(env(safe-area-inset-bottom) + 14px);
+    padding: 9px 12px;
+    font-size: 0.68rem;
+  }
+}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const TICKET_KEY = "fifa-half-time-show-support-ticket";
+const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 
 function createGreeting(firstName) {
@@ -37,6 +38,27 @@ function threadToMessages(thread, customerName = "Unknown guest", customerPhotoU
 
 function normalize(value) {
   return String(value ?? "").trim();
+}
+
+function readSupportAccessToken() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return normalize(window.localStorage.getItem(SUPPORT_ACCESS_KEY));
+}
+
+function saveSupportAccessToken(token) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!normalize(token)) {
+    window.localStorage.removeItem(SUPPORT_ACCESS_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(SUPPORT_ACCESS_KEY, token);
 }
 
 function readPortalProfile() {
@@ -193,6 +215,7 @@ export function SupportChatbot({ inviteToken }) {
   const [customerDisplayName, setCustomerDisplayName] = useState("");
   const [customerPhotoUrl, setCustomerPhotoUrl] = useState("");
   const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
+  const [supportAccessToken, setSupportAccessToken] = useState(() => readSupportAccessToken());
   const [showFoodRequestButton, setShowFoodRequestButton] = useState(false);
   const [showFoodRequestForm, setShowFoodRequestForm] = useState(false);
   const [foodRequestDraft, setFoodRequestDraft] = useState("");
@@ -259,10 +282,15 @@ export function SupportChatbot({ inviteToken }) {
         const phoneNumber = normalize(data.invite?.phoneNumber);
         const photoUrl = normalize(data.invite?.profilePhotoUrl);
         const displayName = fullName || firstName || storedProfile.displayName || storedProfile.firstName || "Unknown guest";
+        const nextAccessToken = normalize(data.supportAccessToken);
 
         setCustomerFirstName(firstName);
         setCustomerDisplayName(displayName);
         setCustomerPhotoUrl(photoUrl || storedProfile.photoUrl);
+        if (nextAccessToken) {
+          setSupportAccessToken(nextAccessToken);
+          saveSupportAccessToken(nextAccessToken);
+        }
         setPortalProfile({
           firstName: firstName || storedProfile.firstName,
           lastName: lastName || storedProfile.lastName,
@@ -333,8 +361,20 @@ export function SupportChatbot({ inviteToken }) {
       try {
         const response = await fetch(
           `${apiBaseUrl}/api/support/inquiries?ticketId=${encodeURIComponent(ticketId)}`,
+          {
+            headers: supportAccessToken
+              ? {
+                  Authorization: `Bearer ${supportAccessToken}`,
+                }
+              : undefined,
+          },
         );
         const data = await response.json();
+
+        if (response.status === 401 || response.status === 403) {
+          setError("Support access is missing. Please reopen your invite.");
+          return;
+        }
 
         if (!cancelled && response.ok && data.ok && data.inquiry?.thread) {
           setMessages(
@@ -358,7 +398,7 @@ export function SupportChatbot({ inviteToken }) {
     return () => {
       cancelled = true;
     };
-  }, [ticketId]);
+  }, [ticketId, supportAccessToken]);
 
   useEffect(() => {
     setRequestForm((current) => ({
@@ -413,7 +453,8 @@ export function SupportChatbot({ inviteToken }) {
     let cancelled = false;
 
     async function loadHistory() {
-      if (!inviteTokenValue) {
+      const storedToken = supportAccessToken || readSupportAccessToken();
+      if (!inviteTokenValue && !storedToken) {
         setHistoryItems([]);
         setSelectedHistoryId("");
         setHistoryError("");
@@ -423,8 +464,20 @@ export function SupportChatbot({ inviteToken }) {
       try {
         const response = await fetch(
           `${apiBaseUrl}/api/support/inquiries/history?inviteToken=${encodeURIComponent(inviteTokenValue)}`,
+          {
+            headers: storedToken
+              ? {
+                  Authorization: `Bearer ${storedToken}`,
+                }
+              : undefined,
+          },
         );
         const data = await response.json();
+
+        if (response.status === 401 || response.status === 403) {
+          setHistoryError("Support access is missing. Please reopen your invite.");
+          return;
+        }
 
         if (cancelled || !response.ok || !data.ok) {
           return;
@@ -446,7 +499,7 @@ export function SupportChatbot({ inviteToken }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteTokenValue, viewMode]);
+  }, [inviteTokenValue, viewMode, supportAccessToken]);
 
   const selectedHistory = useMemo(
     () => historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0] ?? null,
@@ -454,9 +507,17 @@ export function SupportChatbot({ inviteToken }) {
   );
 
   async function postSupportMessage(body, { isRequestSubmission = false } = {}) {
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      throw new Error("Support access is missing. Please reopen your invite.");
+    }
+
     const response = await fetch(`${apiBaseUrl}/api/support/inquiries`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${storedToken}`,
+      },
       body: JSON.stringify(body),
     });
 

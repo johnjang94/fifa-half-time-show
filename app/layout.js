@@ -1,4 +1,5 @@
 import "./globals.css";
+import { BackgroundMusic } from "../components/background-music";
 
 export const metadata = {
   title: "FIFA X BTS Watch Party",
@@ -9,6 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <BackgroundMusic />
         {children}
       </body>
     </html>

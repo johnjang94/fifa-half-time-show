@@ -12,6 +12,7 @@ const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
+const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const venueAddress = "138 Downes Street, Toronto, ON M5E 0E4";
 const venueMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`;
 const RSVP_CHANGE_LOCK_AT = new Date("2026-07-17T00:00:00-04:00");
@@ -81,6 +82,19 @@ function savePortalProfile(profile) {
   } catch {
     // Best effort only.
   }
+}
+
+function saveSupportAccessToken(token) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const safeToken = normalize(token);
+  if (!safeToken) {
+    return;
+  }
+
+  window.localStorage.setItem(SUPPORT_ACCESS_KEY, safeToken);
 }
 
 function formatPhoneNumber(value) {
@@ -337,6 +351,7 @@ function PortalPageInner() {
           const phoneNumber = readInviteField(data.invite, "phoneNumber", "phone_number");
           const barcode = sanitizeBarcode(readInviteField(data.invite, "barcode", "barcode"));
           const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName || "guest";
+          saveSupportAccessToken(data.supportAccessToken);
 
           setInvite({
             firstName,
