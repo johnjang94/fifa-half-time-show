@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useEffect, useRef, useState } from "react";
 
@@ -104,9 +105,9 @@ export function OverviewCarousel({ cards }) {
       </div>
 
       {isReadyForSignup ? (
-        <a className="signup-button overview-signup is-visible" href="/register">
+        <Link className="signup-button overview-signup is-visible" href="/register">
           sign up
-        </a>
+        </Link>
       ) : null}
     </section>
   );
