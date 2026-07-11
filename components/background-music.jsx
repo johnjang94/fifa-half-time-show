@@ -9,8 +9,10 @@ const BGM_PLAYED_IDS_KEY = "fifa-half-time-show-bgm-played-video-ids";
 const PLAYER_SCRIPT_ID = "youtube-iframe-api";
 const PLAYER_VOLUME_START = 1;
 const PLAYER_VOLUME_TARGET = 50;
-const PLAYER_VOLUME_STEP_MS = 1000;
+const PLAYER_VOLUME_STEP_MS = 250;
 const PLAYER_VOLUME_RAMP_MS = 10000;
+const PREFETCH_WINDOW_MS = 7000;
+const CROSSFADE_WINDOW_MS = 5000;
 
 let youtubeApiPromise = null;
 
@@ -151,15 +153,31 @@ export function BackgroundMusic() {
   const [status, setStatus] = useState("idle");
   const enabledRef = useRef(enabled);
   const sessionIdRef = useRef("");
-  const playerMountRef = useRef(null);
-  const playerRef = useRef(null);
-  const recentIdsRef = useRef([]);
+  const playerMountPrimaryRef = useRef(null);
+  const playerMountSecondaryRef = useRef(null);
+  const playersRef = useRef({
+    primary: null,
+    secondary: null,
+  });
+  const playerReadyRef = useRef({
+    primary: false,
+    secondary: false,
+  });
+  const activeSlotRef = useRef("primary");
   const currentTrackRef = useRef(null);
-  const volumeTimerRef = useRef(null);
-  const bootstrappingRef = useRef(false);
+  const queuedTrackRef = useRef(null);
+  const queuedSlotRef = useRef("");
+  const recentIdsRef = useRef([]);
+  const initializedRef = useRef(false);
+  const prefetchInFlightRef = useRef(false);
+  const crossfadeInProgressRef = useRef(false);
+  const volumeRampTimersRef = useRef({
+    primary: null,
+    secondary: null,
+  });
+  const monitorTimerRef = useRef(null);
+  const destroyRequestedRef = useRef(false);
   const waitingForGestureRef = useRef(false);
-  const volumeTargetReachedRef = useRef(false);
-  const destroyedRef = useRef(false);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -170,31 +188,72 @@ export function BackgroundMusic() {
     recentIdsRef.current = loadPlayedVideoIds();
   }, []);
 
-  function clearVolumeRamp() {
-    if (volumeTimerRef.current) {
-      window.clearTimeout(volumeTimerRef.current);
-      volumeTimerRef.current = null;
+  function getPlayer(slot) {
+    return playersRef.current[slot];
+  }
+
+  function getOtherSlot(slot) {
+    return slot === "primary" ? "secondary" : "primary";
+  }
+
+  function getMountNode(slot) {
+    return slot === "primary" ? playerMountPrimaryRef.current : playerMountSecondaryRef.current;
+  }
+
+  function clearTimer(slot) {
+    const timer = volumeRampTimersRef.current[slot];
+    if (timer) {
+      window.clearTimeout(timer);
+      volumeRampTimersRef.current[slot] = null;
     }
   }
 
-  function resetSessionState() {
-    clearVolumeRamp();
-    bootstrappingRef.current = false;
+  function clearAllTimers() {
+    clearTimer("primary");
+    clearTimer("secondary");
+
+    if (monitorTimerRef.current) {
+      window.clearInterval(monitorTimerRef.current);
+      monitorTimerRef.current = null;
+    }
+  }
+
+  function stopMonitoring() {
+    if (monitorTimerRef.current) {
+      window.clearInterval(monitorTimerRef.current);
+      monitorTimerRef.current = null;
+    }
+  }
+
+  function resetRuntimeState() {
+    clearAllTimers();
+    prefetchInFlightRef.current = false;
+    crossfadeInProgressRef.current = false;
+    initializedRef.current = false;
     waitingForGestureRef.current = false;
-    volumeTargetReachedRef.current = false;
     currentTrackRef.current = null;
+    queuedTrackRef.current = null;
+    queuedSlotRef.current = "";
+    activeSlotRef.current = "primary";
     setStatus("idle");
   }
 
-  function destroyPlayer() {
-    destroyedRef.current = true;
+  function destroyPlayers() {
+    destroyRequestedRef.current = true;
+    clearAllTimers();
 
-    clearVolumeRamp();
+    const primary = playersRef.current.primary;
+    const secondary = playersRef.current.secondary;
+    playersRef.current.primary = null;
+    playersRef.current.secondary = null;
+    playerReadyRef.current.primary = false;
+    playerReadyRef.current.secondary = false;
 
-    const player = playerRef.current;
-    playerRef.current = null;
+    for (const player of [primary, secondary]) {
+      if (!player?.destroy) {
+        continue;
+      }
 
-    if (player?.destroy) {
       try {
         player.destroy();
       } catch {
@@ -202,7 +261,7 @@ export function BackgroundMusic() {
       }
     }
 
-    resetSessionState();
+    resetRuntimeState();
   }
 
   function rememberTrack(videoId) {
@@ -241,101 +300,326 @@ export function BackgroundMusic() {
     return pickRandomFallback(recentIdsRef.current);
   }
 
-  function startVolumeRamp() {
-    clearVolumeRamp();
-
-    const player = playerRef.current;
+  function setSlotVolume(slot, volume) {
+    const player = getPlayer(slot);
     if (!player?.setVolume) {
       return;
     }
 
-    if (volumeTargetReachedRef.current) {
-      try {
-        player.setVolume(PLAYER_VOLUME_TARGET);
-      } catch {
-        // Ignore player volume failures.
-      }
-      return;
+    try {
+      player.setVolume(Math.max(0, Math.min(100, Math.round(volume))));
+    } catch {
+      // Best effort only.
     }
+  }
+
+  function startVolumeRamp(slot, fromVolume, toVolume, durationMs) {
+    clearTimer(slot);
 
     const startedAt = Date.now();
 
     const tick = () => {
-      const activePlayer = playerRef.current;
-      if (!activePlayer?.setVolume || destroyedRef.current) {
+      const player = getPlayer(slot);
+      if (!player?.setVolume || destroyRequestedRef.current) {
         return;
       }
 
       const elapsed = Date.now() - startedAt;
-      const progress = Math.min(elapsed / PLAYER_VOLUME_RAMP_MS, 1);
-      const volume = Math.round(
-        PLAYER_VOLUME_START + progress * (PLAYER_VOLUME_TARGET - PLAYER_VOLUME_START),
-      );
-
-      try {
-        activePlayer.setVolume(volume);
-      } catch {
-        // Ignore player volume failures.
-      }
+      const progress = Math.min(elapsed / durationMs, 1);
+      const nextVolume = fromVolume + (toVolume - fromVolume) * progress;
+      setSlotVolume(slot, nextVolume);
 
       if (progress < 1) {
-        volumeTimerRef.current = window.setTimeout(tick, PLAYER_VOLUME_STEP_MS);
+        volumeRampTimersRef.current[slot] = window.setTimeout(tick, PLAYER_VOLUME_STEP_MS);
       } else {
-        volumeTimerRef.current = null;
-        volumeTargetReachedRef.current = true;
+        volumeRampTimersRef.current[slot] = null;
       }
     };
 
     tick();
   }
 
-  async function playNextTrack() {
-    if (!enabledRef.current) {
-      return;
+  async function cueTrackIntoSlot(slot, track, shouldAutoplay = false) {
+    const player = getPlayer(slot);
+    if (!player?.cueVideoById && !player?.loadVideoById) {
+      return false;
     }
-
-    const player = playerRef.current;
-    if (!player?.loadVideoById) {
-      return;
-    }
-
-    if (bootstrappingRef.current) {
-      return;
-    }
-
-    bootstrappingRef.current = true;
-    setStatus("loading");
 
     try {
-      const track = await requestNextTrack();
-      if (!track || !enabledRef.current || !playerRef.current) {
-        return;
+      setSlotVolume(slot, shouldAutoplay ? PLAYER_VOLUME_START : 0);
+      if (shouldAutoplay && player.loadVideoById) {
+        player.loadVideoById(track.videoId);
+      } else if (player.cueVideoById) {
+        player.cueVideoById(track.videoId);
+      } else {
+        player.loadVideoById(track.videoId);
       }
-
-      currentTrackRef.current = track;
-      rememberTrack(track.videoId);
-
-      try {
-        playerRef.current.loadVideoById(track.videoId);
-      } catch {
-        // If the load fails, try a fallback on the next interaction.
-      }
-    } finally {
-      bootstrappingRef.current = false;
+      return true;
+    } catch {
+      return false;
     }
   }
 
-  async function ensurePlayer() {
-    if (playerRef.current || destroyedRef.current) {
+  async function prefetchNextTrack() {
+    if (prefetchInFlightRef.current || destroyRequestedRef.current) {
+      return;
+    }
+
+    const standbySlot = getOtherSlot(activeSlotRef.current);
+    if (queuedTrackRef.current && queuedSlotRef.current === standbySlot) {
+      return;
+    }
+
+    prefetchInFlightRef.current = true;
+
+    try {
+      const track = await requestNextTrack();
+      if (!track || destroyRequestedRef.current || !enabledRef.current) {
+        return;
+      }
+
+      queuedTrackRef.current = track;
+      queuedSlotRef.current = standbySlot;
+      rememberTrack(track.videoId);
+      const queued = await cueTrackIntoSlot(standbySlot, track, false);
+      if (!queued) {
+        queuedTrackRef.current = null;
+        queuedSlotRef.current = "";
+      }
+    } finally {
+      prefetchInFlightRef.current = false;
+    }
+  }
+
+  async function startInitialPlayback() {
+    if (initializedRef.current || destroyRequestedRef.current) {
+      return;
+    }
+
+    initializedRef.current = true;
+    setStatus("loading");
+
+    const track = await requestNextTrack();
+    if (!track || destroyRequestedRef.current || !enabledRef.current) {
+      initializedRef.current = false;
+      return;
+    }
+
+    currentTrackRef.current = track;
+    activeSlotRef.current = "primary";
+    rememberTrack(track.videoId);
+
+    const started = await cueTrackIntoSlot("primary", track, true);
+    if (!started) {
+      initializedRef.current = false;
+      return;
+    }
+
+    setStatus("playing");
+    startVolumeRamp("primary", PLAYER_VOLUME_START, PLAYER_VOLUME_TARGET, PLAYER_VOLUME_RAMP_MS);
+    void prefetchNextTrack();
+    startMonitoring();
+  }
+
+  function startMonitoring() {
+    if (monitorTimerRef.current) {
+      return;
+    }
+
+    monitorTimerRef.current = window.setInterval(() => {
+      if (destroyRequestedRef.current || !enabledRef.current || crossfadeInProgressRef.current) {
+        return;
+      }
+
+      const activeSlot = activeSlotRef.current;
+      const player = getPlayer(activeSlot);
+      if (!player?.getDuration || !player?.getCurrentTime) {
+        return;
+      }
+
+      const duration = player.getDuration();
+      const currentTime = player.getCurrentTime();
+      if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(currentTime)) {
+        return;
+      }
+
+      const remaining = duration - currentTime;
+
+      if (remaining <= CROSSFADE_WINDOW_MS / 1000 && queuedTrackRef.current) {
+        void beginCrossfade();
+        return;
+      }
+
+      if (remaining <= PREFETCH_WINDOW_MS / 1000 && !queuedTrackRef.current && !prefetchInFlightRef.current) {
+        void prefetchNextTrack();
+      }
+    }, 500);
+  }
+
+  async function beginCrossfade() {
+    if (crossfadeInProgressRef.current || destroyRequestedRef.current || !queuedTrackRef.current) {
+      return;
+    }
+
+    const fromSlot = activeSlotRef.current;
+    const toSlot = getOtherSlot(fromSlot);
+    const fromPlayer = getPlayer(fromSlot);
+    const toPlayer = getPlayer(toSlot);
+    const nextTrack = queuedTrackRef.current;
+
+    if (!fromPlayer || !toPlayer || !nextTrack) {
+      return;
+    }
+
+    crossfadeInProgressRef.current = true;
+    setStatus("crossfading");
+
+    try {
+      setSlotVolume(toSlot, 0);
+      if (toPlayer.playVideo) {
+        toPlayer.playVideo();
+      }
+    } catch {
+      // If autoplay is blocked, the next gesture will resume playback.
+      waitingForGestureRef.current = true;
+      setStatus("waiting");
+      crossfadeInProgressRef.current = false;
+      return;
+    }
+
+    const startedAt = Date.now();
+
+    const tick = () => {
+      const elapsed = Date.now() - startedAt;
+      const progress = Math.min(elapsed / CROSSFADE_WINDOW_MS, 1);
+
+      setSlotVolume(fromSlot, PLAYER_VOLUME_TARGET * (1 - progress));
+      setSlotVolume(toSlot, PLAYER_VOLUME_TARGET * progress);
+
+      if (progress < 1 && !destroyRequestedRef.current) {
+        volumeRampTimersRef.current[fromSlot] = window.setTimeout(tick, PLAYER_VOLUME_STEP_MS);
+        return;
+      }
+
+      clearTimer(fromSlot);
+      clearTimer(toSlot);
+
+      try {
+        fromPlayer.stopVideo?.();
+      } catch {
+        // Best effort only.
+      }
+
+      activeSlotRef.current = toSlot;
+      currentTrackRef.current = nextTrack;
+      queuedTrackRef.current = null;
+      queuedSlotRef.current = "";
+      crossfadeInProgressRef.current = false;
+      setStatus("playing");
+      startVolumeRamp(toSlot, PLAYER_VOLUME_TARGET, PLAYER_VOLUME_TARGET, 1);
+      void prefetchNextTrack();
+      startMonitoring();
+    };
+
+    tick();
+  }
+
+  function resumePlaybackFromGesture() {
+    const activePlayer = getPlayer(activeSlotRef.current);
+    const standbyPlayer = getPlayer(getOtherSlot(activeSlotRef.current));
+
+    try {
+      activePlayer?.playVideo?.();
+      standbyPlayer?.playVideo?.();
+      waitingForGestureRef.current = false;
+      setStatus(crossfadeInProgressRef.current ? "crossfading" : "playing");
+    } catch {
+      // Best effort only.
+    }
+  }
+
+  function handlePlayerReady(slot) {
+    if (destroyRequestedRef.current || !enabledRef.current) {
+      return;
+    }
+
+    playerReadyRef.current[slot] = true;
+
+    if (queuedTrackRef.current && queuedSlotRef.current === slot) {
+      void cueTrackIntoSlot(slot, queuedTrackRef.current, false);
+    }
+
+    if (!initializedRef.current && slot === activeSlotRef.current) {
+      void startInitialPlayback();
+      return;
+    }
+
+    if (initializedRef.current && currentTrackRef.current && slot !== activeSlotRef.current && queuedTrackRef.current) {
+      void cueTrackIntoSlot(slot, queuedTrackRef.current, false);
+    }
+  }
+
+  function handlePlayerStateChange(slot, event) {
+    if (destroyRequestedRef.current) {
+      return;
+    }
+
+    const playerState = event?.data;
+    const ytState = window.YT?.PlayerState;
+    const activeSlot = activeSlotRef.current;
+
+    if (playerState === ytState?.PLAYING) {
+      if (slot === activeSlot) {
+        setStatus(crossfadeInProgressRef.current ? "crossfading" : "playing");
+      }
+      waitingForGestureRef.current = false;
+      return;
+    }
+
+    if (playerState === ytState?.PAUSED) {
+      if (slot === activeSlot && enabledRef.current) {
+        setStatus("ready");
+      }
+      return;
+    }
+
+    if (playerState === ytState?.ENDED && slot === activeSlot) {
+      if (queuedTrackRef.current) {
+        void beginCrossfade();
+      } else {
+        void prefetchNextTrack();
+      }
+    }
+  }
+
+  function handleAutoplayBlocked() {
+    if (destroyRequestedRef.current) {
+      return;
+    }
+
+    waitingForGestureRef.current = true;
+    setStatus("waiting");
+  }
+
+  function handlePlayerError() {
+    if (destroyRequestedRef.current) {
+      return;
+    }
+
+    void prefetchNextTrack();
+  }
+
+  async function ensurePlayers() {
+    if (playersRef.current.primary || playersRef.current.secondary || destroyRequestedRef.current) {
       return;
     }
 
     await loadYouTubeApi();
-    if (!enabledRef.current || destroyedRef.current || !playerMountRef.current || playerRef.current) {
+    if (destroyRequestedRef.current || !enabledRef.current) {
       return;
     }
 
-    playerRef.current = new window.YT.Player(playerMountRef.current, {
+    const commonConfig = (slot) => ({
       height: "200",
       width: "200",
       videoId: "",
@@ -351,80 +635,21 @@ export function BackgroundMusic() {
         origin: window.location.origin,
       },
       events: {
-        onReady: () => {
-          if (destroyedRef.current || !enabledRef.current) {
-            return;
-          }
-
-          try {
-            playerRef.current?.setVolume?.(
-              volumeTargetReachedRef.current ? PLAYER_VOLUME_TARGET : PLAYER_VOLUME_START,
-            );
-          } catch {
-            // Best effort only.
-          }
-
-          void playNextTrack();
-        },
-        onStateChange: (event) => {
-          if (destroyedRef.current) {
-            return;
-          }
-
-          const playerState = event?.data;
-          const ytState = window.YT?.PlayerState;
-
-          if (playerState === ytState?.PLAYING) {
-            waitingForGestureRef.current = false;
-            setStatus("playing");
-            startVolumeRamp();
-            return;
-          }
-
-          if (playerState === ytState?.PAUSED && enabledRef.current) {
-            setStatus("ready");
-            return;
-          }
-
-          if (playerState === ytState?.ENDED) {
-            clearVolumeRamp();
-            void playNextTrack();
-          }
-        },
-        onAutoplayBlocked: () => {
-          if (destroyedRef.current) {
-            return;
-          }
-
-          waitingForGestureRef.current = true;
-          setStatus("waiting");
-        },
-        onError: () => {
-          if (destroyedRef.current) {
-            return;
-          }
-
-          clearVolumeRamp();
-          void playNextTrack();
-        },
+        onReady: () => handlePlayerReady(slot),
+        onStateChange: (event) => handlePlayerStateChange(slot, event),
+        onAutoplayBlocked: handleAutoplayBlocked,
+        onError: handlePlayerError,
       },
     });
-  }
 
-  function resumePlaybackFromGesture() {
-    const player = playerRef.current;
-    if (!player?.playVideo) {
+    const primaryMount = getMountNode("primary");
+    const secondaryMount = getMountNode("secondary");
+    if (!primaryMount || !secondaryMount) {
       return;
     }
 
-    if (waitingForGestureRef.current || player.getPlayerState?.() !== window.YT?.PlayerState?.PLAYING) {
-      try {
-        player.playVideo();
-        setStatus("playing");
-      } catch {
-        // If playVideo still fails, the next gesture will try again.
-      }
-    }
+    playersRef.current.primary = new window.YT.Player(primaryMount, commonConfig("primary"));
+    playersRef.current.secondary = new window.YT.Player(secondaryMount, commonConfig("secondary"));
   }
 
   useEffect(() => {
@@ -433,14 +658,13 @@ export function BackgroundMusic() {
 
   useEffect(() => {
     if (!enabled) {
-      destroyPlayer();
+      destroyPlayers();
       return undefined;
     }
 
-    destroyedRef.current = false;
-    setStatus("loading");
-
-    void ensurePlayer();
+    destroyRequestedRef.current = false;
+    initializedRef.current = false;
+    void ensurePlayers();
 
     const onGesture = () => {
       if (!enabledRef.current) {
@@ -458,13 +682,13 @@ export function BackgroundMusic() {
       window.removeEventListener("pointerdown", onGesture);
       window.removeEventListener("keydown", onGesture);
       window.removeEventListener("touchstart", onGesture);
-      destroyPlayer();
+      destroyPlayers();
     };
   }, [enabled]);
 
   useEffect(() => {
     return () => {
-      destroyPlayer();
+      destroyPlayers();
     };
   }, []);
 
@@ -475,16 +699,19 @@ export function BackgroundMusic() {
   const label =
     status === "playing"
       ? "BGM on"
-      : status === "waiting"
-        ? "Tap to resume"
-        : enabled
-          ? "BGM ready"
-          : "BGM off";
+      : status === "crossfading"
+        ? "Crossfading"
+        : status === "waiting"
+          ? "Tap to resume"
+          : enabled
+            ? "BGM ready"
+            : "BGM off";
 
   return (
     <>
       <div className="bgm-shell" aria-hidden="true">
-        <div ref={playerMountRef} className="bgm-player" />
+        <div ref={playerMountPrimaryRef} className="bgm-player" />
+        <div ref={playerMountSecondaryRef} className="bgm-player" />
       </div>
       <button
         aria-pressed={enabled}
