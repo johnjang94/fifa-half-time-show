@@ -58,6 +58,47 @@ function isSupportedProfilePhoto(file) {
   return SUPPORTED_PROFILE_PHOTO_TYPES.has(resolveProfilePhotoType(file));
 }
 
+async function sendInviteNotifications(inviteToken) {
+  const payload = JSON.stringify({ inviteToken });
+
+  const [welcomeResult, thankYouResult] = await Promise.allSettled([
+    fetch(`${controlBaseUrl}/api/invites/welcome`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: payload,
+    }),
+    fetch(`${controlBaseUrl}/api/invites/thank-you`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: payload,
+    }),
+  ]);
+
+  const welcomeResponse = welcomeResult.status === "fulfilled" ? welcomeResult.value : null;
+  const thankYouResponse = thankYouResult.status === "fulfilled" ? thankYouResult.value : null;
+  const [welcomeData, thankYouData] = await Promise.all([
+    welcomeResponse ? welcomeResponse.json().catch(() => ({})) : Promise.resolve({}),
+    thankYouResponse ? thankYouResponse.json().catch(() => ({})) : Promise.resolve({}),
+  ]);
+
+  return {
+    welcome: {
+      ok: Boolean(welcomeResponse?.ok) && Boolean(welcomeData?.ok),
+      status: welcomeResponse?.status ?? 0,
+      data: welcomeData,
+    },
+    thankYou: {
+      ok: Boolean(thankYouResponse?.ok) && Boolean(thankYouData?.ok),
+      status: thankYouResponse?.status ?? 0,
+      data: thankYouData,
+    },
+  };
+}
+
 function loadImage(source) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -283,6 +324,12 @@ export function RegisterForm() {
 
       const qrToken = data.qrToken ?? data.id;
       const barcode = typeof data.barcode === "string" ? data.barcode : "";
+
+      const notificationResults = await sendInviteNotifications(qrToken);
+      if (!notificationResults.welcome.ok || !notificationResults.thankYou.ok) {
+        console.warn("Some invite SMS notifications did not send successfully.", notificationResults);
+      }
+
       form.reset();
       setIsSuccess(true);
       window.setTimeout(() => {

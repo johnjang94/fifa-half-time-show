@@ -7,10 +7,6 @@ import { QrCode } from "../../components/qr-code";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
-const WELCOME_SMS_SENT_PREFIX = "fifa-half-time-show-welcome-sms-sent";
-const welcomeSmsInFlightTokens = new Set();
-const THANK_YOU_ADMIN_SMS_SENT_PREFIX = "fifa-half-time-show-thank-you-admin-sms-sent";
-const thankYouAdminSmsInFlightTokens = new Set();
 
 function sanitizeToken(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "guest";
@@ -32,14 +28,6 @@ function saveSupportAccessToken(token) {
   }
 
   window.localStorage.setItem(SUPPORT_ACCESS_KEY, safeToken);
-}
-
-function getWelcomeSmsStorageKey(inviteToken) {
-  return `${WELCOME_SMS_SENT_PREFIX}:${inviteToken}`;
-}
-
-function getThankYouAdminSmsStorageKey(inviteToken) {
-  return `${THANK_YOU_ADMIN_SMS_SENT_PREFIX}:${inviteToken}`;
 }
 
 export default function ThankYouPage({ searchParams }) {
@@ -90,118 +78,6 @@ export default function ThankYouPage({ searchParams }) {
       cancelled = true;
     };
   }, [inviteBarcode, inviteToken]);
-
-  useEffect(() => {
-    if (!inviteToken || inviteToken === "guest" || typeof window === "undefined") {
-      return undefined;
-    }
-
-    const storageKey = getWelcomeSmsStorageKey(inviteToken);
-
-    try {
-      if (window.localStorage.getItem(storageKey) === "sent") {
-        return undefined;
-      }
-    } catch {
-      // Best effort only.
-    }
-
-    if (welcomeSmsInFlightTokens.has(inviteToken)) {
-      return undefined;
-    }
-
-    welcomeSmsInFlightTokens.add(inviteToken);
-    let cancelled = false;
-
-    async function sendWelcomeSms() {
-      try {
-        const response = await fetch(`${controlBaseUrl}/api/invites/welcome`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            inviteToken,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!cancelled && response.ok && data.ok) {
-          try {
-            window.localStorage.setItem(storageKey, "sent");
-          } catch {
-            // Best effort only.
-          }
-        }
-      } catch {
-        // Best effort only.
-      } finally {
-        welcomeSmsInFlightTokens.delete(inviteToken);
-      }
-    }
-
-    void sendWelcomeSms();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [inviteToken]);
-
-  useEffect(() => {
-    if (!inviteToken || inviteToken === "guest" || typeof window === "undefined") {
-      return undefined;
-    }
-
-    const storageKey = getThankYouAdminSmsStorageKey(inviteToken);
-
-    try {
-      if (window.localStorage.getItem(storageKey) === "sent") {
-        return undefined;
-      }
-    } catch {
-      // Best effort only.
-    }
-
-    if (thankYouAdminSmsInFlightTokens.has(inviteToken)) {
-      return undefined;
-    }
-
-    thankYouAdminSmsInFlightTokens.add(inviteToken);
-    let cancelled = false;
-
-    async function sendThankYouAdminSms() {
-      try {
-        const response = await fetch(`${controlBaseUrl}/api/invites/thank-you`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            inviteToken,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!cancelled && response.ok && data.ok) {
-          try {
-            window.localStorage.setItem(storageKey, "sent");
-          } catch {
-            // Best effort only.
-          }
-        }
-      } catch {
-        // Best effort only.
-      } finally {
-        thankYouAdminSmsInFlightTokens.delete(inviteToken);
-      }
-    }
-
-    void sendThankYouAdminSms();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [inviteToken]);
 
   useEffect(() => {
     if (!isQrReady) {
