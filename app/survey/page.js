@@ -126,7 +126,7 @@ function SurveyPageInner() {
         throw new Error(data.error ?? "Unable to save survey.");
       }
 
-      router.push("/survey-done");
+      router.push(`/survey-done?invite=${encodeURIComponent(inviteToken)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save survey.");
     } finally {

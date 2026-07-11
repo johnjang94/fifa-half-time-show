@@ -1,16 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+const controlBaseUrl =
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const SURVEY_COMPLETION_SMS_SENT_PREFIX = "fifa-half-time-show-survey-completion-admin-sms-sent";
+const surveyCompletionSmsInFlightTokens = new Set();
+
+function normalize(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getSurveyCompletionSmsStorageKey(inviteToken) {
+  return `${SURVEY_COMPLETION_SMS_SENT_PREFIX}:${inviteToken}`;
+}
 
 export default function SurveyDonePage() {
+  return (
+    <Suspense fallback={null}>
+      <SurveyDonePageInner />
+    </Suspense>
+  );
+}
+
+function SurveyDonePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
+  const inviteToken = normalize(searchParams?.get("invite"));
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setIsVisible(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (!inviteToken || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const storageKey = getSurveyCompletionSmsStorageKey(inviteToken);
+
+    try {
+      if (window.localStorage.getItem(storageKey) === "sent") {
+        return undefined;
+      }
+    } catch {
+      // Best effort only.
+    }
+
+    if (surveyCompletionSmsInFlightTokens.has(inviteToken)) {
+      return undefined;
+    }
+
+    surveyCompletionSmsInFlightTokens.add(inviteToken);
+    let cancelled = false;
+
+    async function sendSurveyCompletionSms() {
+      try {
+        const response = await fetch(`${controlBaseUrl}/api/invites/thank-you`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ inviteToken }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!cancelled && response.ok && data.ok) {
+          try {
+            window.localStorage.setItem(storageKey, "sent");
+          } catch {
+            // Best effort only.
+          }
+        }
+      } catch {
+        // Best effort only.
+      } finally {
+        surveyCompletionSmsInFlightTokens.delete(inviteToken);
+      }
+    }
+
+    void sendSurveyCompletionSms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken]);
 
   return (
     <main className={`app-frame survey-done-page ${isVisible ? "is-visible" : ""}`}>
@@ -21,8 +98,8 @@ export default function SurveyDonePage() {
 
         <p className="survey-done-copy">You may check your ticket now</p>
 
-        <button className="survey-done-home" onClick={() => router.push("/")} type="button">
-          home
+        <button className="survey-done-home" onClick={() => router.push("/portal")} type="button">
+          My Ticket
         </button>
       </section>
     </main>

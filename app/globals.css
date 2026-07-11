@@ -1046,9 +1046,19 @@ button {
 
 .survey-done-home {
   margin-top: 8px;
-  border-color: rgba(255, 255, 255, 0.14);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
-  color: var(--text);
+  border-color: rgba(160, 120, 255, 0.56);
+  background: linear-gradient(180deg, rgba(147, 90, 255, 0.98), rgba(94, 36, 208, 0.98));
+  color: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(196, 168, 255, 0.14),
+    0 18px 40px rgba(115, 66, 214, 0.42),
+    0 0 34px rgba(157, 110, 255, 0.24);
+}
+
+.survey-done-home:hover {
+  transform: translateY(-1px);
+  border-color: rgba(187, 161, 255, 0.78);
+  background: linear-gradient(180deg, rgba(158, 102, 255, 0.98), rgba(108, 52, 221, 0.98));
 }
 
 .thank-you-shell {
