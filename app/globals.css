@@ -238,6 +238,131 @@ button {
   outline-offset: 4px;
 }
 
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(4, 8, 12, 0.72);
+  backdrop-filter: blur(18px);
+}
+
+.login-modal {
+  position: relative;
+  width: min(100%, 390px);
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 22px 18px 18px;
+  background:
+    radial-gradient(circle at top, rgba(245, 231, 197, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(12, 16, 20, 0.96), rgba(4, 8, 12, 0.98));
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.58);
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.login-modal-eyebrow {
+  margin: 0 0 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245, 231, 197, 0.72);
+  font-size: 0.72rem;
+}
+
+.login-modal h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.08;
+}
+
+.login-modal-copy {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.login-modal-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.login-modal-field {
+  display: grid;
+  gap: 8px;
+}
+
+.login-modal-field span {
+  color: rgba(255, 250, 243, 0.72);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.login-modal-field input {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0.95rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.login-modal-field input:focus {
+  outline: 2px solid rgba(245, 231, 197, 0.9);
+  outline-offset: 2px;
+}
+
+.login-modal-status {
+  margin: 0;
+  color: rgba(245, 231, 197, 0.9);
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.login-modal-status.is-error {
+  color: #ffb7b7;
+}
+
+.login-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.login-modal-submit,
+.login-modal-secondary {
+  flex: 1 1 0;
+  min-height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 0.85rem 1rem;
+  color: var(--text);
+}
+
+.login-modal-submit {
+  background:
+    linear-gradient(180deg, rgba(126, 70, 224, 0.92), rgba(54, 26, 104, 0.96)),
+    rgba(255, 255, 255, 0.05);
+}
+
+.login-modal-secondary {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .join-link {
   display: inline-block;
   color: var(--text);
