@@ -175,6 +175,9 @@ function PortalTicketCard({
   inviteToken,
   phoneNumber,
   rsvp,
+  profilePhotoUrl,
+  profilePhotoTag,
+  profilePhotoAiGenerated,
   onRsvpChange,
   onClose,
 }) {
@@ -236,6 +239,34 @@ function PortalTicketCard({
         </button>
       </div>
       <div className="portal-card-body">
+        <div className="portal-profile-preview">
+          <div className="portal-profile-photo-frame">
+            {profilePhotoUrl ? (
+              <Image alt="" fill className="portal-profile-photo" src={profilePhotoUrl} />
+            ) : (
+              <span className="portal-profile-photo-fallback" aria-hidden="true">
+                {displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part.charAt(0).toUpperCase())
+                  .join("") || "G"}
+              </span>
+            )}
+          </div>
+          <div className="portal-profile-meta">
+            <div className="portal-profile-meta-row">
+              <strong>{displayName}</strong>
+              {profilePhotoTag ? (
+                <span className={`portal-profile-tag ${profilePhotoAiGenerated ? "is-ai" : ""}`}>
+                  {profilePhotoTag}
+                </span>
+              ) : null}
+            </div>
+            <p>{profilePhotoAiGenerated ? "AI-generated profile photo" : "Uploaded profile photo"}</p>
+          </div>
+        </div>
+
         <dl className="portal-ticket-meta">
           <div>
             <dt>Name</dt>
@@ -290,6 +321,9 @@ function PortalPageInner() {
     rsvp: "Going",
     barcode: "",
     checkedInAt: "",
+    profilePhotoUrl: "",
+    profilePhotoTag: "",
+    profilePhotoAiGenerated: false,
   });
   const portalTitle = getPortalTitle(invite.rsvp);
   const isCheckedIn = Boolean(invite.checkedInAt);
@@ -351,12 +385,17 @@ function PortalPageInner() {
             barcode,
             checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
+            profilePhotoUrl: data.invite.profilePhotoUrl ?? "",
+            profilePhotoTag: data.invite.profilePhotoTag ?? "",
+            profilePhotoAiGenerated: Boolean(data.invite.profilePhotoAiGenerated),
           });
           savePortalProfile({
             firstName,
             lastName,
             displayName,
             phoneNumber,
+            photoUrl: photoUrl || storedProfile.photoUrl,
+            photoTag: normalize(data.invite?.profilePhotoTag) || storedProfile.photoTag || "",
           });
         }
       } catch {
@@ -411,16 +450,19 @@ function PortalPageInner() {
 
         <section className="portal-actions" aria-label="Portal actions">
           {activePanel === "ticket" ? (
-            <PortalTicketCard
-              displayName={displayName}
-              inviteToken={inviteToken}
-              phoneNumber={invite.phoneNumber}
-              rsvp={invite.rsvp}
-              onRsvpChange={(nextRsvp) =>
-                setInvite((current) => ({ ...current, rsvp: normalizeRsvp(nextRsvp) }))
-              }
-              onClose={() => setActivePanel(null)}
-            />
+          <PortalTicketCard
+            displayName={displayName}
+            inviteToken={inviteToken}
+            phoneNumber={invite.phoneNumber}
+            rsvp={invite.rsvp}
+            profilePhotoUrl={invite.profilePhotoUrl}
+            profilePhotoTag={invite.profilePhotoTag}
+            profilePhotoAiGenerated={invite.profilePhotoAiGenerated}
+            onRsvpChange={(nextRsvp) =>
+              setInvite((current) => ({ ...current, rsvp: normalizeRsvp(nextRsvp) }))
+            }
+            onClose={() => setActivePanel(null)}
+          />
           ) : (
             <button
               className="portal-action-button"

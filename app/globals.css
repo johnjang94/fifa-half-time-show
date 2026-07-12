@@ -538,7 +538,7 @@ button {
   gap: 16px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(72px, 16vh, 132px);
+  padding-top: clamp(78px, 17vh, 140px);
 }
 
 .overview-carousel {
@@ -835,7 +835,7 @@ button {
   gap: 12px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(72px, 16vh, 140px);
+  padding-top: clamp(92px, 19vh, 162px);
 }
 
 .register-header {
@@ -848,7 +848,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .register-eyebrow {
@@ -869,7 +869,7 @@ button {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
   flex: 1 1 auto;
   opacity: 1;
   transform: translateY(0);
@@ -887,12 +887,12 @@ button {
 .register-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .register-name-row {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -900,7 +900,7 @@ button {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
 }
 
 .register-field input {
@@ -909,7 +909,7 @@ button {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
-  padding: 0.88rem 0.95rem;
+  padding: 0.82rem 0.92rem;
   font: inherit;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
@@ -941,17 +941,18 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 9px;
   margin-top: -4px;
+  flex-wrap: wrap;
 }
 
 .register-privacy-acceptance {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   color: rgba(255, 250, 243, 0.76);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: lowercase;
 }
 
@@ -976,8 +977,8 @@ button {
   padding: 0;
   background: transparent;
   color: rgba(245, 231, 197, 0.9);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: lowercase;
 }
 
@@ -985,10 +986,52 @@ button {
   color: #fff;
 }
 
+.register-ai-consent {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.register-ai-consent-copy {
+  margin: 0;
+  color: rgba(255, 250, 243, 0.72);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.register-ai-consent-button {
+  width: 100%;
+  border: 1px solid rgba(208, 188, 255, 0.28);
+  border-radius: 999px;
+  padding: 0.72rem 1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  color: var(--text);
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  box-shadow: none;
+}
+
+.register-ai-consent-button.is-active {
+  border-color: rgba(208, 188, 255, 0.6);
+  background: linear-gradient(180deg, rgba(208, 188, 255, 0.98), rgba(172, 132, 255, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(226, 211, 255, 0.12),
+    0 12px 28px rgba(145, 100, 238, 0.26);
+}
+
+.register-ai-consent-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .register-privacy-copy {
   margin: 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   max-height: min(58svh, 380px);
   overflow-y: auto;
   padding-right: 4px;
@@ -999,13 +1042,13 @@ button {
 .register-privacy-copy p {
   margin: 0;
   color: var(--text);
-  line-height: 1.6;
-  font-size: 0.96rem;
+  line-height: 1.55;
+  font-size: 0.94rem;
 }
 
 .register-privacy-scroll-note {
   color: rgba(245, 231, 197, 0.88);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .register-field input[type="file"] {
@@ -1108,7 +1151,7 @@ button {
   width: min(100%, 420px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 24px;
-  padding: 22px 20px 18px;
+  padding: 22px 20px 16px;
   background:
     linear-gradient(180deg, rgba(17, 24, 30, 0.98), rgba(10, 15, 20, 0.98));
   box-shadow: var(--shadow);
@@ -1123,7 +1166,7 @@ button {
 }
 
 .register-privacy-close {
-  margin-top: 18px;
+  margin-top: 16px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
   padding: 0.75rem 1rem;
@@ -1131,6 +1174,33 @@ button {
   color: var(--text);
   text-transform: lowercase;
   letter-spacing: 0.14em;
+}
+
+.register-privacy-close:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.register-privacy-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.register-privacy-agree {
+  flex: 1 1 0;
+  border-color: rgba(208, 188, 255, 0.34);
+  background: linear-gradient(180deg, rgba(208, 188, 255, 0.92), rgba(172, 132, 255, 0.88));
+  color: #fffaf3;
+  text-transform: none;
+  letter-spacing: 0.1em;
+  box-shadow:
+    0 0 0 1px rgba(226, 211, 255, 0.08),
+    0 14px 30px rgba(145, 100, 238, 0.22);
+}
+
+.register-privacy-actions .register-privacy-close:last-child {
+  flex: 0 0 auto;
 }
 
 .register-privacy-close:hover {
@@ -1823,6 +1893,93 @@ button {
   text-align: left;
 }
 
+.portal-profile-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.portal-profile-photo-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(245, 231, 197, 0.18), transparent 36%),
+    rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
+}
+
+.portal-profile-photo {
+  object-fit: cover;
+}
+
+.portal-profile-photo-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.portal-profile-meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.portal-profile-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.portal-profile-meta-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-profile-meta p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.portal-profile-tag,
+.chatbot-profile-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0.08rem 0.5rem;
+  border: 1px solid rgba(245, 231, 197, 0.3);
+  border-radius: 999px;
+  background: rgba(245, 231, 197, 0.12);
+  color: rgba(255, 250, 243, 0.94);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.58rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.portal-profile-tag.is-ai,
+.chatbot-profile-tag {
+  border-color: rgba(208, 188, 255, 0.38);
+  background: rgba(208, 188, 255, 0.14);
+}
+
 .portal-rsvp-message {
   margin: 0 0 12px;
   color: var(--accent-2);
@@ -2305,6 +2462,13 @@ button {
   min-width: 0;
 }
 
+.chatbot-message-name-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .chatbot-avatar {
   width: 24px;
   height: 24px;
@@ -2328,6 +2492,10 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.chatbot-profile-tag {
+  flex: 0 0 auto;
 }
 
 .chatbot-message-header strong {
@@ -2566,17 +2734,17 @@ button {
   }
 
   .overview-shell {
-    padding-top: clamp(58px, 12vh, 104px);
+    padding-top: clamp(64px, 14vh, 112px);
   }
 
   .overview-track {
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 4vw;
-    padding-top: 18px;
+    padding-top: 14px;
   }
 
   .overview-slide {
-    flex-basis: 92%;
+    flex-basis: 90%;
   }
 
   .overview-slide.is-full-width {
@@ -2584,7 +2752,7 @@ button {
   }
 
   .overview-media {
-    min-height: 68svh;
+    min-height: 74svh;
   }
 
   .signup-button {
@@ -2596,11 +2764,85 @@ button {
   }
 
   .register-shell {
-    padding-top: clamp(56px, 12vh, 96px);
+    padding-top: clamp(68px, 14vh, 112px);
   }
 
   .register-form {
+    gap: 8px;
+  }
+
+  .register-body {
     gap: 10px;
+  }
+
+  .register-field {
+    gap: 4px;
+  }
+
+  .register-field span {
+    font-size: 0.62rem;
+  }
+
+  .register-field input {
+    padding: 0.78rem 0.88rem;
+  }
+
+  .register-privacy {
+    gap: 8px;
+  }
+
+  .register-privacy-acceptance,
+  .register-privacy-link {
+    font-size: 0.66rem;
+  }
+
+  .register-privacy-copy {
+    max-height: min(46svh, 300px);
+    gap: 8px;
+  }
+
+  .register-privacy-copy p {
+    font-size: 0.9rem;
+  }
+
+  .register-privacy-scroll-note {
+    font-size: 0.76rem;
+  }
+
+  .register-privacy-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .register-privacy-actions .register-privacy-close:last-child,
+  .register-privacy-agree {
+    width: 100%;
+  }
+
+  .register-privacy-agree {
+    text-align: center;
+  }
+
+  .register-privacy-dialog {
+    padding: 18px 16px 14px;
+  }
+
+  .register-privacy-close {
+    margin-top: 14px;
+    padding: 0.68rem 0.9rem;
+  }
+
+  .register-ai-consent {
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .register-ai-consent-copy {
+    font-size: 0.74rem;
+  }
+
+  .register-ai-consent-button {
+    padding: 0.66rem 0.9rem;
   }
 
   .register-field input[type="file"]::file-selector-button {

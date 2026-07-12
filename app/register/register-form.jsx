@@ -141,12 +141,14 @@ export function RegisterForm() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [hasReadPrivacyPolicy, setHasReadPrivacyPolicy] = useState(false);
+  const [isAiConsentAccepted, setIsAiConsentAccepted] = useState(false);
+  const [hasProfilePhoto, setHasProfilePhoto] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
     privacyAccepted: "",
-    privacyReviewed: "",
+    aiConsentAccepted: "",
   });
   const [formValues, setFormValues] = useState({
     firstName: "",
@@ -211,6 +213,10 @@ export function RegisterForm() {
     const lastName = String(formData.get("lastName") ?? "").trim();
     const phoneNumber = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "");
     const privacyAccepted = formData.get("privacyAccepted") === "on";
+    const aiConsentAccepted = formData.get("aiConsentAccepted") === "on";
+    const profilePhoto = formData.get("profilePhoto");
+    const hasUploadedPhoto =
+      profilePhoto instanceof File && typeof profilePhoto.size === "number" && profilePhoto.size > 0;
 
     const nextFieldErrors = {
       firstName:
@@ -227,10 +233,11 @@ export function RegisterForm() {
           : "Please enter a 10-digit phone number, like 5551234567.",
       privacyAccepted: privacyAccepted
         ? ""
-        : "Please confirm the privacy policy before signing up.",
-      privacyReviewed: hasReadPrivacyPolicy
-        ? ""
-        : "Please read the privacy policy to the end before signing up.",
+        : "Please review and accept the privacy policy before signing up.",
+      aiConsentAccepted:
+        hasUploadedPhoto || aiConsentAccepted
+          ? ""
+          : "Please upload a photo or consent to use AI portrait.",
     };
 
     return {
@@ -245,7 +252,8 @@ export function RegisterForm() {
       NAME_PATTERN.test(values.lastName.trim()) &&
       PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
       isPrivacyAccepted &&
-      hasReadPrivacyPolicy
+      hasReadPrivacyPolicy &&
+      (hasProfilePhoto || isAiConsentAccepted)
     );
   }
 
@@ -314,6 +322,8 @@ export function RegisterForm() {
       form.reset();
       setIsPrivacyAccepted(false);
       setHasReadPrivacyPolicy(false);
+      setIsAiConsentAccepted(false);
+      setHasProfilePhoto(false);
       setIsPrivacyPolicyOpen(false);
       setIsSuccess(true);
       window.setTimeout(() => {
@@ -396,7 +406,16 @@ export function RegisterForm() {
 
       <label className="register-field">
         <span>profile photo</span>
-        <input accept="image/jpeg,image/png,image/webp" name="profilePhoto" type="file" />
+        <input
+          accept="image/jpeg,image/png,image/webp"
+          name="profilePhoto"
+          onChange={(event) => {
+            const hasFile = Boolean(event.currentTarget.files?.length);
+            setHasProfilePhoto(hasFile);
+            setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
+          }}
+          type="file"
+        />
         <p className="register-field-help">
           JPEG, PNG, or WebP. Large photos are compressed automatically, and the final upload should stay under{" "}
           {formatFileSize(MAX_PROFILE_PHOTO_BYTES)}.
@@ -407,7 +426,7 @@ export function RegisterForm() {
         <label className="register-privacy-acceptance">
           <input
             checked={isPrivacyAccepted}
-            aria-label="Accept the privacy policy"
+            aria-label="Confirm that you have read and agree to the privacy policy"
             name="privacyAccepted"
             onChange={(event) => {
               setIsPrivacyAccepted(event.target.checked);
@@ -415,20 +434,39 @@ export function RegisterForm() {
             }}
             type="checkbox"
           />
-          <span>I agree</span>
+          <span>I have read and agree</span>
         </label>
         <button
           className="register-privacy-link"
           type="button"
           onClick={() => setIsPrivacyPolicyOpen(true)}
         >
-          privacy policy
+          review policy
         </button>
       </div>
 
-      {fieldErrors.privacyAccepted || fieldErrors.privacyReviewed ? (
+      <div className="register-ai-consent">
+        <input name="aiConsentAccepted" type="hidden" value={isAiConsentAccepted ? "on" : ""} />
+        <p className="register-ai-consent-copy">
+          If you skip the upload, we will generate a refined AI portrait for your profile and
+          label it AI.
+        </p>
+        <button
+          aria-pressed={isAiConsentAccepted}
+          className={`register-ai-consent-button ${isAiConsentAccepted ? "is-active" : ""}`}
+          type="button"
+          onClick={() => {
+            setIsAiConsentAccepted((current) => !current);
+            setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
+          }}
+        >
+          {isAiConsentAccepted ? "AI portrait consented" : "consent to use AI portrait"}
+        </button>
+      </div>
+
+      {fieldErrors.privacyAccepted || fieldErrors.aiConsentAccepted ? (
         <p className="register-field-error">
-          {fieldErrors.privacyAccepted || fieldErrors.privacyReviewed}
+          {fieldErrors.privacyAccepted || fieldErrors.aiConsentAccepted}
         </p>
       ) : null}
 
@@ -436,7 +474,13 @@ export function RegisterForm() {
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}
-        disabled={isSubmitting || isSuccess || !isPrivacyAccepted || !hasReadPrivacyPolicy}
+        disabled={
+          isSubmitting ||
+          isSuccess ||
+          !isPrivacyAccepted ||
+          !hasReadPrivacyPolicy ||
+          (!hasProfilePhoto && !isAiConsentAccepted)
+        }
         type="submit"
       >
         {submitLabel}
@@ -473,35 +517,54 @@ export function RegisterForm() {
 
                 if (hasReachedEnd) {
                   setHasReadPrivacyPolicy(true);
-                  setFieldErrors((current) => ({ ...current, privacyReviewed: "" }));
                 }
               }}
             >
               <p>
-                We use your name, phone number, and profile photo only to manage your event
-                registration, contact you about the watch party, and help with check-in and
-                support if needed.
+                We use your name, phone number, and profile photo to manage your registration and
+                event communications.
               </p>
               <p>
                 We do not sell your information. We share it only with trusted service providers
-                that help us run the event, and only as needed to provide those services.
+                who help us run the event.
               </p>
               <p>
-                We keep your information for the event itself and a short period afterward for
-                operational and safety purposes, then delete it unless we need to keep it longer
-                for legal, security, or fraud-prevention reasons.
+                We keep it only as long as needed for event operations, safety, and legal or
+                security requirements.
+              </p>
+              <p>
+                If you choose not to upload a photo, we may generate a refined AI portrait for
+                your profile. That portrait will be labeled AI.
               </p>
               <p className="register-privacy-scroll-note">
-                Please scroll to the end of this policy to unlock sign up.
+                Scroll to the end to unlock the agreement button.
               </p>
             </div>
-            <button
-              className="register-privacy-close"
-              type="button"
-              onClick={() => setIsPrivacyPolicyOpen(false)}
-            >
-              close
-            </button>
+            <div className="register-privacy-actions">
+              <button
+                className="register-privacy-close register-privacy-agree"
+                disabled={!hasReadPrivacyPolicy}
+                type="button"
+                onClick={() => {
+                  setIsPrivacyAccepted(true);
+                  setHasReadPrivacyPolicy(true);
+                  setFieldErrors((current) => ({
+                    ...current,
+                    privacyAccepted: "",
+                  }));
+                  setIsPrivacyPolicyOpen(false);
+                }}
+              >
+                I agree
+              </button>
+              <button
+                className="register-privacy-close"
+                type="button"
+                onClick={() => setIsPrivacyPolicyOpen(false)}
+              >
+                close
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

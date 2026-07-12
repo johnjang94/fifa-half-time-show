@@ -27,13 +27,19 @@ function createInitialMessages(firstName) {
   ];
 }
 
-function threadToMessages(thread, customerName = "Unknown guest", customerPhotoUrl = "") {
+function threadToMessages(
+  thread,
+  customerName = "Unknown guest",
+  customerPhotoUrl = "",
+  customerPhotoTag = "",
+) {
   return thread.map((item) => ({
     role: item.role === "customer" ? "user" : "assistant",
     name: item.role === "customer" ? customerName : "Support",
     text: item.message,
     createdAt: item.createdAt,
     photoUrl: item.role === "customer" ? customerPhotoUrl : "",
+    photoTag: item.role === "customer" ? customerPhotoTag : "",
   }));
 }
 
@@ -80,6 +86,7 @@ function readPortalProfile() {
       displayName: "",
       phoneNumber: "",
       photoUrl: "",
+      photoTag: "",
     };
   }
 
@@ -92,6 +99,7 @@ function readPortalProfile() {
         displayName: "",
         phoneNumber: "",
         photoUrl: "",
+        photoTag: "",
       };
     }
 
@@ -102,6 +110,7 @@ function readPortalProfile() {
       displayName: normalize(parsed.displayName),
       phoneNumber: normalize(parsed.phoneNumber),
       photoUrl: normalize(parsed.photoUrl),
+      photoTag: normalize(parsed.photoTag),
     };
   } catch {
     return {
@@ -110,6 +119,7 @@ function readPortalProfile() {
       displayName: "",
       phoneNumber: "",
       photoUrl: "",
+      photoTag: "",
     };
   }
 }
@@ -225,6 +235,7 @@ export function SupportChatbot({ inviteToken }) {
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerDisplayName, setCustomerDisplayName] = useState("");
   const [customerPhotoUrl, setCustomerPhotoUrl] = useState("");
+  const [customerPhotoTag, setCustomerPhotoTag] = useState("");
   const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
   const [supportAccessToken, setSupportAccessToken] = useState(() => readSupportAccessToken());
   const [showFoodRequestButton, setShowFoodRequestButton] = useState(false);
@@ -268,6 +279,7 @@ export function SupportChatbot({ inviteToken }) {
         setCustomerFirstName(nextFirstName);
         setCustomerDisplayName(nextDisplayName);
         setCustomerPhotoUrl(storedProfile.photoUrl);
+        setCustomerPhotoTag(storedProfile.photoTag);
         setRequestForm((current) => ({
           ...current,
           ...defaultRequestForm(nextFirstName || nextDisplayName, storedProfile.phoneNumber, current.message),
@@ -297,12 +309,14 @@ export function SupportChatbot({ inviteToken }) {
         const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
         const phoneNumber = normalize(data.invite?.phoneNumber);
         const photoUrl = normalize(data.invite?.profilePhotoUrl);
+        const photoTag = normalize(data.invite?.profilePhotoTag);
         const displayName = fullName || firstName || storedProfile.displayName || storedProfile.firstName || "Unknown guest";
         const nextAccessToken = normalize(data.supportAccessToken);
 
         setCustomerFirstName(firstName);
         setCustomerDisplayName(displayName);
         setCustomerPhotoUrl(photoUrl || storedProfile.photoUrl);
+        setCustomerPhotoTag(photoTag);
         if (nextAccessToken) {
           setSupportAccessToken(nextAccessToken);
           saveSupportAccessToken(nextAccessToken);
@@ -313,6 +327,7 @@ export function SupportChatbot({ inviteToken }) {
           displayName,
           phoneNumber: phoneNumber || storedProfile.phoneNumber,
           photoUrl: photoUrl || storedProfile.photoUrl,
+          photoTag: photoTag || storedProfile.photoTag,
         });
         window.localStorage.setItem(
           PORTAL_PROFILE_KEY,
@@ -322,6 +337,7 @@ export function SupportChatbot({ inviteToken }) {
             displayName,
             phoneNumber: phoneNumber || storedProfile.phoneNumber,
             photoUrl: photoUrl || storedProfile.photoUrl,
+            photoTag: photoTag || storedProfile.photoTag,
           }),
         );
         setRequestForm((current) => ({
@@ -343,6 +359,7 @@ export function SupportChatbot({ inviteToken }) {
           setCustomerFirstName(nextFirstName);
           setCustomerDisplayName(nextDisplayName);
           setCustomerPhotoUrl(storedProfile.photoUrl);
+          setCustomerPhotoTag(storedProfile.photoTag);
           setRequestForm((current) => ({
             ...defaultRequestForm(nextDisplayName || nextFirstName, storedProfile.phoneNumber, current.message),
           }));
@@ -415,6 +432,7 @@ export function SupportChatbot({ inviteToken }) {
                 portalProfile.displayName ||
                 portalProfile.firstName,
               data.inquiry.customerPhotoUrl || customerPhotoUrl,
+              data.inquiry.customerPhotoTag || customerPhotoTag,
             ),
           );
         }
@@ -441,6 +459,7 @@ export function SupportChatbot({ inviteToken }) {
     supportAccessToken,
     customerDisplayName,
     customerPhotoUrl,
+    customerPhotoTag,
     portalProfile.displayName,
     portalProfile.firstName,
   ]);
@@ -496,7 +515,7 @@ export function SupportChatbot({ inviteToken }) {
 
       return changed ? nextMessages : current;
     });
-  }, [customerDisplayName, customerFirstName, customerPhotoUrl, portalProfile.displayName, portalProfile.firstName]);
+  }, [customerDisplayName, customerFirstName, customerPhotoUrl, customerPhotoTag, portalProfile.displayName, portalProfile.firstName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -591,6 +610,7 @@ export function SupportChatbot({ inviteToken }) {
             portalProfile.displayName ||
             portalProfile.firstName,
           data.inquiry.customerPhotoUrl || customerPhotoUrl,
+          data.inquiry.customerPhotoTag || customerPhotoTag,
         ),
       );
     } else if (data.inquiry?.answer) {
@@ -658,6 +678,8 @@ export function SupportChatbot({ inviteToken }) {
           "You",
         text: trimmed,
         createdAt: new Date().toISOString(),
+        photoUrl: customerPhotoUrl,
+        photoTag: customerPhotoTag,
       },
     ];
     setMessages(nextMessages);
@@ -794,6 +816,7 @@ export function SupportChatbot({ inviteToken }) {
         selectedHistory.thread,
         getHistoryCustomerName(selectedHistory, resolvedCustomerName),
         selectedHistory.customerPhotoUrl || customerPhotoUrl,
+        selectedHistory.customerPhotoTag || customerPhotoTag,
       )
     : [];
   const liveMessages = messages;
@@ -860,13 +883,18 @@ export function SupportChatbot({ inviteToken }) {
                             "S"
                           )}
                         </span>
-                        <strong>
-                          {message.role === "user"
-                            ? isPlaceholderCustomerName(message.name)
-                              ? selectedHistory?.customer || resolvedCustomerName || "You"
-                              : message.name
-                            : "Support"}
-                        </strong>
+                        <span className="chatbot-message-name-wrap">
+                          <strong>
+                            {message.role === "user"
+                              ? isPlaceholderCustomerName(message.name)
+                                ? selectedHistory?.customer || resolvedCustomerName || "You"
+                                : message.name
+                              : "Support"}
+                          </strong>
+                          {message.role === "user" && normalize(message.photoTag) ? (
+                            <span className="chatbot-profile-tag">{message.photoTag}</span>
+                          ) : null}
+                        </span>
                       </div>
                       <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
                     </header>
@@ -900,13 +928,18 @@ export function SupportChatbot({ inviteToken }) {
                           "S"
                         )}
                       </span>
-                      <strong>
-                        {message.role === "user"
-                          ? isPlaceholderCustomerName(message.name)
-                            ? resolvedCustomerName || "You"
-                            : message.name
-                          : "Support"}
-                      </strong>
+                      <span className="chatbot-message-name-wrap">
+                        <strong>
+                          {message.role === "user"
+                            ? isPlaceholderCustomerName(message.name)
+                              ? resolvedCustomerName || "You"
+                              : message.name
+                            : "Support"}
+                        </strong>
+                        {message.role === "user" && normalize(message.photoTag) ? (
+                          <span className="chatbot-profile-tag">{message.photoTag}</span>
+                        ) : null}
+                      </span>
                     </div>
                     <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
                   </header>
