@@ -139,10 +139,13 @@ async function compressProfilePhoto(file) {
 export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
+  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
+    privacyAccepted: "",
   });
   const [formValues, setFormValues] = useState({
     firstName: "",
@@ -192,6 +195,7 @@ export function RegisterForm() {
     const firstName = String(formData.get("firstName") ?? "").trim();
     const lastName = String(formData.get("lastName") ?? "").trim();
     const phoneNumber = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "");
+    const privacyAccepted = formData.get("privacyAccepted") === "on";
 
     const nextFieldErrors = {
       firstName:
@@ -206,6 +210,9 @@ export function RegisterForm() {
         PHONE_PATTERN.test(phoneNumber)
           ? ""
           : "Please enter a 10-digit phone number, like 5551234567.",
+      privacyAccepted: privacyAccepted
+        ? ""
+        : "Please confirm the privacy policy before signing up.",
     };
 
     return {
@@ -218,7 +225,8 @@ export function RegisterForm() {
     return (
       NAME_PATTERN.test(values.firstName.trim()) &&
       NAME_PATTERN.test(values.lastName.trim()) &&
-      PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, ""))
+      PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
+      isPrivacyAccepted
     );
   }
 
@@ -285,6 +293,7 @@ export function RegisterForm() {
       const barcode = typeof data.barcode === "string" ? data.barcode : "";
 
       form.reset();
+      setIsPrivacyAccepted(false);
       setIsSuccess(true);
       window.setTimeout(() => {
         const query = new URLSearchParams({ invite: qrToken });
@@ -373,11 +382,38 @@ export function RegisterForm() {
         </p>
       </label>
 
+      <div className="register-privacy">
+        <label className="register-privacy-acceptance">
+          <input
+            checked={isPrivacyAccepted}
+            aria-label="Accept the privacy policy"
+            name="privacyAccepted"
+            onChange={(event) => {
+              setIsPrivacyAccepted(event.target.checked);
+              setFieldErrors((current) => ({ ...current, privacyAccepted: "" }));
+            }}
+            type="checkbox"
+          />
+          <span>I agree</span>
+        </label>
+        <button
+          className="register-privacy-link"
+          type="button"
+          onClick={() => setIsPrivacyPolicyOpen(true)}
+        >
+          privacy policy
+        </button>
+      </div>
+
+      {fieldErrors.privacyAccepted ? (
+        <p className="register-field-error">{fieldErrors.privacyAccepted}</p>
+      ) : null}
+
       {error ? <p className="register-status register-status-error">{error}</p> : null}
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}
-        disabled={isSubmitting || isSuccess}
+        disabled={isSubmitting || isSuccess || !isPrivacyAccepted}
         type="submit"
       >
         {submitLabel}
@@ -390,6 +426,35 @@ export function RegisterForm() {
             ? `${inviteCount} guests are signed up.`
             : "Checking availability..."}
       </p>
+
+      {isPrivacyPolicyOpen ? (
+        <div
+          className="register-privacy-modal"
+          role="presentation"
+          onClick={() => setIsPrivacyPolicyOpen(false)}
+        >
+          <div
+            aria-modal="true"
+            className="register-privacy-dialog"
+            role="dialog"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="register-privacy-title">privacy policy</p>
+            <p className="register-privacy-copy">
+              Your personal information will be kept strictly confidential. It will be used only
+              to verify and manage your login for the event, and it will be permanently deleted
+              after the event ends, with no possibility of recovery.
+            </p>
+            <button
+              className="register-privacy-close"
+              type="button"
+              onClick={() => setIsPrivacyPolicyOpen(false)}
+            >
+              close
+            </button>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
