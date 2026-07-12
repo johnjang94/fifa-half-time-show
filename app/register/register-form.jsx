@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -141,17 +140,20 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
+  const [hasReadPrivacyPolicy, setHasReadPrivacyPolicy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
     privacyAccepted: "",
+    privacyReviewed: "",
   });
   const [formValues, setFormValues] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
   });
+  const privacyPolicyBodyRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [inviteCount, setInviteCount] = useState(0);
@@ -191,6 +193,19 @@ export function RegisterForm() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isPrivacyPolicyOpen) {
+      return;
+    }
+
+    const body = privacyPolicyBodyRef.current;
+    if (!body) {
+      return;
+    }
+
+    body.scrollTop = 0;
+  }, [isPrivacyPolicyOpen]);
+
   function validateForm(formData) {
     const firstName = String(formData.get("firstName") ?? "").trim();
     const lastName = String(formData.get("lastName") ?? "").trim();
@@ -213,6 +228,9 @@ export function RegisterForm() {
       privacyAccepted: privacyAccepted
         ? ""
         : "Please confirm the privacy policy before signing up.",
+      privacyReviewed: hasReadPrivacyPolicy
+        ? ""
+        : "Please read the privacy policy to the end before signing up.",
     };
 
     return {
@@ -226,7 +244,8 @@ export function RegisterForm() {
       NAME_PATTERN.test(values.firstName.trim()) &&
       NAME_PATTERN.test(values.lastName.trim()) &&
       PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
-      isPrivacyAccepted
+      isPrivacyAccepted &&
+      hasReadPrivacyPolicy
     );
   }
 
@@ -294,6 +313,8 @@ export function RegisterForm() {
 
       form.reset();
       setIsPrivacyAccepted(false);
+      setHasReadPrivacyPolicy(false);
+      setIsPrivacyPolicyOpen(false);
       setIsSuccess(true);
       window.setTimeout(() => {
         const query = new URLSearchParams({ invite: qrToken });
@@ -405,15 +426,17 @@ export function RegisterForm() {
         </button>
       </div>
 
-      {fieldErrors.privacyAccepted ? (
-        <p className="register-field-error">{fieldErrors.privacyAccepted}</p>
+      {fieldErrors.privacyAccepted || fieldErrors.privacyReviewed ? (
+        <p className="register-field-error">
+          {fieldErrors.privacyAccepted || fieldErrors.privacyReviewed}
+        </p>
       ) : null}
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}
-        disabled={isSubmitting || isSuccess || !isPrivacyAccepted}
+        disabled={isSubmitting || isSuccess || !isPrivacyAccepted || !hasReadPrivacyPolicy}
         type="submit"
       >
         {submitLabel}
@@ -440,11 +463,38 @@ export function RegisterForm() {
             onClick={(event) => event.stopPropagation()}
           >
             <p className="register-privacy-title">privacy policy</p>
-            <p className="register-privacy-copy">
-              Your personal information will be kept strictly confidential. It will be used only
-              to verify and manage your login for the event, and it will be permanently deleted
-              after the event ends, with no possibility of recovery.
-            </p>
+            <div
+              className="register-privacy-copy"
+              ref={privacyPolicyBodyRef}
+              onScroll={(event) => {
+                const body = event.currentTarget;
+                const hasReachedEnd =
+                  body.scrollTop + body.clientHeight >= body.scrollHeight - 8;
+
+                if (hasReachedEnd) {
+                  setHasReadPrivacyPolicy(true);
+                  setFieldErrors((current) => ({ ...current, privacyReviewed: "" }));
+                }
+              }}
+            >
+              <p>
+                We use your name, phone number, and profile photo only to manage your event
+                registration, contact you about the watch party, and help with check-in and
+                support if needed.
+              </p>
+              <p>
+                We do not sell your information. We share it only with trusted service providers
+                that help us run the event, and only as needed to provide those services.
+              </p>
+              <p>
+                We keep your information for the event itself and a short period afterward for
+                operational and safety purposes, then delete it unless we need to keep it longer
+                for legal, security, or fraud-prevention reasons.
+              </p>
+              <p className="register-privacy-scroll-note">
+                Please scroll to the end of this policy to unlock sign up.
+              </p>
+            </div>
             <button
               className="register-privacy-close"
               type="button"

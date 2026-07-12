@@ -479,8 +479,8 @@ button {
 }
 
 .page-background-image {
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
+  object-position: center top;
   opacity: 0.5;
 }
 
@@ -538,6 +538,7 @@ button {
   gap: 16px;
   position: relative;
   z-index: 1;
+  padding-top: clamp(72px, 16vh, 132px);
 }
 
 .overview-carousel {
@@ -578,7 +579,7 @@ button {
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: max(10vw, 20px);
-  padding: 12px max(10vw, 20px) 18px;
+  padding: 28px max(10vw, 20px) 18px;
   width: 100%;
   flex: 1;
   -webkit-overflow-scrolling: touch;
@@ -834,7 +835,7 @@ button {
   gap: 12px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(44px, 12vh, 120px);
+  padding-top: clamp(72px, 16vh, 140px);
 }
 
 .register-header {
@@ -847,7 +848,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 10px;
 }
 
 .register-eyebrow {
@@ -868,7 +869,7 @@ button {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   flex: 1 1 auto;
   opacity: 1;
   transform: translateY(0);
@@ -886,12 +887,12 @@ button {
 .register-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .register-name-row {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -899,7 +900,7 @@ button {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .register-field input {
@@ -908,7 +909,7 @@ button {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--text);
-  padding: 1rem;
+  padding: 0.88rem 0.95rem;
   font: inherit;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
@@ -984,6 +985,29 @@ button {
   color: #fff;
 }
 
+.register-privacy-copy {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  max-height: min(58svh, 380px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.register-privacy-copy p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 0.96rem;
+}
+
+.register-privacy-scroll-note {
+  color: rgba(245, 231, 197, 0.88);
+  font-size: 0.84rem;
+}
+
 .register-field input[type="file"] {
   padding: 0.7rem 0.8rem;
 }
@@ -1005,10 +1029,10 @@ button {
 }
 
 .register-button {
-  margin-top: auto;
+  margin-top: 2px;
   border: 1px solid var(--edge);
   border-radius: 999px;
-  padding: 1rem 1.5rem;
+  padding: 0.92rem 1.4rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08));
   color: var(--text);
   letter-spacing: 0.18em;
@@ -1096,13 +1120,6 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.24em;
   font-size: 0.75rem;
-}
-
-.register-privacy-copy {
-  margin: 0;
-  color: var(--text);
-  line-height: 1.6;
-  font-size: 0.98rem;
 }
 
 .register-privacy-close {
@@ -2548,9 +2565,14 @@ button {
     padding: 18px;
   }
 
+  .overview-shell {
+    padding-top: clamp(58px, 12vh, 104px);
+  }
+
   .overview-track {
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 4vw;
+    padding-top: 18px;
   }
 
   .overview-slide {
@@ -2574,11 +2596,11 @@ button {
   }
 
   .register-shell {
-    padding-top: clamp(36px, 10vh, 72px);
+    padding-top: clamp(56px, 12vh, 96px);
   }
 
   .register-form {
-    gap: 12px;
+    gap: 10px;
   }
 
   .register-field input[type="file"]::file-selector-button {
