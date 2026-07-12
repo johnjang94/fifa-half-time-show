@@ -2,9 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-const SESSION_KEY = "fifa-half-time-show-session";
-const LOGOUT_REASON_KEY = "fifa-half-time-show-logout-reason";
+import { clearSessionState, LOGOUT_REASON_KEY, SESSION_KEY, markIdleLogout } from "./session-lifecycle";
 const IDLE_LIMIT_MS = 15 * 60 * 1000;
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -46,8 +44,8 @@ export function SessionGuard() {
 
     function clearSessionAndRedirect() {
       void recordActivity("logout", { reason: "idle" });
-      sessionStorage.removeItem(SESSION_KEY);
-      sessionStorage.setItem(LOGOUT_REASON_KEY, "idle");
+      clearSessionState();
+      markIdleLogout();
       router.replace("/");
     }
 
@@ -73,6 +71,7 @@ export function SessionGuard() {
         clearSessionAndRedirect();
         return undefined;
       }
+      clearSessionState();
       router.replace("/");
       return undefined;
     }

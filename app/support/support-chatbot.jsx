@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -215,7 +216,7 @@ function initialsFromName(value) {
 
 export function SupportChatbot({ inviteToken }) {
   const router = useRouter();
-  const inviteTokenValue = useMemo(() => (inviteToken ? String(inviteToken).trim() : ""), [inviteToken]);
+  const { inviteToken: inviteTokenValue, isResolved } = usePersistentInviteToken(inviteToken);
   const [messages, setMessages] = useState(() => createInitialMessages("there"));
   const [value, setValue] = useState("");
   const [ticketId, setTicketId] = useState("");
@@ -252,6 +253,10 @@ export function SupportChatbot({ inviteToken }) {
     let cancelled = false;
 
     async function loadInvite() {
+      if (!isResolved) {
+        return;
+      }
+
       const storedProfile = readPortalProfile();
       setPortalProfile(storedProfile);
 
@@ -359,10 +364,10 @@ export function SupportChatbot({ inviteToken }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteTokenValue]);
+  }, [inviteTokenValue, isResolved]);
 
   useEffect(() => {
-    if (!ticketId || viewMode !== "live") {
+    if (!isResolved || !ticketId || viewMode !== "live") {
       return undefined;
     }
 
@@ -430,6 +435,7 @@ export function SupportChatbot({ inviteToken }) {
       }
     };
   }, [
+    isResolved,
     ticketId,
     viewMode,
     supportAccessToken,
@@ -440,12 +446,16 @@ export function SupportChatbot({ inviteToken }) {
   ]);
 
   useEffect(() => {
+    if (!isResolved) {
+      return;
+    }
+
     setRequestForm((current) => ({
       ...current,
       name: current.name || customerFirstName || "",
       phoneNumber: current.phoneNumber || inviteTokenValue || "",
     }));
-  }, [customerFirstName, inviteTokenValue]);
+  }, [customerFirstName, inviteTokenValue, isResolved]);
 
   useEffect(() => {
     if (!customerDisplayName && !customerPhotoUrl) {
@@ -493,7 +503,7 @@ export function SupportChatbot({ inviteToken }) {
 
     async function loadHistory() {
       const storedToken = supportAccessToken || readSupportAccessToken();
-      if (!inviteTokenValue && !storedToken) {
+      if (!isResolved || !inviteTokenValue) {
         setHistoryItems([]);
         setSelectedHistoryId("");
         setHistoryError("");
@@ -538,7 +548,7 @@ export function SupportChatbot({ inviteToken }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteTokenValue, viewMode, supportAccessToken]);
+  }, [inviteTokenValue, isResolved, viewMode, supportAccessToken]);
 
   const selectedHistory = useMemo(
     () => historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0] ?? null,

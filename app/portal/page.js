@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
+import { SESSION_KEY, clearSessionState } from "../../components/session-lifecycle";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 import loungeImage from "../../lounge.jpg";
 
-const SESSION_KEY = "fifa-half-time-show-session";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
@@ -41,22 +42,6 @@ async function recordActivity(eventType, extra = {}) {
   } catch {
     // Best effort logging only.
   }
-}
-
-function sanitizeToken(value) {
-  if (Array.isArray(value)) {
-    return value[0]?.trim() || "guest";
-  }
-
-  return typeof value === "string" && value.trim() ? value.trim() : "guest";
-}
-
-function readInviteToken(value) {
-  if (Array.isArray(value)) {
-    return value[0]?.trim() || "";
-  }
-
-  return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
 function normalize(value) {
@@ -295,7 +280,7 @@ export default function PortalPage() {
 function PortalPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteToken = useMemo(() => readInviteToken(searchParams?.get("invite")), [searchParams]);
+  const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.get("invite"));
   const [activePanel, setActivePanel] = useState(null);
   const [showLockedNotice, setShowLockedNotice] = useState(false);
   const [invite, setInvite] = useState({
@@ -309,15 +294,19 @@ function PortalPageInner() {
   const portalTitle = getPortalTitle(invite.rsvp);
   const isCheckedIn = Boolean(invite.checkedInAt);
 
-  const displayName = useMemo(() => {
+  const displayName = (() => {
     const fullName = [normalize(invite.firstName), normalize(invite.lastName)]
       .filter(Boolean)
       .join(" ")
       .trim();
     return fullName || "guest";
-  }, [invite.firstName, invite.lastName]);
+  })();
 
   useEffect(() => {
+    if (!isResolved) {
+      return;
+    }
+
     if (!inviteToken) {
       router.replace("/");
       return;
@@ -331,10 +320,10 @@ function PortalPageInner() {
     void recordActivity("portal-view", {
       inviteToken,
     });
-  }, [inviteToken, router]);
+  }, [inviteToken, isResolved, router]);
 
   useEffect(() => {
-    if (!inviteToken) {
+    if (!isResolved || !inviteToken) {
       return;
     }
 
@@ -380,7 +369,11 @@ function PortalPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [inviteToken]);
+  }, [inviteToken, isResolved]);
+
+  if (!isResolved) {
+    return null;
+  }
 
   if (typeof window !== "undefined" && !sessionStorage.getItem(SESSION_KEY)) {
     return null;
@@ -388,6 +381,12 @@ function PortalPageInner() {
 
   if (!inviteToken) {
     return null;
+  }
+
+  function handleLogout() {
+    void recordActivity("logout", { reason: "manual" });
+    clearSessionState();
+    router.replace("/");
   }
 
   return (
@@ -440,10 +439,10 @@ function PortalPageInner() {
 
           <button
             className="portal-action-button portal-logout-button"
-            onClick={() => router.push("/")}
+            onClick={handleLogout}
             type="button"
           >
-            logout
+            end session
           </button>
         </section>
       </section>

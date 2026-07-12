@@ -3,14 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
-
-function sanitizeToken(value) {
-  return typeof value === "string" && value.trim() ? value.trim() : "guest";
-}
 
 function sanitizeBarcode(value) {
   const digits = typeof value === "string" ? value.replace(/\D/g, "") : "";
@@ -32,7 +29,7 @@ function saveSupportAccessToken(token) {
 
 export default function ThankYouPage({ searchParams }) {
   const router = useRouter();
-  const inviteToken = sanitizeToken(searchParams?.invite);
+  const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.invite);
   const [inviteBarcode, setInviteBarcode] = useState(() => sanitizeBarcode(searchParams?.barcode));
   const [isVisible, setIsVisible] = useState(false);
   const [showBarcode, setShowBarcode] = useState(false);
@@ -48,7 +45,7 @@ export default function ThankYouPage({ searchParams }) {
   }, []);
 
   useEffect(() => {
-    if (!inviteToken || inviteToken === "guest") {
+    if (!isResolved || !inviteToken) {
       return undefined;
     }
 
@@ -77,7 +74,13 @@ export default function ThankYouPage({ searchParams }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteBarcode, inviteToken]);
+  }, [inviteBarcode, inviteToken, isResolved]);
+
+  useEffect(() => {
+    if (isResolved && !inviteToken) {
+      router.replace("/");
+    }
+  }, [inviteToken, isResolved, router]);
 
   useEffect(() => {
     if (!isQrReady) {
@@ -101,6 +104,14 @@ export default function ThankYouPage({ searchParams }) {
   const handleQrReady = useCallback(() => {
     setIsQrReady(true);
   }, []);
+
+  if (!isResolved) {
+    return null;
+  }
+
+  if (!inviteToken) {
+    return null;
+  }
 
   return (
     <main className={`app-frame thank-you-page ${isVisible ? "is-visible" : ""}`}>

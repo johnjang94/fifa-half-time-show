@@ -4,10 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { saveStoredInviteToken } from "./invite-storage";
+import { LOGOUT_REASON_KEY, SESSION_KEY } from "./session-lifecycle";
 import heroImage from "../image.png";
-
-const SESSION_KEY = "fifa-half-time-show-session";
-const LOGOUT_REASON_KEY = "fifa-half-time-show-logout-reason";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 
@@ -94,6 +93,7 @@ export function GuestExperience() {
     event.preventDefault();
     const sessionId = String(Date.now());
     sessionStorage.setItem(SESSION_KEY, sessionId);
+    saveStoredInviteToken(digitsOnly);
     void recordActivity("login", {
       phoneNumber: digitsOnly,
       inviteToken: digitsOnly,

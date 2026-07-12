@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -44,7 +45,7 @@ export default function SurveyPage() {
 function SurveyPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteToken = useMemo(() => normalize(searchParams?.get("invite")), [searchParams]);
+  const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.get("invite"));
   const [isVisible, setIsVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -64,10 +65,14 @@ function SurveyPageInner() {
   }, []);
 
   useEffect(() => {
+    if (!isResolved) {
+      return;
+    }
+
     if (!inviteToken) {
       router.replace("/");
     }
-  }, [inviteToken, router]);
+  }, [inviteToken, isResolved, router]);
 
   const isFriends = answers.howDidYouKnow === "Friends";
   const isComplete =
@@ -75,6 +80,10 @@ function SurveyPageInner() {
     (!isFriends || Boolean(normalize(answers.referredBy))) &&
     Boolean(normalize(answers.dietaryRestrictions)) &&
     Boolean(answers.resident);
+
+  if (!isResolved) {
+    return null;
+  }
 
   if (typeof window !== "undefined" && !inviteToken) {
     return null;

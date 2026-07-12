@@ -2,15 +2,12 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const SURVEY_COMPLETION_SMS_SENT_PREFIX = "fifa-half-time-show-survey-completion-admin-sms-sent";
 const surveyCompletionSmsInFlightTokens = new Set();
-
-function normalize(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
 
 function getSurveyCompletionSmsStorageKey(inviteToken) {
   return `${SURVEY_COMPLETION_SMS_SENT_PREFIX}:${inviteToken}`;
@@ -28,7 +25,7 @@ function SurveyDonePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
-  const inviteToken = normalize(searchParams?.get("invite"));
+  const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.get("invite"));
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setIsVisible(true));
@@ -36,7 +33,7 @@ function SurveyDonePageInner() {
   }, []);
 
   useEffect(() => {
-    if (!inviteToken || typeof window === "undefined") {
+    if (!isResolved || !inviteToken || typeof window === "undefined") {
       return undefined;
     }
 
@@ -87,7 +84,20 @@ function SurveyDonePageInner() {
     return () => {
       cancelled = true;
     };
-  }, [inviteToken]);
+  }, [inviteToken, isResolved]);
+
+  function handleMyTicketClick() {
+    if (!inviteToken) {
+      router.push("/");
+      return;
+    }
+
+    router.push(`/portal?invite=${encodeURIComponent(inviteToken)}`);
+  }
+
+  if (!isResolved) {
+    return null;
+  }
 
   return (
     <main className={`app-frame survey-done-page ${isVisible ? "is-visible" : ""}`}>
@@ -98,7 +108,7 @@ function SurveyDonePageInner() {
 
         <p className="survey-done-copy">You may check your ticket now</p>
 
-        <button className="survey-done-home" onClick={() => router.push("/portal")} type="button">
+        <button className="survey-done-home" onClick={handleMyTicketClick} type="button">
           My Ticket
         </button>
       </section>
