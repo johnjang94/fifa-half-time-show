@@ -42,8 +42,15 @@ export function GuestExperience() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [logoutNotice, setLogoutNotice] = useState("");
+  const [inviteCount, setInviteCount] = useState(0);
+  const [capacity, setCapacity] = useState(null);
+  const [availabilityLoaded, setAvailabilityLoaded] = useState(false);
   const digitsOnly = phoneNumber.replace(/\D/g, "");
   const isPhoneNumberComplete = digitsOnly.length === 10;
+  const spotsLeft =
+    availabilityLoaded && capacity !== null ? Math.max(0, Number(capacity) - Number(inviteCount)) : null;
+  const shouldShowSpotWarning = spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5;
+  const joinLinkLabel = spotsLeft === 0 ? "join the waitlist" : "join the watch party";
 
   useEffect(() => {
     const reason = sessionStorage.getItem(LOGOUT_REASON_KEY);
@@ -52,6 +59,35 @@ export function GuestExperience() {
       setLogoutNotice("You were signed out after 15 minutes of inactivity.");
       sessionStorage.removeItem(LOGOUT_REASON_KEY);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAvailability() {
+      try {
+        const response = await fetch(`${controlBaseUrl}/api/invites`, {
+          cache: "no-store",
+        });
+        const data = await response.json();
+
+        if (!cancelled && response.ok && data.ok) {
+          setInviteCount(Number(data.inviteCount ?? 0));
+          setCapacity(
+            data.capacity === null || data.capacity === undefined ? null : Number(data.capacity),
+          );
+          setAvailabilityLoaded(true);
+        }
+      } catch {
+        // Best effort only.
+      }
+    }
+
+    void loadAvailability();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function handleLoginSubmit(event) {
@@ -86,6 +122,13 @@ export function GuestExperience() {
               <p className="login-status" role="status">
                 {logoutNotice}
               </p>
+            ) : null}
+
+            {shouldShowSpotWarning ? (
+              <div className="login-warning" role="status" aria-live="polite">
+                <strong>{spotsLeft} spots left</strong>
+                <span>Hurry, the guest list is nearly full.</span>
+              </div>
             ) : null}
 
             <div className={`auth-switch ${isLoginOpen ? "is-open" : ""}`}>
@@ -127,7 +170,7 @@ export function GuestExperience() {
             </div>
 
             <Link className="join-link" href="/overview">
-              join the watch party
+              {joinLinkLabel}
             </Link>
           </div>
         </div>

@@ -105,6 +105,34 @@ button {
   background: #04080c;
 }
 
+.login-warning {
+  display: grid;
+  gap: 4px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 173, 66, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 173, 66, 0.16), rgba(92, 43, 11, 0.84)),
+    rgba(4, 8, 12, 0.72);
+  color: rgba(255, 236, 215, 0.96);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.login-warning strong {
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.login-warning span {
+  color: rgba(255, 236, 215, 0.76);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .auth-switch {
   position: relative;
   min-height: 64px;
