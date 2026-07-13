@@ -548,7 +548,7 @@ button {
   align-items: stretch;
   min-height: 0;
   position: relative;
-  gap: 16px;
+  gap: 12px;
 }
 
 .overview-carousel::before,
@@ -771,7 +771,7 @@ button {
 
 .overview-signup {
   align-self: stretch;
-  margin: 2px 0 0;
+  margin: 8px 0 0;
   width: 100%;
   min-width: 0;
   transition:
@@ -794,8 +794,8 @@ button {
   align-items: center;
   justify-content: center;
   align-self: center;
-  margin-top: auto;
-  margin-bottom: 2px;
+  margin-top: 0;
+  margin-bottom: 0;
   min-width: 180px;
   padding: 1rem 2rem;
   border-radius: 999px;
@@ -2734,13 +2734,14 @@ button {
   }
 
   .overview-shell {
-    padding-top: clamp(64px, 14vh, 112px);
+    padding-top: clamp(42px, 10vh, 76px);
   }
 
   .overview-track {
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 4vw;
-    padding-top: 14px;
+    padding-top: 0;
+    padding-bottom: 10px;
   }
 
   .overview-slide {
@@ -2752,7 +2753,7 @@ button {
   }
 
   .overview-media {
-    min-height: 74svh;
+    min-height: 66svh;
   }
 
   .signup-button {
