@@ -21,6 +21,31 @@ function normalizeRecentIds(input) {
     .filter(Boolean);
 }
 
+function isAudioOnlyTrack(track) {
+  const title = normalizeText(track?.title).toLowerCase();
+  const channelTitle = normalizeText(track?.channelTitle).toLowerCase();
+  const isBtsAudio = looksLikeBtsAudioTrack(track);
+  const hasVideoLikeKeyword =
+    title.includes("mv") ||
+    title.includes("music video") ||
+    title.includes("video") ||
+    title.includes("teaser") ||
+    title.includes("performance") ||
+    title.includes("live") ||
+    title.includes("dance practice") ||
+    title.includes("behind the scenes");
+
+  return (
+    isBtsAudio &&
+    !hasVideoLikeKeyword &&
+    (title.includes("audio") ||
+      title.includes("official audio") ||
+      title.includes("lyric") ||
+      title.includes("lyrics") ||
+      channelTitle.includes("audio"))
+  );
+}
+
 function isFreshTrack(track, recentIds) {
   return Boolean(track?.videoId) && !recentIds.includes(track.videoId);
 }
@@ -46,6 +71,7 @@ async function fetchYouTubeSearch(query) {
   url.searchParams.set("part", "snippet");
   url.searchParams.set("type", "video");
   url.searchParams.set("videoEmbeddable", "true");
+  url.searchParams.set("videoCategoryId", "10");
   url.searchParams.set("maxResults", "10");
   url.searchParams.set("q", query);
   url.searchParams.set("key", apiKey);
@@ -73,7 +99,7 @@ async function fetchYouTubeSearch(query) {
         publishedAt: normalizeText(item?.snippet?.publishedAt),
         source: "youtube-search",
       }))
-      .filter((track) => track.videoId && looksLikeBtsAudioTrack(track));
+      .filter((track) => track.videoId && isAudioOnlyTrack(track));
   } catch {
     return [];
   } finally {
@@ -191,6 +217,7 @@ export async function POST(request) {
       channelTitle: track.channelTitle || "YouTube",
       publishedAt: track.publishedAt || "",
       source: track.source || "fallback",
+      playbackMode: "audio-only",
     },
   });
 }
