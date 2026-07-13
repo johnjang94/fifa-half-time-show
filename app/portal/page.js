@@ -484,7 +484,7 @@ function PortalPageInner() {
             onClick={handleLogout}
             type="button"
           >
-            end session
+            Log out
           </button>
         </section>
       </section>

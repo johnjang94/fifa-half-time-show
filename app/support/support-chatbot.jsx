@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const apiBaseUrl =
@@ -196,6 +195,93 @@ function getHistorySnippet(inquiry) {
   return normalize(firstCustomerLine || fallback).slice(0, 72);
 }
 
+function getHistoryTitle(inquiry) {
+  return normalize(inquiry?.summaryTitle ?? "") || getHistorySnippet(inquiry);
+}
+
+function getHistoryTicketCode(inquiry) {
+  return normalize(inquiry?.ticketCode ?? "");
+}
+
+function getHistoryDisplayTitle(inquiry) {
+  const ticketCode = getHistoryTicketCode(inquiry);
+  const title = getHistoryTitle(inquiry);
+
+  if (!ticketCode) {
+    return title;
+  }
+
+  return `${ticketCode} · ${title}`;
+}
+
+function parseHistoryTimestamp(value) {
+  const date = new Date(value);
+  const time = date.getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getHistoryLastAgentTimestamp(inquiry) {
+  return Math.max(
+    ...(Array.isArray(inquiry?.thread)
+      ? inquiry.thread
+          .filter((entry) => entry?.role === "agent")
+          .map((entry) => parseHistoryTimestamp(entry?.createdAt))
+      : [0]),
+    0,
+  );
+}
+
+function hasHistoryUnreadReply(inquiry) {
+  const lastAgentAt = getHistoryLastAgentTimestamp(inquiry);
+  if (!lastAgentAt) {
+    return false;
+  }
+
+  const lastReadAt = parseHistoryTimestamp(inquiry?.supportChatReadAt);
+  return lastAgentAt > lastReadAt;
+}
+
+function hasAdminAppeared(inquiry) {
+  return Boolean(
+    Array.isArray(inquiry?.thread) && inquiry.thread.some((entry) => entry?.role === "agent"),
+  );
+}
+
+function getHistoryItemState(inquiry) {
+  const unread = hasHistoryUnreadReply(inquiry);
+  return {
+    unread,
+    adminAppeared: hasAdminAppeared(inquiry),
+  };
+}
+
+async function sendSupportPresenceUpdate(ticketId, state, supportAccessToken) {
+  const safeTicketId = normalize(ticketId);
+  const safeState = state === "inactive" ? "inactive" : "active";
+  const safeToken = normalize(supportAccessToken);
+
+  if (!safeTicketId || !safeToken) {
+    return;
+  }
+
+  try {
+    await fetch(`${apiBaseUrl}/api/support/inquiries/presence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${safeToken}`,
+      },
+      body: JSON.stringify({
+        ticketId: safeTicketId,
+        state: safeState,
+      }),
+      keepalive: true,
+    });
+  } catch {
+    // Best effort only.
+  }
+}
+
 function getHistoryCustomerName(inquiry, fallbackName = "Unknown guest") {
   const name = [normalize(inquiry?.customer ?? ""), normalize(inquiry?.firstName ?? "")]
     .filter(Boolean)
@@ -225,7 +311,6 @@ function initialsFromName(value) {
 }
 
 export function SupportChatbot({ inviteToken }) {
-  const router = useRouter();
   const { inviteToken: inviteTokenValue, isResolved } = usePersistentInviteToken(inviteToken);
   const [messages, setMessages] = useState(() => createInitialMessages("there"));
   const [value, setValue] = useState("");
@@ -244,7 +329,7 @@ export function SupportChatbot({ inviteToken }) {
   const [historyItems, setHistoryItems] = useState([]);
   const [historyError, setHistoryError] = useState("");
   const [selectedHistoryId, setSelectedHistoryId] = useState("");
-  const [viewMode, setViewMode] = useState("live");
+  const [viewMode, setViewMode] = useState("hub");
   const [requestForm, setRequestForm] = useState({
     name: "",
     phoneNumber: "",
@@ -257,6 +342,8 @@ export function SupportChatbot({ inviteToken }) {
     const savedTicketId = window.localStorage.getItem(TICKET_KEY);
     if (savedTicketId) {
       setTicketId(savedTicketId);
+      setSelectedHistoryId(savedTicketId);
+      setViewMode("live");
     }
   }, []);
 
@@ -384,6 +471,61 @@ export function SupportChatbot({ inviteToken }) {
   }, [inviteTokenValue, isResolved]);
 
   useEffect(() => {
+    if (!isResolved || !ticketId) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let intervalId = null;
+
+    async function pingPresence(state) {
+      if (cancelled) {
+        return;
+      }
+
+      await sendSupportPresenceUpdate(ticketId, state, supportAccessToken);
+    }
+
+    void pingPresence(viewMode === "live" ? "active" : "inactive");
+
+    if (viewMode !== "live") {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        void pingPresence("inactive");
+        return;
+      }
+
+      void pingPresence("active");
+    };
+
+    const handlePageHide = () => {
+      void pingPresence("inactive");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+
+    intervalId = window.setInterval(() => {
+      void pingPresence("active");
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      void sendSupportPresenceUpdate(ticketId, "inactive", supportAccessToken);
+    };
+  }, [isResolved, ticketId, viewMode, supportAccessToken]);
+
+  useEffect(() => {
     if (!isResolved || !ticketId || viewMode !== "live") {
       return undefined;
     }
@@ -435,6 +577,7 @@ export function SupportChatbot({ inviteToken }) {
               data.inquiry.customerPhotoTag || customerPhotoTag,
             ),
           );
+          void sendSupportPresenceUpdate(ticketId, "active", supportAccessToken);
         }
       } catch {
         // Best effort hydration only.
@@ -554,7 +697,7 @@ export function SupportChatbot({ inviteToken }) {
         const items = Array.isArray(data.inquiries) ? data.inquiries : [];
         setHistoryItems(items);
         setHistoryError("");
-        setSelectedHistoryId((current) => current || items[0]?.id || "");
+        setSelectedHistoryId((current) => current || ticketId || items[0]?.id || "");
       } catch {
         if (!cancelled) {
           setHistoryError("Unable to load chat history.");
@@ -567,7 +710,7 @@ export function SupportChatbot({ inviteToken }) {
     return () => {
       cancelled = true;
     };
-  }, [inviteTokenValue, isResolved, viewMode, supportAccessToken]);
+  }, [inviteTokenValue, isResolved, supportAccessToken, ticketId]);
 
   const selectedHistory = useMemo(
     () => historyItems.find((item) => item.id === selectedHistoryId) ?? historyItems[0] ?? null,
@@ -598,6 +741,7 @@ export function SupportChatbot({ inviteToken }) {
     if (data.ticketId) {
       setTicketId(data.ticketId);
       window.localStorage.setItem(TICKET_KEY, data.ticketId);
+      void sendSupportPresenceUpdate(data.ticketId, "active", supportAccessToken);
     }
 
     if (data.inquiry?.thread) {
@@ -758,11 +902,7 @@ export function SupportChatbot({ inviteToken }) {
   }
 
   function finishTheChat() {
-    const nextPath = inviteTokenValue
-      ? `/portal?invite=${encodeURIComponent(inviteTokenValue)}`
-      : "/portal";
-
-    router.push(nextPath);
+    setViewMode("hub");
   }
 
   function startNewChat() {
@@ -791,12 +931,7 @@ export function SupportChatbot({ inviteToken }) {
   }
 
   function goBackToSupport() {
-    setViewMode("live");
-    router.push(
-      inviteTokenValue
-        ? `/portal?invite=${encodeURIComponent(inviteTokenValue)}`
-        : "/portal",
-    );
+    setViewMode("hub");
   }
 
   const hasHistory = historyItems.length > 0;
@@ -821,45 +956,69 @@ export function SupportChatbot({ inviteToken }) {
     : [];
   const liveMessages = messages;
 
+  function renderHistoryItem(item, { showSnippet }) {
+    const { unread, adminAppeared } = getHistoryItemState(item);
+    const title = showSnippet ? getHistoryCustomerName(item, resolvedCustomerName) : getHistoryDisplayTitle(item);
+
+    return (
+      <button
+        className={`support-history-item ${item.id === selectedHistory?.id ? "is-active" : ""} ${unread ? "is-unread" : ""}`}
+        key={item.id}
+        onClick={() => {
+          setSelectedHistoryId(item.id);
+          if (showSnippet) {
+            setViewMode("history");
+          } else {
+            setViewMode("history");
+          }
+        }}
+        type="button"
+      >
+        <span className="support-history-item-copy">
+          <strong>{title}</strong>
+          <time dateTime={item.createdAt}>{formatHistoryDate(item.createdAt)}</time>
+        </span>
+        <span className="support-history-item-markers" aria-hidden="true">
+          {unread ? <span className="support-history-dot is-unread" /> : null}
+          {unread && adminAppeared ? <span className="support-history-dot is-admin" /> : null}
+        </span>
+        {showSnippet ? <span className="support-history-snippet">{getHistorySnippet(item)}</span> : null}
+      </button>
+    );
+  }
+
   return (
     <section className="chatbot-shell support-chatbot" aria-label="Support chatbot">
-      <div className="support-top-actions">
-        <button className="support-back-button" onClick={goBackToSupport} type="button">
-          back
-        </button>
+      <div className={`support-top-actions ${viewMode === "hub" ? "is-hub" : ""}`}>
+        {viewMode === "hub" ? null : (
+          <button className="support-back-button" onClick={goBackToSupport} type="button">
+            back
+          </button>
+        )}
         <button className="support-new-chat-button" onClick={startNewChat} type="button">
           + new chat
         </button>
       </div>
 
       <div className="support-chat-stage">
-        {viewMode === "history" ? (
-          <div className="support-history-panel">
-            <div className="support-history-header">
-              <div>
-                <p className="support-history-eyebrow">your chat history</p>
-                <h2>Past conversations</h2>
-              </div>
-              <span className="support-history-count">{historyItems.length}</span>
-            </div>
+        {viewMode === "hub" ? (
+          <div className="support-hub-panel">
+            {historyError ? <p className="chatbot-error">{historyError}</p> : null}
 
+            {hasHistory ? (
+              <div className="support-hub-list" role="list">
+                {historyItems.map((item) => renderHistoryItem(item, { showSnippet: false }))}
+              </div>
+            ) : (
+              <p className="support-hub-empty">you have no saved chats in history</p>
+            )}
+          </div>
+        ) : viewMode === "history" ? (
+          <div className="support-history-panel">
             {historyError ? <p className="chatbot-error">{historyError}</p> : null}
 
             <div className="support-history-list" role="list">
-              {historyItems.map((item) => (
-                <button
-                  className={`support-history-item ${item.id === selectedHistory?.id ? "is-active" : ""}`}
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedHistoryId(item.id);
-                  }}
-                  type="button"
-                >
-                  <strong>{getHistoryCustomerName(item, resolvedCustomerName)}</strong>
-                  <time dateTime={item.createdAt}>{formatHistoryDate(item.createdAt)}</time>
-                  <span>{getHistorySnippet(item)}</span>
-                </button>
-              ))}
+              {historyItems.map((item) => renderHistoryItem(item, { showSnippet: true }))}
             </div>
 
             <div className="support-history-thread">
@@ -902,7 +1061,7 @@ export function SupportChatbot({ inviteToken }) {
                   </article>
                 ))
               ) : (
-                <p className="support-history-empty">Pick a conversation to review it here.</p>
+                <p className="support-history-empty">you have no saved chats in history</p>
               )}
             </div>
           </div>
@@ -1037,17 +1196,13 @@ export function SupportChatbot({ inviteToken }) {
         )}
       </div>
 
-      <div className="support-bottom-actions">
-        <button className="support-finish-button" onClick={finishTheChat} type="button">
-          finish the chat
-        </button>
-
-        {hasHistory ? (
-          <button className="support-history-button" onClick={openHistory} type="button">
-            your chat history
+      {viewMode === "live" ? (
+        <div className="support-bottom-actions">
+          <button className="support-finish-button" onClick={finishTheChat} type="button">
+            finish the chat
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }

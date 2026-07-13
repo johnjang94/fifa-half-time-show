@@ -2354,6 +2354,10 @@ button {
   flex-wrap: wrap;
 }
 
+.support-top-actions.is-hub {
+  justify-content: flex-end;
+}
+
 .support-bottom-actions {
   justify-content: center;
   flex-wrap: wrap;
@@ -2389,6 +2393,33 @@ button {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.support-hub-panel {
+  display: grid;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+  align-content: start;
+}
+
+.support-hub-list {
+  display: grid;
+  gap: 10px;
+}
+
+.support-hub-empty {
+  margin: 0;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 22px;
+  color: var(--muted);
+  text-align: center;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
 }
 
 .support-history-header {
@@ -2432,8 +2463,9 @@ button {
 }
 
 .support-history-item {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   text-align: left;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
@@ -2443,19 +2475,58 @@ button {
 }
 
 .support-history-item strong {
+  font-weight: 400;
   font-size: 0.82rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
+.support-history-item-copy {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.support-history-item-markers {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-top: 0.15rem;
+}
+
+.support-history-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.03);
+}
+
+.support-history-dot.is-unread {
+  background: #f5e7c5;
+  box-shadow: 0 0 0 6px rgba(245, 231, 197, 0.08);
+}
+
+.support-history-dot.is-admin {
+  background: #51d36f;
+  box-shadow: 0 0 0 6px rgba(81, 211, 111, 0.08);
+}
+
 .support-history-item time,
-.support-history-item span {
+.support-history-snippet {
   color: rgba(255, 255, 255, 0.56);
   line-height: 1.4;
 }
 
-.support-history-item span {
+.support-history-snippet {
   display: block;
+}
+
+.support-history-item.is-unread strong {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .support-history-item.is-active {
@@ -2943,6 +3014,10 @@ button {
     gap: 8px;
   }
 
+  .support-top-actions.is-hub {
+    justify-content: flex-end;
+  }
+
   .support-back-button,
   .support-new-chat-button,
   .support-finish-button,
@@ -2979,6 +3054,11 @@ button {
 
   .support-history-list {
     max-height: 24vh;
+  }
+
+  .support-hub-empty {
+    min-height: 120px;
+    padding: 1rem 0.9rem;
   }
 
   .support-history-thread {

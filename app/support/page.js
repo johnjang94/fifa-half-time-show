@@ -12,7 +12,7 @@ export default function SupportPage({ searchParams }) {
       <section className="support-shell">
         <header className="support-header">
           <p className="support-eyebrow">support</p>
-          <h1>Chat with us</h1>
+          <h1>Hub</h1>
         </header>
 
         <SupportChatbot inviteToken={inviteToken} />
