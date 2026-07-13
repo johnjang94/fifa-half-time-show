@@ -846,7 +846,7 @@ button {
   gap: 12px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(132px, 24vh, 206px);
+  padding-top: clamp(160px, 28vh, 248px);
 }
 
 .register-header {
@@ -858,8 +858,9 @@ button {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 12px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 154px);
 }
 
 .register-eyebrow {
@@ -881,7 +882,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  margin-top: 18px;
   opacity: 1;
   transform: translateY(0);
   transition:
@@ -967,6 +969,7 @@ button {
   width: 100%;
   display: flex;
   align-items: flex-start;
+  justify-content: flex-start;
   gap: 12px;
   border: 0;
   padding: 0;
@@ -1074,7 +1077,13 @@ button {
 }
 
 .register-button {
-  margin-top: 2px;
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 64px);
+  z-index: 30;
+  width: min(calc(100vw - 40px), 440px);
+  margin-top: 0;
+  transform: translateX(-50%);
   border: 1px solid var(--edge);
   border-radius: 999px;
   padding: 0.92rem 1.4rem;
@@ -1125,7 +1134,14 @@ button {
 }
 
 .register-back {
-  align-self: center;
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 20px);
+  z-index: 30;
+  width: min(calc(100vw - 40px), 440px);
+  align-self: auto;
+  text-align: center;
+  transform: translateX(-50%);
   color: var(--muted);
   text-decoration: none;
   text-transform: lowercase;
