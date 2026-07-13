@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { saveStoredInviteToken } from "../../components/invite-storage";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -317,6 +318,7 @@ export function RegisterForm() {
       const qrToken = data.qrToken ?? data.id;
       const barcode = typeof data.barcode === "string" ? data.barcode : "";
 
+      saveStoredInviteToken(qrToken);
       form.reset();
       setIsPrivacyAccepted(false);
       setHasReadPrivacyPolicy(false);
