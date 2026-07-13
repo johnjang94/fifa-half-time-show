@@ -414,40 +414,36 @@ export function RegisterForm() {
           }}
           type="file"
         />
-        <p className="register-field-help">
-          JPEG, PNG, or WebP. Large photos are compressed automatically, and the final upload should stay under{" "}
-          {formatFileSize(MAX_PROFILE_PHOTO_BYTES)}.
-        </p>
       </label>
 
       <div className="register-privacy">
         <input name="privacyAccepted" type="hidden" value={isPrivacyAccepted ? "on" : ""} />
         <button
           aria-label="By using this platform, you agree to our Privacy Policy"
-          className="register-privacy-trigger"
+          className={`register-consent-button ${isPrivacyAccepted ? "is-checked" : ""}`}
           type="button"
           onClick={() => setIsPrivacyPolicyOpen(true)}
         >
-          By using this platform, you agree to our Privacy Policy
+          <span className="register-consent-checkbox" aria-hidden="true" />
+          <span className="register-consent-text">
+            By using this platform, you agree to our Privacy Policy
+          </span>
         </button>
       </div>
 
       <div className="register-ai-consent">
         <input name="aiConsentAccepted" type="hidden" value={isAiConsentAccepted ? "on" : ""} />
-        <p className="register-ai-consent-copy">
-          If you skip the upload, we will generate a refined AI avatar for your profile and label
-          it AI.
-        </p>
         <button
           aria-pressed={isAiConsentAccepted}
-          className={`register-ai-consent-button ${isAiConsentAccepted ? "is-active" : ""}`}
+          className={`register-consent-button ${isAiConsentAccepted ? "is-checked" : ""}`}
           type="button"
           onClick={() => {
             setIsAiConsentAccepted((current) => !current);
             setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
           }}
         >
-          {isAiConsentAccepted ? "AI avatar consented" : "I agree to use AI avatar if no photo is uploaded"}
+          <span className="register-consent-checkbox" aria-hidden="true" />
+          <span className="register-consent-text">I agree to use AI avatar if no photo is uploaded</span>
         </button>
       </div>
 
@@ -472,14 +468,6 @@ export function RegisterForm() {
       >
         {submitLabel}
       </button>
-
-      <p className="register-field-help">
-        {availabilityLoaded && capacity !== null
-          ? `${inviteCount} of ${capacity} spots are filled.`
-          : availabilityLoaded
-            ? `${inviteCount} guests are signed up.`
-            : "Checking availability..."}
-      </p>
 
       {isPrivacyPolicyOpen ? (
         <div

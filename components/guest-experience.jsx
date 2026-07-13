@@ -11,6 +11,8 @@ import heroImage from "../image.png";
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
+const OTP_CODE_LENGTH = 5;
+const PHONE_NUMBER_LENGTH = 10;
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
@@ -39,45 +41,24 @@ async function recordActivity(eventType, extra = {}) {
 }
 
 function normalizePhoneNumber(value) {
-  return String(value ?? "").replace(/\D/g, "").slice(0, 10);
+  return String(value ?? "").replace(/\D/g, "").slice(0, PHONE_NUMBER_LENGTH);
 }
 
 function normalizeOtpCode(value) {
-  return String(value ?? "").replace(/\D/g, "").slice(0, 6);
+  return String(value ?? "").replace(/\D/g, "").slice(0, OTP_CODE_LENGTH);
 }
 
-function LoginOtpModal({ isOpen, onClose, onVerified }) {
-  const [step, setStep] = useState("phone");
-  const [phoneNumber, setPhoneNumber] = useState("");
+function LoginOtpModal({ isOpen, phoneNumber, onClose, onVerified }) {
   const [otpCode, setOtpCode] = useState("");
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const phoneInputRef = useRef(null);
   const otpInputRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setStep("phone");
-      setPhoneNumber("");
       setOtpCode("");
-      setStatus("");
       setError("");
       setIsSubmitting(false);
-      return undefined;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      phoneInputRef.current?.focus?.();
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen || step !== "otp") {
       return undefined;
     }
 
@@ -88,7 +69,7 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [isOpen, step]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -108,55 +89,13 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
     };
   }, [isOpen, onClose]);
 
-  async function handleSendCode(event) {
-    event.preventDefault();
-
-    const digitsOnly = normalizePhoneNumber(phoneNumber);
-    if (digitsOnly.length !== 10 || isSubmitting) {
-      setError("Please enter the 10-digit phone number you used to register.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-    setStatus("");
-
-    try {
-      const response = await fetch(`${controlBaseUrl}/api/auth/otp/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber: digitsOnly }),
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error ?? "Unable to send verification code.");
-      }
-
-      setStep("otp");
-      setOtpCode("");
-      setStatus(
-        data.delivered
-          ? "We sent a 6-digit code to your phone."
-          : "If that number is registered, a verification code has been sent.",
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to send verification code.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   async function handleVerifyCode(event) {
     event.preventDefault();
 
-    const digitsOnly = normalizePhoneNumber(phoneNumber);
-    const codeOnly = normalizeOtpCode(otpCode);
+    const digitsOnly = normalizeOtpCode(otpCode);
 
-    if (digitsOnly.length !== 10 || codeOnly.length !== 6 || isSubmitting) {
-      setError("Please enter the 6-digit code from your text message.");
+    if (digitsOnly.length !== OTP_CODE_LENGTH || isSubmitting) {
+      setError(`Please enter the ${OTP_CODE_LENGTH}-digit code from your text message.`);
       return;
     }
 
@@ -170,8 +109,8 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          phoneNumber: digitsOnly,
-          code: codeOnly,
+          phoneNumber: normalizePhoneNumber(phoneNumber),
+          code: digitsOnly,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -182,7 +121,7 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
 
       onVerified({
         inviteToken: data.inviteToken,
-        phoneNumber: digitsOnly,
+        phoneNumber: normalizePhoneNumber(phoneNumber),
         supportAccessToken: data.supportAccessToken ?? "",
       });
     } catch (err) {
@@ -215,90 +154,47 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
         </button>
 
         <p className="login-modal-eyebrow">login</p>
-        <h2 id="login-modal-title">
-          {step === "phone" ? "Enter your phone number" : "Enter the 6-digit code"}
-        </h2>
+        <h2 id="login-modal-title">Enter the {OTP_CODE_LENGTH}-digit code</h2>
         <p className="login-modal-copy">
-          {step === "phone"
-            ? "We will text you a one-time code to confirm it is really you."
-            : "Check your SMS and type the code below to continue."}
+          Check your SMS and type the code below to continue.
         </p>
 
-        {step === "phone" ? (
-          <form className="login-modal-form" onSubmit={handleSendCode}>
-            <label className="login-modal-field">
-              <span>phone number</span>
-              <input
-                autoComplete="tel"
-                inputMode="tel"
-                name="phoneNumber"
-                onChange={(event) => setPhoneNumber(event.target.value)}
-                placeholder="Enter phone number"
-                ref={phoneInputRef}
-                type="tel"
-                value={phoneNumber}
-              />
-            </label>
+        <form className="login-modal-form" onSubmit={handleVerifyCode}>
+          <label className="login-modal-field">
+            <span>verification code</span>
+            <input
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={OTP_CODE_LENGTH}
+              name="otpCode"
+              onChange={(event) => setOtpCode(event.target.value)}
+              placeholder="12345"
+              ref={otpInputRef}
+              type="text"
+              value={otpCode}
+            />
+          </label>
 
-            {error ? (
-              <p className="login-modal-status is-error" role="status">
-                {error}
-              </p>
-            ) : null}
+          {error ? (
+            <p className="login-modal-status is-error" role="status">
+              {error}
+            </p>
+          ) : null}
 
-            <button className="login-modal-submit" disabled={isSubmitting} type="submit">
-              {isSubmitting ? "sending code..." : "send code"}
+          <div className="login-modal-actions">
+            <button
+              className="login-modal-secondary"
+              disabled={isSubmitting}
+              onClick={onClose}
+              type="button"
+            >
+              back
             </button>
-          </form>
-        ) : (
-          <form className="login-modal-form" onSubmit={handleVerifyCode}>
-            <label className="login-modal-field">
-              <span>verification code</span>
-              <input
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                maxLength={6}
-                name="otpCode"
-                onChange={(event) => setOtpCode(event.target.value)}
-                placeholder="123456"
-                ref={otpInputRef}
-                type="text"
-                value={otpCode}
-              />
-            </label>
-
-            {status ? (
-              <p className="login-modal-status" role="status">
-                {status}
-              </p>
-            ) : null}
-
-            {error ? (
-              <p className="login-modal-status is-error" role="status">
-                {error}
-              </p>
-            ) : null}
-
-            <div className="login-modal-actions">
-              <button
-                className="login-modal-secondary"
-                disabled={isSubmitting}
-                onClick={() => {
-                  setStep("phone");
-                  setOtpCode("");
-                  setError("");
-                  setStatus("");
-                }}
-                type="button"
-              >
-                back
-              </button>
-              <button className="login-modal-submit" disabled={isSubmitting} type="submit">
-                {isSubmitting ? "verifying..." : "verify"}
-              </button>
-            </div>
-          </form>
-        )}
+            <button className="login-modal-submit" disabled={isSubmitting} type="submit">
+              {isSubmitting ? "verifying..." : "verify"}
+            </button>
+          </div>
+        </form>
       </section>
     </div>
   );
@@ -306,11 +202,17 @@ function LoginOtpModal({ isOpen, onClose, onVerified }) {
 
 export function GuestExperience() {
   const router = useRouter();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isLoginPanelOpen, setIsLoginPanelOpen] = useState(false);
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [phoneStatus, setPhoneStatus] = useState("");
+  const [isSendingCode, setIsSendingCode] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState("");
   const [inviteCount, setInviteCount] = useState(0);
   const [capacity, setCapacity] = useState(null);
   const [availabilityLoaded, setAvailabilityLoaded] = useState(false);
+  const phoneInputRef = useRef(null);
   const spotsLeft =
     availabilityLoaded && capacity !== null ? Math.max(0, Number(capacity) - Number(inviteCount)) : null;
   const shouldShowSpotWarning = spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5;
@@ -324,6 +226,20 @@ export function GuestExperience() {
       sessionStorage.removeItem(LOGOUT_REASON_KEY);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isLoginPanelOpen) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      phoneInputRef.current?.focus?.();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isLoginPanelOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -369,8 +285,53 @@ export function GuestExperience() {
       method: "otp",
     });
 
-    setIsLoginModalOpen(false);
+    setIsOtpModalOpen(false);
     router.push(`/portal?invite=${encodeURIComponent(inviteToken)}`);
+  }
+
+  async function handleSendCode(event) {
+    event.preventDefault();
+
+    if (!isLoginPanelOpen) {
+      setIsLoginPanelOpen(true);
+      return;
+    }
+
+    const digitsOnly = normalizePhoneNumber(phoneNumber);
+    if (digitsOnly.length !== PHONE_NUMBER_LENGTH || isSendingCode) {
+      setPhoneError("Please enter the 10-digit phone number you used to register.");
+      return;
+    }
+
+    setIsSendingCode(true);
+    setPhoneError("");
+    setPhoneStatus("");
+
+    try {
+      const response = await fetch(`${controlBaseUrl}/api/auth/otp/start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phoneNumber: digitsOnly }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error ?? "Unable to send verification code.");
+      }
+
+      setPhoneStatus(
+        data.delivered
+          ? `We sent a ${OTP_CODE_LENGTH}-digit code to your phone.`
+          : "If that number is registered, a verification code has been sent.",
+      );
+      setIsOtpModalOpen(true);
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : "Unable to send verification code.");
+    } finally {
+      setIsSendingCode(false);
+    }
   }
 
   return (
@@ -403,9 +364,43 @@ export function GuestExperience() {
               </div>
             ) : null}
 
-            <button className="login-button" onClick={() => setIsLoginModalOpen(true)} type="button">
-              Login
-            </button>
+            <div className={`auth-switch ${isLoginPanelOpen ? "is-open" : ""}`}>
+              <div className="auth-state auth-state-login" aria-hidden={isLoginPanelOpen}>
+                <button className="login-button" onClick={() => setIsLoginPanelOpen(true)} type="button">
+                  Login
+                </button>
+              </div>
+
+              <form className="auth-state auth-state-form login-panel" onSubmit={handleSendCode}>
+                <label className="login-field">
+                  <span>phone number</span>
+                  <input
+                    autoComplete="tel"
+                    inputMode="tel"
+                    name="phoneNumber"
+                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    placeholder="Enter phone number"
+                    ref={phoneInputRef}
+                    type="tel"
+                    value={phoneNumber}
+                  />
+                </label>
+
+                {phoneError ? (
+                  <p className="login-status is-error" role="status">
+                    {phoneError}
+                  </p>
+                ) : phoneStatus ? (
+                  <p className="login-status" role="status">
+                    {phoneStatus}
+                  </p>
+                ) : null}
+
+                <button className="login-submit is-ready" disabled={isSendingCode} type="submit">
+                  {isSendingCode ? "sending code..." : "Login"}
+                </button>
+              </form>
+            </div>
 
             <Link className="join-link" href="/overview">
               {joinLinkLabel}
@@ -415,9 +410,10 @@ export function GuestExperience() {
       </section>
 
       <LoginOtpModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+        isOpen={isOtpModalOpen}
+        onClose={() => setIsOtpModalOpen(false)}
         onVerified={handleLoginSuccess}
+        phoneNumber={phoneNumber}
       />
     </main>
   );
