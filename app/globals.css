@@ -941,35 +941,36 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 9px;
   margin-top: -4px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
-.register-privacy-acceptance {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: rgba(255, 250, 243, 0.76);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
-}
-
-.register-privacy-acceptance input {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  accent-color: rgba(208, 188, 255, 0.98);
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-.register-privacy-acceptance input:focus-visible,
-.register-privacy-link:focus-visible,
+.register-privacy-trigger:focus-visible,
 .register-privacy-close:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+.register-privacy-trigger {
+  width: 100%;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(245, 231, 197, 0.9);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  cursor: pointer;
+}
+
+.register-privacy-trigger:hover {
+  color: #fff;
 }
 
 .register-privacy-link {
@@ -2789,12 +2790,13 @@ button {
   }
 
   .register-privacy {
-    gap: 8px;
+    justify-content: center;
   }
 
-  .register-privacy-acceptance,
-  .register-privacy-link {
-    font-size: 0.66rem;
+  .register-privacy-trigger {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: center;
   }
 
   .register-privacy-copy {

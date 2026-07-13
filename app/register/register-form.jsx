@@ -231,13 +231,11 @@ export function RegisterForm() {
         PHONE_PATTERN.test(phoneNumber)
           ? ""
           : "Please enter a 10-digit phone number, like 5551234567.",
-      privacyAccepted: privacyAccepted
-        ? ""
-        : "Please review and accept the privacy policy before signing up.",
+      privacyAccepted: privacyAccepted ? "" : "Please accept the privacy policy before signing up.",
       aiConsentAccepted:
         hasUploadedPhoto || aiConsentAccepted
           ? ""
-          : "Please upload a photo or consent to use AI portrait.",
+          : "Please upload a photo or agree to use AI avatar if no photo is uploaded.",
     };
 
     return {
@@ -423,33 +421,22 @@ export function RegisterForm() {
       </label>
 
       <div className="register-privacy">
-        <label className="register-privacy-acceptance">
-          <input
-            checked={isPrivacyAccepted}
-            aria-label="Confirm that you have read and agree to the privacy policy"
-            name="privacyAccepted"
-            onChange={(event) => {
-              setIsPrivacyAccepted(event.target.checked);
-              setFieldErrors((current) => ({ ...current, privacyAccepted: "" }));
-            }}
-            type="checkbox"
-          />
-          <span>I have read and agree</span>
-        </label>
+        <input name="privacyAccepted" type="hidden" value={isPrivacyAccepted ? "on" : ""} />
         <button
-          className="register-privacy-link"
+          aria-label="By using this platform, you agree to our Privacy Policy"
+          className="register-privacy-trigger"
           type="button"
           onClick={() => setIsPrivacyPolicyOpen(true)}
         >
-          review policy
+          By using this platform, you agree to our Privacy Policy
         </button>
       </div>
 
       <div className="register-ai-consent">
         <input name="aiConsentAccepted" type="hidden" value={isAiConsentAccepted ? "on" : ""} />
         <p className="register-ai-consent-copy">
-          If you skip the upload, we will generate a refined AI portrait for your profile and
-          label it AI.
+          If you skip the upload, we will generate a refined AI avatar for your profile and label
+          it AI.
         </p>
         <button
           aria-pressed={isAiConsentAccepted}
@@ -460,7 +447,7 @@ export function RegisterForm() {
             setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
           }}
         >
-          {isAiConsentAccepted ? "AI portrait consented" : "consent to use AI portrait"}
+          {isAiConsentAccepted ? "AI avatar consented" : "I agree to use AI avatar if no photo is uploaded"}
         </button>
       </div>
 
@@ -533,8 +520,8 @@ export function RegisterForm() {
                 security requirements.
               </p>
               <p>
-                If you choose not to upload a photo, we may generate a refined AI portrait for
-                your profile. That portrait will be labeled AI.
+                If you choose not to upload a photo, we may generate a refined AI avatar for your
+                profile. That avatar will be labeled AI.
               </p>
               <p className="register-privacy-scroll-note">
                 Scroll to the end to unlock the agreement button.
