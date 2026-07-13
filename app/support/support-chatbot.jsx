@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
@@ -990,7 +991,11 @@ export function SupportChatbot({ inviteToken }) {
   return (
     <section className="chatbot-shell support-chatbot" aria-label="Support chatbot">
       <div className={`support-top-actions ${viewMode === "hub" ? "is-hub" : ""}`}>
-        {viewMode === "hub" ? null : (
+        {viewMode === "hub" ? (
+          <Link className="support-back-button" href="/portal">
+            back
+          </Link>
+        ) : (
           <button className="support-back-button" onClick={goBackToSupport} type="button">
             back
           </button>

@@ -2355,7 +2355,7 @@ button {
 }
 
 .support-top-actions.is-hub {
-  justify-content: flex-end;
+  justify-content: space-between;
 }
 
 .support-bottom-actions {
@@ -2365,6 +2365,9 @@ button {
 
 .support-back-button,
 .support-new-chat-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
