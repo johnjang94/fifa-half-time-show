@@ -549,7 +549,7 @@ button {
   gap: 16px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(78px, 17vh, 140px);
+  padding-top: clamp(42px, 10vh, 96px);
 }
 
 .overview-carousel {
@@ -583,6 +583,11 @@ button {
   background: linear-gradient(270deg, rgba(8, 5, 16, 0.92), transparent);
 }
 
+.overview-carousel.is-signup-ready::before,
+.overview-carousel.is-signup-ready::after {
+  opacity: 0;
+}
+
 .overview-track {
   display: flex;
   gap: 14px;
@@ -590,7 +595,7 @@ button {
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: max(10vw, 20px);
-  padding: 28px max(10vw, 20px) 18px;
+  padding: 0 max(10vw, 20px) 18px;
   width: 100%;
   flex: 1;
   -webkit-overflow-scrolling: touch;
@@ -621,8 +626,16 @@ button {
   scroll-snap-align: center;
 }
 
+.overview-slide:not(.is-full-width) {
+  margin-top: -24px;
+}
+
 .overview-slide.is-full-width {
   flex-basis: 100%;
+}
+
+.overview-carousel.is-signup-ready .overview-slide.is-full-width {
+  margin-top: -34px;
 }
 
 .overview-track::-webkit-scrollbar {
@@ -662,6 +675,16 @@ button {
   filter: saturate(1.02) contrast(1);
 }
 
+.overview-carousel.is-signup-ready .overview-slide.is-full-width .overview-card {
+  transform: translateY(-12px) scale(1.04);
+  border-color: rgba(228, 210, 255, 0.3);
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  opacity: 1;
+  filter: saturate(1.02) contrast(1);
+}
+
 .overview-card.is-active .overview-media::before {
   content: "";
   position: absolute;
@@ -683,18 +706,23 @@ button {
 }
 
 .overview-card:not(.is-active) .overview-image {
-  transform: scale(1.14);
+  transform: scale(1.2);
   filter: saturate(0.86) brightness(0.88) contrast(0.96);
 }
 
 .overview-card.is-active .overview-image {
-  transform: scale(1.05);
+  transform: scale(1.12);
   filter: saturate(1.02) brightness(1) contrast(1);
+}
+
+.overview-carousel.is-signup-ready .overview-slide.is-full-width .overview-image {
+  transform: scale(1.24);
+  object-position: center top;
 }
 
 .overview-media {
   position: relative;
-  aspect-ratio: 0.82 / 1.16;
+  aspect-ratio: 0.82 / 1.28;
   overflow: hidden;
   min-height: 0;
   background:
@@ -704,9 +732,14 @@ button {
 
 .overview-image {
   object-fit: cover;
-  object-position: center;
-  transform: scale(1.12);
+  object-position: center top;
+  transform: scale(1.16);
   transition: transform 1100ms cubic-bezier(0.18, 0.82, 0.18, 1);
+}
+
+.overview-carousel.is-signup-ready .overview-slide.is-full-width .overview-media {
+  aspect-ratio: 0.82 / 1.48;
+  min-height: 78svh;
 }
 
 .overview-media::after {
@@ -846,7 +879,7 @@ button {
   gap: 12px;
   position: relative;
   z-index: 1;
-  padding-top: clamp(160px, 28vh, 248px);
+  padding-top: clamp(176px, 30vh, 272px);
 }
 
 .register-header {
@@ -883,7 +916,8 @@ button {
   flex-direction: column;
   gap: 9px;
   flex: 0 1 auto;
-  margin-top: 18px;
+  margin-top: 30px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 220px);
   opacity: 1;
   transform: translateY(0);
   transition:
@@ -1079,7 +1113,7 @@ button {
 .register-button {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 64px);
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
   z-index: 30;
   width: min(calc(100vw - 40px), 440px);
   margin-top: 0;
@@ -1136,7 +1170,7 @@ button {
 .register-back {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 20px);
+  bottom: calc(env(safe-area-inset-bottom) + 8px);
   z-index: 30;
   width: min(calc(100vw - 40px), 440px);
   align-self: auto;
@@ -2752,7 +2786,7 @@ button {
   }
 
   .overview-shell {
-    padding-top: clamp(42px, 10vh, 76px);
+    padding-top: clamp(24px, 6vh, 58px);
   }
 
   .overview-track {
@@ -2766,12 +2800,24 @@ button {
     flex-basis: 90%;
   }
 
+  .overview-slide:not(.is-full-width) {
+    margin-top: -18px;
+  }
+
   .overview-slide.is-full-width {
     flex-basis: 100%;
   }
 
+  .overview-carousel.is-signup-ready .overview-slide.is-full-width {
+    margin-top: -24px;
+  }
+
   .overview-media {
-    min-height: 66svh;
+    min-height: 72svh;
+  }
+
+  .overview-carousel.is-signup-ready .overview-slide.is-full-width .overview-media {
+    min-height: 78svh;
   }
 
   .signup-button {
@@ -2783,11 +2829,13 @@ button {
   }
 
   .register-shell {
-    padding-top: clamp(68px, 14vh, 112px);
+    padding-top: clamp(92px, 18vh, 142px);
   }
 
   .register-form {
     gap: 8px;
+    margin-top: 24px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 250px);
   }
 
   .register-body {
@@ -2807,13 +2855,13 @@ button {
   }
 
   .register-privacy {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
-  .register-privacy-trigger {
+  .register-consent-button {
     font-size: 0.75rem;
     line-height: 1.5;
-    text-align: center;
+    text-align: left;
   }
 
   .register-privacy-copy {
@@ -2854,15 +2902,6 @@ button {
 
   .register-ai-consent {
     gap: 6px;
-    padding: 10px 12px;
-  }
-
-  .register-ai-consent-copy {
-    font-size: 0.74rem;
-  }
-
-  .register-ai-consent-button {
-    padding: 0.66rem 0.9rem;
   }
 
   .register-field input[type="file"]::file-selector-button {

@@ -58,7 +58,10 @@ export function OverviewCarousel({ cards }) {
   const isReadyForSignup = activeIndex === cards.length - 1;
 
   return (
-    <section className="overview-carousel" aria-label="Overview cards">
+    <section
+      className={`overview-carousel ${isReadyForSignup ? "is-signup-ready" : ""}`}
+      aria-label="Overview cards"
+    >
       <div className="overview-track" ref={trackRef}>
         {cards.map((card, index) => (
           <div
