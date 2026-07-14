@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const apiBaseUrl =
@@ -339,6 +339,40 @@ export function SupportChatbot({ inviteToken }) {
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const lastSyncedThreadSignatureRef = useRef("");
 
+  const syncLiveInquiry = useCallback(
+    (inquiry) => {
+      if (!Array.isArray(inquiry?.thread)) {
+        return;
+      }
+
+      const nextSignature = threadSignature(inquiry.thread);
+      if (!nextSignature || nextSignature === lastSyncedThreadSignatureRef.current) {
+        return;
+      }
+
+      lastSyncedThreadSignatureRef.current = nextSignature;
+
+      setMessages(
+        threadToMessages(
+          inquiry.thread,
+          inquiry.customer ||
+            customerDisplayName ||
+            portalProfile.displayName ||
+            portalProfile.firstName,
+          inquiry.customerPhotoUrl || customerPhotoUrl,
+          inquiry.customerPhotoTag || customerPhotoTag,
+        ),
+      );
+    },
+    [
+      customerDisplayName,
+      customerPhotoTag,
+      customerPhotoUrl,
+      portalProfile.displayName,
+      portalProfile.firstName,
+    ],
+  );
+
   useEffect(() => {
     const savedTicketId = window.localStorage.getItem(TICKET_KEY);
     if (savedTicketId) {
@@ -524,89 +558,60 @@ export function SupportChatbot({ inviteToken }) {
       window.removeEventListener("pagehide", handlePageHide);
       void sendSupportPresenceUpdate(ticketId, "inactive", supportAccessToken);
     };
-  }, [isResolved, ticketId, viewMode, supportAccessToken]);
+  }, [isResolved, ticketId, viewMode, supportAccessToken, syncLiveInquiry]);
 
   useEffect(() => {
     if (!isResolved || !ticketId || viewMode !== "live") {
       return undefined;
     }
 
-    let cancelled = false;
-    let intervalId = null;
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      setError("Support access is missing. Please reopen your invite.");
+      return undefined;
+    }
 
-    async function syncTicket() {
+    let closed = false;
+    const streamUrl = `${apiBaseUrl}/api/support/inquiries/stream?ticketId=${encodeURIComponent(ticketId)}&supportAccessToken=${encodeURIComponent(storedToken)}`;
+    const source = new EventSource(streamUrl);
+
+    source.onmessage = (event) => {
+      if (closed) {
+        return;
+      }
+
       try {
-        const response = await fetch(
-          `${apiBaseUrl}/api/support/inquiries?ticketId=${encodeURIComponent(ticketId)}`,
-          {
-            headers: supportAccessToken
-              ? {
-                  Authorization: `Bearer ${supportAccessToken}`,
-                }
-              : undefined,
-          },
-        );
-        const data = await response.json();
-
-        if (response.status === 401 || response.status === 403) {
-          if (!cancelled) {
+        const data = JSON.parse(event.data);
+        if (data?.ok === false) {
+          if (String(data.error ?? "").toLowerCase().includes("unauthorized")) {
             setError("Support access is missing. Please reopen your invite.");
+            source.close();
           }
           return;
         }
 
-        if (!response.ok || !data.ok || !data.inquiry?.thread) {
-          return;
-        }
-
-        const nextSignature = threadSignature(data.inquiry.thread);
-        if (!nextSignature || nextSignature === lastSyncedThreadSignatureRef.current) {
-          return;
-        }
-
-        lastSyncedThreadSignatureRef.current = nextSignature;
-
-        if (!cancelled) {
-          setMessages(
-            threadToMessages(
-              data.inquiry.thread,
-              data.inquiry.customer ||
-                customerDisplayName ||
-                portalProfile.displayName ||
-                portalProfile.firstName,
-              data.inquiry.customerPhotoUrl || customerPhotoUrl,
-              data.inquiry.customerPhotoTag || customerPhotoTag,
-            ),
-          );
-          void sendSupportPresenceUpdate(ticketId, "active", supportAccessToken);
+        if (data?.inquiry?.thread) {
+          syncLiveInquiry(data.inquiry);
+          void sendSupportPresenceUpdate(ticketId, "active", storedToken);
         }
       } catch {
-        // Best effort hydration only.
-      }
-    }
-
-    void syncTicket();
-    intervalId = window.setInterval(() => {
-      void syncTicket();
-    }, 4000);
-
-    return () => {
-      cancelled = true;
-      if (intervalId) {
-        window.clearInterval(intervalId);
+        // Ignore malformed stream events.
       }
     };
-  }, [
-    isResolved,
-    ticketId,
-    viewMode,
-    supportAccessToken,
-    customerDisplayName,
-    customerPhotoUrl,
-    customerPhotoTag,
-    portalProfile.displayName,
-    portalProfile.firstName,
-  ]);
+
+    source.onerror = () => {
+      if (closed) {
+        return;
+      }
+
+      setError((current) => current || "Live chat connection dropped. Reconnecting...");
+    };
+
+    return () => {
+      closed = true;
+      source.close();
+    };
+  }, [isResolved, ticketId, viewMode, supportAccessToken]);
 
   useEffect(() => {
     if (!isResolved) {
@@ -746,18 +751,7 @@ export function SupportChatbot({ inviteToken }) {
     }
 
     if (data.inquiry?.thread) {
-      lastSyncedThreadSignatureRef.current = threadSignature(data.inquiry.thread);
-      setMessages(
-        threadToMessages(
-          data.inquiry.thread,
-          data.inquiry.customer ||
-            customerDisplayName ||
-            portalProfile.displayName ||
-            portalProfile.firstName,
-          data.inquiry.customerPhotoUrl || customerPhotoUrl,
-          data.inquiry.customerPhotoTag || customerPhotoTag,
-        ),
-      );
+      syncLiveInquiry(data.inquiry);
     } else if (data.inquiry?.answer) {
       setMessages((current) => [
         ...current,
