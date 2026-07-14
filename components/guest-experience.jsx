@@ -200,9 +200,9 @@ function LoginOtpModal({ isOpen, phoneNumber, onClose, onVerified }) {
   );
 }
 
-export function GuestExperience() {
+export function GuestExperience({ initialLoginOpen = false } = {}) {
   const router = useRouter();
-  const [isLoginPanelOpen, setIsLoginPanelOpen] = useState(false);
+  const [isLoginPanelOpen, setIsLoginPanelOpen] = useState(Boolean(initialLoginOpen));
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -242,6 +242,12 @@ export function GuestExperience() {
   }, [isLoginPanelOpen]);
 
   useEffect(() => {
+    if (initialLoginOpen) {
+      setIsLoginPanelOpen(true);
+    }
+  }, [initialLoginOpen]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadAvailability() {
@@ -252,7 +258,7 @@ export function GuestExperience() {
         const data = await response.json();
 
         if (!cancelled && response.ok && data.ok) {
-          setInviteCount(Number(data.inviteCount ?? 0));
+          setInviteCount(Number(data.registeredCount ?? data.inviteCount ?? 0));
           setCapacity(
             data.capacity === null || data.capacity === undefined ? null : Number(data.capacity),
           );

@@ -86,14 +86,20 @@ function SurveyDonePageInner() {
     };
   }, [inviteToken, isResolved]);
 
-  function handleMyTicketClick() {
-    if (!inviteToken) {
-      router.push("/");
-      return;
+  useEffect(() => {
+    if (!isResolved) {
+      return undefined;
     }
 
-    router.push(`/portal?invite=${encodeURIComponent(inviteToken)}`);
-  }
+    const timer = window.setTimeout(() => {
+      const query = inviteToken ? `?invite=${encodeURIComponent(inviteToken)}` : "";
+      router.replace(`/login${query}`);
+    }, 1100);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [inviteToken, isResolved, router]);
 
   if (!isResolved) {
     return null;
@@ -106,11 +112,7 @@ function SurveyDonePageInner() {
           <h1>Thank you.</h1>
         </header>
 
-        <p className="survey-done-copy">You may check your ticket now</p>
-
-        <button className="survey-done-home" onClick={handleMyTicketClick} type="button">
-          My Ticket
-        </button>
+        <p className="survey-done-copy">stay tuned for more updates!</p>
       </section>
     </main>
   );

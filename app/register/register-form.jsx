@@ -175,7 +175,7 @@ export function RegisterForm() {
         const data = await response.json();
 
         if (!cancelled && response.ok && data.ok) {
-          setInviteCount(Number(data.inviteCount ?? 0));
+          setInviteCount(Number(data.registeredCount ?? data.inviteCount ?? 0));
           setCapacity(
             data.capacity === null || data.capacity === undefined
               ? null
@@ -320,8 +320,6 @@ export function RegisterForm() {
 
       const qrToken = data.qrToken ?? data.id;
       const barcode = typeof data.barcode === "string" ? data.barcode : "";
-      const isWaitlist = Boolean(data.isWaitlist);
-
       saveStoredInviteToken(qrToken);
       form.reset();
       setIsPrivacyAccepted(false);
@@ -335,7 +333,7 @@ export function RegisterForm() {
         if (barcode) {
           query.set("barcode", barcode);
         }
-        router.push(`/${isWaitlist ? "waitlist" : "thank-you"}?${query.toString()}`);
+        router.push(`/waitlist?${query.toString()}`);
       }, 420);
     } catch (err) {
       setError(
