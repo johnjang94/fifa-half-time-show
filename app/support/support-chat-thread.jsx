@@ -13,6 +13,24 @@ const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 
 const SUPPORT_ASSISTANT_NAME = "Miranda";
+const QUICK_REPLIES = [
+  {
+    label: "What is this party about?",
+    message: "What is this party about?",
+  },
+  {
+    label: "How do I register?",
+    message: "How do I register?",
+  },
+  {
+    label: "What happens after survey?",
+    message: "What happens after the survey?",
+  },
+  {
+    label: "Help with login",
+    message: "I need help with login / OTP.",
+  },
+];
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -220,6 +238,7 @@ export function SupportChatThread({ inviteToken }) {
   const [value, setValue] = useState("");
   const [ticketId, setTicketId] = useState("");
   const [error, setError] = useState("");
+  const [connectionStatus, setConnectionStatus] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [customerFirstName, setCustomerFirstName] = useState("");
   const [customerDisplayName, setCustomerDisplayName] = useState("");
@@ -554,6 +573,7 @@ export function SupportChatThread({ inviteToken }) {
 
         liveThreadPollFailureCountRef.current = 0;
         setError("");
+        setConnectionStatus("");
 
         if (data.inquiry?.thread) {
           syncLiveInquiry(data.inquiry);
@@ -568,9 +588,9 @@ export function SupportChatThread({ inviteToken }) {
         liveThreadPollFailureCountRef.current = nextFailureCount;
 
         if (nextFailureCount >= 3) {
-          setError("Live chat is temporarily unavailable. Retrying...");
+          setConnectionStatus("Reconnecting live support...");
         } else {
-          setError((current) => current || "Reconnecting live chat...");
+          setConnectionStatus((current) => current || "Connecting live support...");
         }
       }
     }
@@ -657,10 +677,8 @@ export function SupportChatThread({ inviteToken }) {
     return data;
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    const trimmed = value.trim();
+  async function sendSupportText(text, { restoreDraftText = "" } = {}) {
+    const trimmed = normalize(text);
     if (!trimmed || isSending) {
       return;
     }
@@ -693,10 +711,21 @@ export function SupportChatThread({ inviteToken }) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to send support message.");
       setMessages(nextMessages);
-      setValue(trimmed);
+      if (restoreDraftText) {
+        setValue(restoreDraftText);
+      }
     } finally {
       setIsSending(false);
     }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    void sendSupportText(value, { restoreDraftText: value });
+  }
+
+  function handleQuickReply(message) {
+    void sendSupportText(message);
   }
 
   function finishTheChat() {
@@ -706,9 +735,11 @@ export function SupportChatThread({ inviteToken }) {
     setMessages(createInitialMessages(resolvedCustomerName || "there"));
     setValue("");
     setError("");
+    setConnectionStatus("");
   }
 
   const hasMessageDraft = value.trim().length > 0;
+  const hasStartedConversation = ticketId && messages.some((message) => message.role === "user");
 
   return (
     <section className="chatbot-shell support-chatbot" aria-label="Support chat">
@@ -757,13 +788,32 @@ export function SupportChatThread({ inviteToken }) {
             ))}
           </div>
 
+          {hasStartedConversation && connectionStatus ? (
+            <p className="chatbot-connection-status" role="status" aria-live="polite">
+              {connectionStatus}
+            </p>
+          ) : null}
+
           {error ? (
-            <p className="chatbot-error" role="status">
+            <p className="chatbot-error" role="alert">
               {error}
             </p>
           ) : null}
 
           <div className="chatbot-compose">
+            <div className="support-quick-replies" aria-label="Quick questions">
+              {QUICK_REPLIES.map((reply) => (
+                <button
+                  className="support-quick-reply"
+                  disabled={isSending}
+                  key={reply.message}
+                  onClick={() => handleQuickReply(reply.message)}
+                  type="button"
+                >
+                  {reply.label}
+                </button>
+              ))}
+            </div>
             <form className="chatbot-form" onSubmit={handleSubmit}>
               <input
                 aria-label="Send a message"

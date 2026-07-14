@@ -2738,6 +2738,33 @@ button {
   flex: 0 0 auto;
 }
 
+.support-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.support-quick-reply {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 0.58rem 0.82rem;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+.support-quick-reply:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.support-quick-reply:disabled {
+  opacity: 0.55;
+}
+
 .support-finish-button {
   align-self: center;
   min-height: 40px;
@@ -2779,6 +2806,14 @@ button {
   border: 1px solid rgba(255, 123, 123, 0.25);
   padding: 12px 14px;
   border-radius: 16px;
+}
+
+.chatbot-connection-status {
+  margin: 0;
+  color: rgba(245, 231, 197, 0.78);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .support-action-panel,
