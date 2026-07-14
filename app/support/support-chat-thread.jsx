@@ -6,6 +6,8 @@ import { usePersistentInviteToken } from "../../components/use-persistent-invite
 
 const apiBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const realtimeBaseUrl =
+  process.env.NEXT_PUBLIC_REALTIME_URL ?? "https://fifa-realtime.onrender.com";
 const TICKET_KEY = "fifa-half-time-show-support-ticket";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
@@ -177,6 +179,18 @@ async function sendSupportPresenceUpdate(ticketId, state, supportAccessToken) {
   }
 }
 
+function getRealtimeSocketUrl(roomId) {
+  const safeRoomId = normalize(roomId);
+  if (!safeRoomId) {
+    return "";
+  }
+
+  const url = new URL("/ws", realtimeBaseUrl);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.searchParams.set("room", safeRoomId);
+  return url.toString();
+}
+
 function getCustomerName(profile, inviteProfile) {
   return (
     inviteProfile?.displayName ||
@@ -212,9 +226,11 @@ export function SupportChatThread({ inviteToken }) {
   const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
   const [supportAccessToken, setSupportAccessToken] = useState(() => readSupportAccessToken());
   const lastSyncedThreadSignatureRef = useRef("");
-  const liveStreamReconnectTimerRef = useRef(null);
-  const liveStreamReconnectAttemptRef = useRef(0);
-  const liveStreamClosedRef = useRef(false);
+  const liveThreadPollTimerRef = useRef(null);
+  const liveThreadPollFailureCountRef = useRef(0);
+  const liveSocketRef = useRef(null);
+  const liveSocketReconnectTimerRef = useRef(null);
+  const liveSocketReconnectAttemptRef = useRef(0);
 
   const resolvedCustomerName =
     customerDisplayName ||
@@ -398,107 +414,120 @@ export function SupportChatThread({ inviteToken }) {
       return undefined;
     }
 
-    const storedToken = supportAccessToken || readSupportAccessToken();
-    if (!storedToken) {
+    const socketUrl = getRealtimeSocketUrl(ticketId);
+    if (!socketUrl || typeof window.WebSocket !== "function") {
       return undefined;
     }
 
-    const streamUrl = `${apiBaseUrl}/api/support/inquiries/stream?ticketId=${encodeURIComponent(ticketId)}&supportAccessToken=${encodeURIComponent(storedToken)}`;
+    let cancelled = false;
 
     function clearReconnectTimer() {
-      if (liveStreamReconnectTimerRef.current) {
-        window.clearTimeout(liveStreamReconnectTimerRef.current);
-        liveStreamReconnectTimerRef.current = null;
+      if (liveSocketReconnectTimerRef.current) {
+        window.clearTimeout(liveSocketReconnectTimerRef.current);
+        liveSocketReconnectTimerRef.current = null;
       }
     }
 
-    function connect() {
-      if (liveStreamClosedRef.current) {
+    function closeSocket() {
+      if (!liveSocketRef.current) {
         return;
       }
 
-      const source = new EventSource(streamUrl);
-      let terminal = false;
+      try {
+        liveSocketRef.current.close();
+      } catch {
+        // Ignore cleanup close failures.
+      }
 
-      source.onmessage = (event) => {
-        if (terminal || liveStreamClosedRef.current) {
+      liveSocketRef.current = null;
+    }
+
+    function connect() {
+      if (cancelled) {
+        return;
+      }
+
+      closeSocket();
+      const socket = new WebSocket(socketUrl);
+      liveSocketRef.current = socket;
+
+      socket.onopen = () => {
+        if (cancelled) {
+          return;
+        }
+
+        liveSocketReconnectAttemptRef.current = 0;
+        clearReconnectTimer();
+      };
+
+      socket.onmessage = (event) => {
+        if (cancelled) {
           return;
         }
 
         try {
           const data = JSON.parse(event.data);
-          if (data?.ok === false) {
-            if (String(data.error ?? "").toLowerCase().includes("unauthorized")) {
-              terminal = true;
-              liveStreamClosedRef.current = true;
-              clearReconnectTimer();
-              source.close();
-              setError("Support access is missing. Please reopen your invite.");
-            }
-            return;
-          }
-
-          if (data?.inquiry?.thread) {
+          if (data?.type === "inquiry.updated" && data?.room === ticketId && data?.inquiry?.thread) {
             syncLiveInquiry(data.inquiry);
-            void sendSupportPresenceUpdate(ticketId, "active", storedToken);
           }
         } catch {
-          // Ignore malformed stream events.
+          // Ignore malformed websocket payloads.
         }
       };
 
-      source.onopen = () => {
-        if (terminal || liveStreamClosedRef.current) {
+      socket.onerror = () => {
+        if (cancelled) {
           return;
         }
 
-        liveStreamReconnectAttemptRef.current = 0;
-        clearReconnectTimer();
-        setError("");
+        try {
+          socket.close();
+        } catch {
+          // Ignore close failures.
+        }
       };
 
-      source.onerror = () => {
-        if (terminal || liveStreamClosedRef.current) {
+      socket.onclose = () => {
+        if (cancelled) {
           return;
         }
 
-        terminal = true;
-        source.close();
-
-        const attempt = liveStreamReconnectAttemptRef.current + 1;
-        liveStreamReconnectAttemptRef.current = attempt;
-        const delay = Math.min(30000, 1000 * 2 ** Math.min(attempt - 1, 5));
+        const attempt = liveSocketReconnectAttemptRef.current + 1;
+        liveSocketReconnectAttemptRef.current = attempt;
+        const delay = Math.min(15000, 500 * 2 ** Math.min(attempt - 1, 5));
 
         clearReconnectTimer();
-        liveStreamReconnectTimerRef.current = window.setTimeout(() => {
-          liveStreamReconnectTimerRef.current = null;
+        liveSocketReconnectTimerRef.current = window.setTimeout(() => {
+          liveSocketReconnectTimerRef.current = null;
           connect();
         }, delay);
-
-        if (attempt >= 4) {
-          setError("Live chat connection dropped. Reconnecting...");
-        } else {
-          setError((current) => current || "Reconnecting live chat...");
-        }
       };
     }
 
-    liveStreamClosedRef.current = false;
-    clearReconnectTimer();
     connect();
 
     return () => {
-      liveStreamClosedRef.current = true;
+      cancelled = true;
       clearReconnectTimer();
+      closeSocket();
+      liveSocketReconnectAttemptRef.current = 0;
     };
-  }, [isResolved, supportAccessToken, ticketId]);
+  }, [isResolved, ticketId]);
 
   useEffect(() => {
+    if (!isResolved || !ticketId) {
+      return undefined;
+    }
+
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      return undefined;
+    }
+
     let cancelled = false;
 
-    async function loadCurrentThread() {
-      const storedToken = supportAccessToken || readSupportAccessToken();
-      if (!isResolved || !ticketId || !storedToken) {
+    async function refreshCurrentThread() {
+      if (cancelled) {
         return;
       }
 
@@ -513,24 +542,49 @@ export function SupportChatThread({ inviteToken }) {
         );
         const data = await response.json();
 
-        if (!response.ok || !data.ok || cancelled) {
+        if (cancelled) {
           return;
         }
 
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error ?? "Unable to load chat.");
+        }
+
+        liveThreadPollFailureCountRef.current = 0;
+        setError("");
+
         if (data.inquiry?.thread) {
           syncLiveInquiry(data.inquiry);
+          void sendSupportPresenceUpdate(ticketId, "active", storedToken);
         }
       } catch {
-        if (!cancelled) {
-          setError("Unable to load chat.");
+        if (cancelled) {
+          return;
+        }
+
+        const nextFailureCount = liveThreadPollFailureCountRef.current + 1;
+        liveThreadPollFailureCountRef.current = nextFailureCount;
+
+        if (nextFailureCount >= 3) {
+          setError("Live chat is temporarily unavailable. Retrying...");
+        } else {
+          setError((current) => current || "Reconnecting live chat...");
         }
       }
     }
 
-    void loadCurrentThread();
+    void refreshCurrentThread();
+    liveThreadPollTimerRef.current = window.setInterval(() => {
+      void refreshCurrentThread();
+    }, 2500);
 
     return () => {
       cancelled = true;
+      if (liveThreadPollTimerRef.current) {
+        window.clearInterval(liveThreadPollTimerRef.current);
+        liveThreadPollTimerRef.current = null;
+      }
+      liveThreadPollFailureCountRef.current = 0;
     };
   }, [isResolved, supportAccessToken, ticketId]);
 
