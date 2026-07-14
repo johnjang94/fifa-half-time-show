@@ -1,0 +1,739 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
+
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
+const TICKET_KEY = "fifa-half-time-show-support-ticket";
+const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
+const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
+
+function normalize(value) {
+  return String(value ?? "").trim();
+}
+
+function readSupportAccessToken() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return normalize(window.localStorage.getItem(SUPPORT_ACCESS_KEY));
+}
+
+function saveSupportAccessToken(token) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!normalize(token)) {
+    window.localStorage.removeItem(SUPPORT_ACCESS_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(SUPPORT_ACCESS_KEY, token);
+}
+
+function readPortalProfile() {
+  if (typeof window === "undefined") {
+    return {
+      firstName: "",
+      lastName: "",
+      displayName: "",
+      phoneNumber: "",
+      photoUrl: "",
+      photoTag: "",
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PORTAL_PROFILE_KEY);
+    if (!raw) {
+      return {
+        firstName: "",
+        lastName: "",
+        displayName: "",
+        phoneNumber: "",
+        photoUrl: "",
+        photoTag: "",
+      };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      firstName: normalize(parsed.firstName),
+      lastName: normalize(parsed.lastName),
+      displayName: normalize(parsed.displayName),
+      phoneNumber: normalize(parsed.phoneNumber),
+      photoUrl: normalize(parsed.photoUrl),
+      photoTag: normalize(parsed.photoTag),
+    };
+  } catch {
+    return {
+      firstName: "",
+      lastName: "",
+      displayName: "",
+      phoneNumber: "",
+      photoUrl: "",
+      photoTag: "",
+    };
+  }
+}
+
+function createInitialMessages(name = "there") {
+  const createdAt = new Date().toISOString();
+  return [
+    {
+      role: "assistant",
+      name: "Support",
+      text: `Hi ${name}, we're here. Send your message and someone from the team will reply here.`,
+      createdAt,
+    },
+  ];
+}
+
+function threadToMessages(thread, customerName = "Unknown guest", customerPhotoUrl = "", customerPhotoTag = "") {
+  return thread.map((item) => ({
+    role: item.role === "customer" ? "user" : "assistant",
+    name: item.role === "customer" ? customerName : "Support",
+    text: item.message,
+    createdAt: item.createdAt,
+    photoUrl: item.role === "customer" ? customerPhotoUrl : "",
+    photoTag: item.role === "customer" ? customerPhotoTag : "",
+  }));
+}
+
+function threadSignature(thread) {
+  if (!Array.isArray(thread) || !thread.length) {
+    return "";
+  }
+
+  return thread
+    .map((item) => [item.role, item.message, item.createdAt].map((part) => normalize(part)).join("|"))
+    .join("||");
+}
+
+function formatMessageTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function initialsFromName(value) {
+  const parts = normalize(value)
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (!parts.length) {
+    return "?";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function isPlaceholderCustomerName(value) {
+  const name = normalize(value);
+  return !name || name === "You" || name === "Unknown guest";
+}
+
+async function sendSupportPresenceUpdate(ticketId, state, supportAccessToken) {
+  const safeTicketId = normalize(ticketId);
+  const safeState = state === "inactive" ? "inactive" : "active";
+  const safeToken = normalize(supportAccessToken);
+
+  if (!safeTicketId || !safeToken) {
+    return;
+  }
+
+  try {
+    await fetch(`${apiBaseUrl}/api/support/inquiries/presence`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${safeToken}`,
+      },
+      body: JSON.stringify({
+        ticketId: safeTicketId,
+        state: safeState,
+      }),
+      keepalive: true,
+    });
+  } catch {
+    // Best effort only.
+  }
+}
+
+function getCustomerName(profile, inviteProfile) {
+  return (
+    inviteProfile?.displayName ||
+    inviteProfile?.firstName ||
+    profile.displayName ||
+    profile.firstName ||
+    "You"
+  );
+}
+
+function SendMessageIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+      <path
+        d="M3.5 20.5 20.5 12 3.5 3.5l3.2 7.2L14 12l-7.3 1.3-3.2 7.2Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export function SupportChatThread({ inviteToken }) {
+  const { inviteToken: inviteTokenValue, isResolved } = usePersistentInviteToken(inviteToken);
+  const [messages, setMessages] = useState(() => createInitialMessages("there"));
+  const [value, setValue] = useState("");
+  const [ticketId, setTicketId] = useState("");
+  const [error, setError] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [customerFirstName, setCustomerFirstName] = useState("");
+  const [customerDisplayName, setCustomerDisplayName] = useState("");
+  const [customerPhotoUrl, setCustomerPhotoUrl] = useState("");
+  const [customerPhotoTag, setCustomerPhotoTag] = useState("");
+  const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
+  const [supportAccessToken, setSupportAccessToken] = useState(() => readSupportAccessToken());
+  const lastSyncedThreadSignatureRef = useRef("");
+  const liveStreamReconnectTimerRef = useRef(null);
+  const liveStreamReconnectAttemptRef = useRef(0);
+  const liveStreamClosedRef = useRef(false);
+
+  const resolvedCustomerName =
+    customerDisplayName ||
+    customerFirstName ||
+    portalProfile.displayName ||
+    portalProfile.firstName ||
+    "Unknown guest";
+
+  const syncLiveInquiry = (inquiry) => {
+    if (!Array.isArray(inquiry?.thread)) {
+      return;
+    }
+
+    const nextSignature = threadSignature(inquiry.thread);
+    if (!nextSignature || nextSignature === lastSyncedThreadSignatureRef.current) {
+      return;
+    }
+
+    lastSyncedThreadSignatureRef.current = nextSignature;
+    setMessages(
+      threadToMessages(
+        inquiry.thread,
+        inquiry.customer || resolvedCustomerName,
+        inquiry.customerPhotoUrl || customerPhotoUrl,
+        inquiry.customerPhotoTag || customerPhotoTag,
+      ),
+    );
+  };
+
+  useEffect(() => {
+    const savedTicketId = window.localStorage.getItem(TICKET_KEY);
+    if (savedTicketId) {
+      setTicketId(savedTicketId);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInvite() {
+      if (!isResolved) {
+        return;
+      }
+
+      const storedProfile = readPortalProfile();
+      setPortalProfile(storedProfile);
+
+      if (!inviteTokenValue) {
+        const nextName = getCustomerName(storedProfile, storedProfile);
+        setCustomerFirstName(storedProfile.firstName);
+        setCustomerDisplayName(storedProfile.displayName || [storedProfile.firstName, storedProfile.lastName].filter(Boolean).join(" ").trim());
+        setCustomerPhotoUrl(storedProfile.photoUrl);
+        setCustomerPhotoTag(storedProfile.photoTag);
+        setMessages(createInitialMessages(nextName || "there"));
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/api/invites/lookup?inviteToken=${encodeURIComponent(inviteTokenValue)}`,
+        );
+        const data = await response.json();
+
+        if (cancelled || !response.ok || !data.ok) {
+          return;
+        }
+
+        const firstName = normalize(data.invite?.firstName);
+        const lastName = normalize(data.invite?.lastName);
+        const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+        const displayName =
+          fullName || firstName || storedProfile.displayName || storedProfile.firstName || "Unknown guest";
+        const phoneNumber = normalize(data.invite?.phoneNumber);
+        const photoUrl = normalize(data.invite?.profilePhotoUrl);
+        const photoTag = normalize(data.invite?.profilePhotoTag);
+        const nextAccessToken = normalize(data.supportAccessToken);
+
+        setCustomerFirstName(firstName);
+        setCustomerDisplayName(displayName);
+        setCustomerPhotoUrl(photoUrl || storedProfile.photoUrl);
+        setCustomerPhotoTag(photoTag || storedProfile.photoTag);
+        if (nextAccessToken) {
+          setSupportAccessToken(nextAccessToken);
+          saveSupportAccessToken(nextAccessToken);
+        }
+        setPortalProfile({
+          firstName: firstName || storedProfile.firstName,
+          lastName: lastName || storedProfile.lastName,
+          displayName,
+          phoneNumber: phoneNumber || storedProfile.phoneNumber,
+          photoUrl: photoUrl || storedProfile.photoUrl,
+          photoTag: photoTag || storedProfile.photoTag,
+        });
+        window.localStorage.setItem(
+          PORTAL_PROFILE_KEY,
+          JSON.stringify({
+            firstName: firstName || storedProfile.firstName,
+            lastName: lastName || storedProfile.lastName,
+            displayName,
+            phoneNumber: phoneNumber || storedProfile.phoneNumber,
+            photoUrl: photoUrl || storedProfile.photoUrl,
+            photoTag: photoTag || storedProfile.photoTag,
+          }),
+        );
+        setMessages(createInitialMessages(firstName || displayName || "there"));
+      } catch {
+        if (!cancelled) {
+          const nextName = storedProfile.displayName || [storedProfile.firstName, storedProfile.lastName].filter(Boolean).join(" ").trim();
+          setCustomerFirstName(storedProfile.firstName);
+          setCustomerDisplayName(nextName);
+          setCustomerPhotoUrl(storedProfile.photoUrl);
+          setCustomerPhotoTag(storedProfile.photoTag);
+          setMessages(createInitialMessages(nextName || storedProfile.firstName || "there"));
+        }
+      }
+    }
+
+    void loadInvite();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteTokenValue, isResolved]);
+
+  useEffect(() => {
+    if (!isResolved || !ticketId) {
+      return undefined;
+    }
+
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      setError("Support access is missing. Please reopen your invite.");
+      return undefined;
+    }
+
+    let cancelled = false;
+    let intervalId = null;
+
+    async function pingPresence(state) {
+      if (cancelled) {
+        return;
+      }
+
+      await sendSupportPresenceUpdate(ticketId, state, storedToken);
+    }
+
+    void pingPresence("active");
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        void pingPresence("inactive");
+        return;
+      }
+
+      void pingPresence("active");
+    };
+
+    const handlePageHide = () => {
+      void pingPresence("inactive");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    intervalId = window.setInterval(() => {
+      void pingPresence("active");
+    }, 15000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      void sendSupportPresenceUpdate(ticketId, "inactive", storedToken);
+    };
+  }, [isResolved, supportAccessToken, ticketId]);
+
+  useEffect(() => {
+    if (!isResolved || !ticketId) {
+      return undefined;
+    }
+
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      return undefined;
+    }
+
+    const streamUrl = `${apiBaseUrl}/api/support/inquiries/stream?ticketId=${encodeURIComponent(ticketId)}&supportAccessToken=${encodeURIComponent(storedToken)}`;
+
+    function clearReconnectTimer() {
+      if (liveStreamReconnectTimerRef.current) {
+        window.clearTimeout(liveStreamReconnectTimerRef.current);
+        liveStreamReconnectTimerRef.current = null;
+      }
+    }
+
+    function connect() {
+      if (liveStreamClosedRef.current) {
+        return;
+      }
+
+      const source = new EventSource(streamUrl);
+      let terminal = false;
+
+      source.onmessage = (event) => {
+        if (terminal || liveStreamClosedRef.current) {
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          if (data?.ok === false) {
+            if (String(data.error ?? "").toLowerCase().includes("unauthorized")) {
+              terminal = true;
+              liveStreamClosedRef.current = true;
+              clearReconnectTimer();
+              source.close();
+              setError("Support access is missing. Please reopen your invite.");
+            }
+            return;
+          }
+
+          if (data?.inquiry?.thread) {
+            syncLiveInquiry(data.inquiry);
+            void sendSupportPresenceUpdate(ticketId, "active", storedToken);
+          }
+        } catch {
+          // Ignore malformed stream events.
+        }
+      };
+
+      source.onopen = () => {
+        if (terminal || liveStreamClosedRef.current) {
+          return;
+        }
+
+        liveStreamReconnectAttemptRef.current = 0;
+        clearReconnectTimer();
+        setError("");
+      };
+
+      source.onerror = () => {
+        if (terminal || liveStreamClosedRef.current) {
+          return;
+        }
+
+        terminal = true;
+        source.close();
+
+        const attempt = liveStreamReconnectAttemptRef.current + 1;
+        liveStreamReconnectAttemptRef.current = attempt;
+        const delay = Math.min(30000, 1000 * 2 ** Math.min(attempt - 1, 5));
+
+        clearReconnectTimer();
+        liveStreamReconnectTimerRef.current = window.setTimeout(() => {
+          liveStreamReconnectTimerRef.current = null;
+          connect();
+        }, delay);
+
+        if (attempt >= 4) {
+          setError("Live chat connection dropped. Reconnecting...");
+        } else {
+          setError((current) => current || "Reconnecting live chat...");
+        }
+      };
+    }
+
+    liveStreamClosedRef.current = false;
+    clearReconnectTimer();
+    connect();
+
+    return () => {
+      liveStreamClosedRef.current = true;
+      clearReconnectTimer();
+    };
+  }, [isResolved, supportAccessToken, ticketId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCurrentThread() {
+      const storedToken = supportAccessToken || readSupportAccessToken();
+      if (!isResolved || !ticketId || !storedToken) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${apiBaseUrl}/api/support/inquiries?ticketId=${encodeURIComponent(ticketId)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${storedToken}`,
+            },
+          },
+        );
+        const data = await response.json();
+
+        if (!response.ok || !data.ok || cancelled) {
+          return;
+        }
+
+        if (data.inquiry?.thread) {
+          syncLiveInquiry(data.inquiry);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Unable to load chat.");
+        }
+      }
+    }
+
+    void loadCurrentThread();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isResolved, supportAccessToken, ticketId]);
+
+  useEffect(() => {
+    if (!customerDisplayName && !customerPhotoUrl) {
+      return;
+    }
+
+    setMessages((current) => {
+      let changed = false;
+      const nextMessages = current.map((message) => {
+        if (message.role !== "user") {
+          return message;
+        }
+
+        const nextName = isPlaceholderCustomerName(message.name)
+          ? customerDisplayName || customerFirstName || portalProfile.displayName || portalProfile.firstName || "Unknown guest"
+          : message.name;
+        const shouldUpdatePhoto = !normalize(message.photoUrl) && Boolean(customerPhotoUrl);
+
+        if (nextName !== message.name || shouldUpdatePhoto) {
+          changed = true;
+          return {
+            ...message,
+            name: nextName,
+            photoUrl: shouldUpdatePhoto ? customerPhotoUrl : message.photoUrl,
+          };
+        }
+
+        return message;
+      });
+
+      return changed ? nextMessages : current;
+    });
+  }, [customerDisplayName, customerFirstName, customerPhotoUrl, portalProfile.displayName, portalProfile.firstName]);
+
+  async function postSupportMessage(body) {
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      throw new Error("Support access is missing. Please reopen your invite.");
+    }
+
+    const response = await fetch(`${apiBaseUrl}/api/support/inquiries`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${storedToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error ?? "Unable to send support message.");
+    }
+
+    if (data.ticketId) {
+      setTicketId(data.ticketId);
+      window.localStorage.setItem(TICKET_KEY, data.ticketId);
+      void sendSupportPresenceUpdate(data.ticketId, "active", supportAccessToken);
+    }
+
+    if (data.inquiry?.thread) {
+      syncLiveInquiry(data.inquiry);
+    }
+
+    return data;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const trimmed = value.trim();
+    if (!trimmed || isSending) {
+      return;
+    }
+
+    setIsSending(true);
+    setError("");
+
+    const nextMessages = [
+      ...messages,
+      {
+        role: "user",
+        name: resolvedCustomerName,
+        text: trimmed,
+        createdAt: new Date().toISOString(),
+        photoUrl: customerPhotoUrl,
+        photoTag: customerPhotoTag,
+      },
+    ];
+    setMessages(nextMessages);
+    setValue("");
+
+    try {
+      await postSupportMessage({
+        inviteToken: inviteTokenValue,
+        message: trimmed,
+        ticketId: ticketId || undefined,
+        contactName: resolvedCustomerName,
+        contactPhoneNumber: portalProfile.phoneNumber || undefined,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to send support message.");
+      setMessages(nextMessages);
+      setValue(trimmed);
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  function finishTheChat() {
+    window.localStorage.removeItem(TICKET_KEY);
+    setTicketId("");
+    lastSyncedThreadSignatureRef.current = "";
+    setMessages(createInitialMessages(resolvedCustomerName || "there"));
+    setValue("");
+    setError("");
+  }
+
+  const hasMessageDraft = value.trim().length > 0;
+
+  return (
+    <section className="chatbot-shell support-chatbot" aria-label="Support chat">
+      <div className="support-top-actions">
+        <Link className="support-back-button" href="/portal">
+          back
+        </Link>
+      </div>
+
+      <div className="support-chat-stage">
+        <div className="support-live-panel">
+          <div className="chatbot-messages">
+            {messages.map((message, index) => (
+              <article className={`chatbot-message chatbot-message-${message.role}`} key={`${message.role}-${index}`}>
+                <header className="chatbot-message-header">
+                  <div className="chatbot-message-identity">
+                    <span
+                      className={`chatbot-avatar ${message.role === "user" ? "is-user" : "is-support"}`}
+                      aria-hidden="true"
+                    >
+                      {message.role === "user" && message.photoUrl ? (
+                        <img alt="" src={message.photoUrl} />
+                      ) : message.role === "user" ? (
+                        initialsFromName(message.name || resolvedCustomerName)
+                      ) : (
+                        "S"
+                      )}
+                    </span>
+                    <span className="chatbot-message-name-wrap">
+                      <strong>
+                        {message.role === "user"
+                          ? isPlaceholderCustomerName(message.name)
+                            ? resolvedCustomerName || "You"
+                            : message.name
+                          : "Support"}
+                      </strong>
+                      {message.role === "user" && normalize(message.photoTag) ? (
+                        <span className="chatbot-profile-tag">{message.photoTag}</span>
+                      ) : null}
+                    </span>
+                  </div>
+                  <time dateTime={message.createdAt || ""}>{formatMessageTime(message.createdAt)}</time>
+                </header>
+                {message.text}
+              </article>
+            ))}
+          </div>
+
+          {error ? (
+            <p className="chatbot-error" role="status">
+              {error}
+            </p>
+          ) : null}
+
+          <div className="chatbot-compose">
+            <form className="chatbot-form" onSubmit={handleSubmit}>
+              <input
+                aria-label="Send a message"
+                placeholder="Type your message..."
+                value={value}
+                onChange={(event) => setValue(event.target.value)}
+                type="text"
+              />
+              <button
+                aria-label="Send message"
+                className={`chatbot-send-button ${hasMessageDraft ? "is-ready" : "is-idle"}`}
+                disabled={isSending || !hasMessageDraft}
+                type="submit"
+              >
+                {isSending ? <span className="chatbot-send-loading">...</span> : <SendMessageIcon />}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div className="support-bottom-actions">
+        <button className="support-finish-button" onClick={finishTheChat} type="button">
+          finish the chat
+        </button>
+      </div>
+    </section>
+  );
+}
