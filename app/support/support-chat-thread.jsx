@@ -12,6 +12,8 @@ const TICKET_KEY = "fifa-half-time-show-support-ticket";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 
+const SUPPORT_ASSISTANT_NAME = "Miranda";
+
 function normalize(value) {
   return String(value ?? "").trim();
 }
@@ -88,8 +90,8 @@ function createInitialMessages(name = "there") {
   return [
     {
       role: "assistant",
-      name: "Support",
-      text: `Hi ${name}, we're here. Send your message and someone from the team will reply here.`,
+      name: SUPPORT_ASSISTANT_NAME,
+      text: `Hi ${name}, welcome to FIFA X BTS support. My name is Miranda. How can I help you today?`,
       createdAt,
     },
   ];
@@ -98,7 +100,7 @@ function createInitialMessages(name = "there") {
 function threadToMessages(thread, customerName = "Unknown guest", customerPhotoUrl = "", customerPhotoTag = "") {
   return thread.map((item) => ({
     role: item.role === "customer" ? "user" : "assistant",
-    name: item.role === "customer" ? customerName : "Support",
+    name: item.role === "customer" ? customerName : normalize(item.senderName) || SUPPORT_ASSISTANT_NAME,
     text: item.message,
     createdAt: item.createdAt,
     photoUrl: item.role === "customer" ? customerPhotoUrl : "",
@@ -732,7 +734,7 @@ export function SupportChatThread({ inviteToken }) {
                       ) : message.role === "user" ? (
                         initialsFromName(message.name || resolvedCustomerName)
                       ) : (
-                        "S"
+                        initialsFromName(message.name || SUPPORT_ASSISTANT_NAME)
                       )}
                     </span>
                     <span className="chatbot-message-name-wrap">
@@ -741,7 +743,7 @@ export function SupportChatThread({ inviteToken }) {
                           ? isPlaceholderCustomerName(message.name)
                             ? resolvedCustomerName || "You"
                             : message.name
-                          : "Support"}
+                          : message.name || SUPPORT_ASSISTANT_NAME}
                       </strong>
                       {message.role === "user" && normalize(message.photoTag) ? (
                         <span className="chatbot-profile-tag">{message.photoTag}</span>
