@@ -258,6 +258,9 @@ export function RegisterForm() {
 
   const isReady = isFormComplete(formValues);
   const isWaitlistMode = availabilityLoaded && isFull;
+  const spotsLeft =
+    availabilityLoaded && capacity !== null ? Math.max(0, Number(capacity) - Number(inviteCount)) : null;
+  const shouldShowSpotWarning = spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5;
   const submitLabel = isSuccess
     ? "redirecting..."
     : isSubmitting
@@ -317,6 +320,7 @@ export function RegisterForm() {
 
       const qrToken = data.qrToken ?? data.id;
       const barcode = typeof data.barcode === "string" ? data.barcode : "";
+      const isWaitlist = Boolean(data.isWaitlist);
 
       saveStoredInviteToken(qrToken);
       form.reset();
@@ -331,7 +335,7 @@ export function RegisterForm() {
         if (barcode) {
           query.set("barcode", barcode);
         }
-        router.push(`/thank-you?${query.toString()}`);
+        router.push(`/${isWaitlist ? "waitlist" : "thank-you"}?${query.toString()}`);
       }, 420);
     } catch (err) {
       setError(
@@ -456,6 +460,8 @@ export function RegisterForm() {
       ) : null}
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
+
+      {shouldShowSpotWarning ? <p className="register-capacity-warning">only 5 spots left!!</p> : null}
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}

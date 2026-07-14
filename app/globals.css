@@ -1167,6 +1167,15 @@ button {
   color: #ffcdcd;
 }
 
+.register-capacity-warning {
+  margin: -6px 0 0;
+  color: #ff4d4d;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .register-back {
   position: fixed;
   left: 50%;
@@ -1477,6 +1486,15 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+}
+
+.waitlist-copy {
+  max-width: 34rem;
+  margin: 0;
+  color: rgba(244, 250, 245, 0.82);
+  font-size: 1rem;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
 }
 
 .thank-you-return {
