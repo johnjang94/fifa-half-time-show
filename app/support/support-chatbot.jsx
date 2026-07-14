@@ -338,6 +338,9 @@ export function SupportChatbot({ inviteToken }) {
   });
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const lastSyncedThreadSignatureRef = useRef("");
+  const liveStreamReconnectTimerRef = useRef(null);
+  const liveStreamReconnectAttemptRef = useRef(0);
+  const liveStreamClosedRef = useRef(false);
 
   const syncLiveInquiry = useCallback(
     (inquiry) => {
@@ -571,45 +574,93 @@ export function SupportChatbot({ inviteToken }) {
       return undefined;
     }
 
-    let closed = false;
     const streamUrl = `${apiBaseUrl}/api/support/inquiries/stream?ticketId=${encodeURIComponent(ticketId)}&supportAccessToken=${encodeURIComponent(storedToken)}`;
-    const source = new EventSource(streamUrl);
 
-    source.onmessage = (event) => {
-      if (closed) {
+    function clearReconnectTimer() {
+      if (liveStreamReconnectTimerRef.current) {
+        window.clearTimeout(liveStreamReconnectTimerRef.current);
+        liveStreamReconnectTimerRef.current = null;
+      }
+    }
+
+    function connect() {
+      if (liveStreamClosedRef.current) {
         return;
       }
 
-      try {
-        const data = JSON.parse(event.data);
-        if (data?.ok === false) {
-          if (String(data.error ?? "").toLowerCase().includes("unauthorized")) {
-            setError("Support access is missing. Please reopen your invite.");
-            source.close();
-          }
+      const source = new EventSource(streamUrl);
+      let terminal = false;
+
+      source.onmessage = (event) => {
+        if (terminal || liveStreamClosedRef.current) {
           return;
         }
 
-        if (data?.inquiry?.thread) {
-          syncLiveInquiry(data.inquiry);
-          void sendSupportPresenceUpdate(ticketId, "active", storedToken);
+        try {
+          const data = JSON.parse(event.data);
+          if (data?.ok === false) {
+            if (String(data.error ?? "").toLowerCase().includes("unauthorized")) {
+              terminal = true;
+              liveStreamClosedRef.current = true;
+              clearReconnectTimer();
+              source.close();
+              setError("Support access is missing. Please reopen your invite.");
+            }
+            return;
+          }
+
+          if (data?.inquiry?.thread) {
+            syncLiveInquiry(data.inquiry);
+            void sendSupportPresenceUpdate(ticketId, "active", storedToken);
+          }
+        } catch {
+          // Ignore malformed stream events.
         }
-      } catch {
-        // Ignore malformed stream events.
-      }
-    };
+      };
 
-    source.onerror = () => {
-      if (closed) {
-        return;
-      }
+      source.onopen = () => {
+        if (terminal || liveStreamClosedRef.current) {
+          return;
+        }
 
-      setError((current) => current || "Live chat connection dropped. Reconnecting...");
-    };
+        liveStreamReconnectAttemptRef.current = 0;
+        clearReconnectTimer();
+        setError("");
+      };
+
+      source.onerror = () => {
+        if (terminal || liveStreamClosedRef.current) {
+          return;
+        }
+
+        terminal = true;
+        source.close();
+
+        const attempt = liveStreamReconnectAttemptRef.current + 1;
+        liveStreamReconnectAttemptRef.current = attempt;
+        const delay = Math.min(30000, 1000 * 2 ** Math.min(attempt - 1, 5));
+
+        clearReconnectTimer();
+        liveStreamReconnectTimerRef.current = window.setTimeout(() => {
+          liveStreamReconnectTimerRef.current = null;
+          connect();
+        }, delay);
+
+        if (attempt >= 4) {
+          setError("Live chat connection dropped. Reconnecting...");
+        } else {
+          setError((current) => current || "Reconnecting live chat...");
+        }
+      };
+    }
+
+    liveStreamClosedRef.current = false;
+    clearReconnectTimer();
+    connect();
 
     return () => {
-      closed = true;
-      source.close();
+      liveStreamClosedRef.current = true;
+      clearReconnectTimer();
     };
   }, [isResolved, ticketId, viewMode, supportAccessToken]);
 
