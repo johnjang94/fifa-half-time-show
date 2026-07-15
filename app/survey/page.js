@@ -7,7 +7,7 @@ import { usePersistentInviteToken } from "../../components/use-persistent-invite
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
-const SOURCE_OPTIONS = ["Friends", "LinkedIn", "Eventbrite", "Instagram", "X"];
+const SOURCE_OPTIONS = ["Friends", "Eventbrite", "Instagram", "Volleyball", "Run Club"];
 const YES_NO_OPTIONS = ["Yes", "No"];
 
 function normalize(value) {
