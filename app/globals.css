@@ -1906,14 +1906,21 @@ button {
   gap: 14px;
 }
 
-.activity-hub-help-illustration {
+.activity-hub-help-image-wrap {
   width: 100%;
   min-height: 180px;
-  display: block;
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.activity-hub-help-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .activity-hub-help-copy {
@@ -1989,10 +1996,21 @@ button {
 
 .portal-things-card {
   padding-bottom: 0;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 260ms ease;
 }
 
 .portal-things-card[open] {
   padding-bottom: 1rem;
+  transform: translateY(-1px);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    var(--shadow);
 }
 
 .portal-things-trigger {
@@ -2015,9 +2033,10 @@ button {
   font: inherit;
   cursor: pointer;
   transition:
-    transform 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease;
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 220ms ease,
+    border-color 220ms ease,
+    letter-spacing 220ms ease;
 }
 
 .portal-things-trigger > span:first-child {
@@ -2051,11 +2070,13 @@ button {
   right: 1.1rem;
   font-size: 1rem;
   line-height: 1;
-  transition: transform 220ms ease;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+  opacity: 0.82;
 }
 
 .portal-things-card[open] .portal-things-trigger-lock {
   transform: rotate(180deg);
+  opacity: 1;
 }
 
 .portal-things-card-body {
@@ -2063,23 +2084,28 @@ button {
   min-height: 0;
   overflow: hidden;
   padding: 5px;
-  border-radius: 16px;
+  border-radius: 18px;
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-10px) scale(0.985);
+  filter: blur(1px) saturate(0.96);
+  transform-origin: top center;
   transition:
-    opacity 260ms ease,
-    transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 240ms ease,
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 300ms ease;
 }
 
 .activity-hub-disclosure-panel {
   display: grid;
   grid-template-rows: 0fr;
+  overflow: hidden;
   padding-top: 0;
   transition: grid-template-rows 420ms cubic-bezier(0.22, 1, 0.36, 1), padding-top 320ms ease;
 }
 
 .activity-hub-disclosure-panel > .portal-things-card-body {
   min-height: 0;
+  margin-inline: 1px;
 }
 
 .activity-hub-disclosure-panel > .portal-things-card-body > .activity-hub-card-copy {
@@ -2093,7 +2119,8 @@ button {
 
 .portal-things-card[open] .portal-things-card-body {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
+  filter: blur(0) saturate(1);
 }
 
 .portal-things-tabs {

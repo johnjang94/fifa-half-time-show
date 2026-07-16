@@ -15,6 +15,7 @@ import skewersImage from "../../skewers.jpeg";
 import salmonRiceImage from "../../salmon-rice.webp";
 import cardGameImage from "../../card-game.jpeg";
 import soccerImage from "../../soccer.webp";
+import helpImage from "../../help.jpg";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -143,88 +144,6 @@ function VenueMapPreview() {
         allowFullScreen
       />
     </div>
-  );
-}
-
-function HelpNeededIllustration() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="activity-hub-help-illustration"
-      viewBox="0 0 960 420"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id="helpSky" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stopColor="#111820" />
-          <stop offset="100%" stopColor="#091015" />
-        </linearGradient>
-        <linearGradient id="helpGlow" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stopColor="#f6d15d" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#f19c6b" stopOpacity="0.9" />
-        </linearGradient>
-      </defs>
-
-      <rect width="960" height="420" rx="36" fill="url(#helpSky)" />
-      <circle cx="156" cy="86" r="38" fill="rgba(246,209,93,0.16)" />
-      <circle cx="156" cy="86" r="18" fill="rgba(246,209,93,0.34)" />
-      <circle cx="784" cy="94" r="48" fill="rgba(255,255,255,0.05)" />
-      <path
-        d="M746 292 C784 210, 854 200, 900 230"
-        fill="none"
-        stroke="rgba(255,255,255,0.12)"
-        strokeWidth="26"
-        strokeLinecap="round"
-      />
-      <path
-        d="M64 304 C112 236, 178 206, 244 212"
-        fill="none"
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth="22"
-        strokeLinecap="round"
-      />
-      <path d="M130 292 C176 244, 220 224, 274 220" fill="none" stroke="#f6d15d" strokeWidth="6" strokeLinecap="round" />
-      <path d="M666 270 C700 250, 728 240, 756 240" fill="none" stroke="#f19c6b" strokeWidth="6" strokeLinecap="round" />
-
-      <g transform="translate(210 154)">
-        <circle cx="0" cy="0" r="28" fill="#f5e7c5" />
-        <path d="M-26 36 C-22 92, 22 92, 26 36" fill="#d96f5f" />
-        <path d="M-54 60 C-96 84, -106 128, -88 166" fill="none" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <path d="M54 60 C96 84, 106 128, 88 166" fill="none" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <path d="M-48 166 L-24 250" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <path d="M48 166 L24 250" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <path d="M-38 250 L-68 338" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <path d="M38 250 L68 338" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
-        <circle cx="-9" cy="-4" r="3.5" fill="#0f1418" />
-        <circle cx="9" cy="-4" r="3.5" fill="#0f1418" />
-        <path d="M-8 10 C-2 16, 2 16, 8 10" fill="none" stroke="#0f1418" strokeWidth="4" strokeLinecap="round" />
-        <path d="M-8 46 L-22 98" stroke="rgba(15,20,24,0.22)" strokeWidth="5" />
-        <path d="M8 46 L22 98" stroke="rgba(15,20,24,0.22)" strokeWidth="5" />
-      </g>
-
-      <g transform="translate(682 168)">
-        <circle cx="0" cy="0" r="74" fill="rgba(255,255,255,0.05)" />
-        <circle cx="0" cy="0" r="60" fill="#f5f7f8" />
-        <path d="M0 -60 L24 -22 L0 0 L-24 -22 Z" fill="#202a31" />
-        <path d="M-52 -18 L-24 -22 L0 0 L-16 34 L-52 18 Z" fill="#202a31" />
-        <path d="M52 -18 L24 -22 L0 0 L16 34 L52 18 Z" fill="#202a31" />
-        <path d="M-16 34 L0 60 L16 34 L0 0 Z" fill="#202a31" />
-      </g>
-
-      <g transform="translate(442 110)">
-        <path d="M0 0 L18 24 L-18 24 Z" fill="url(#helpGlow)" />
-        <rect x="-10" y="24" width="20" height="54" rx="10" fill="url(#helpGlow)" />
-        <path d="M-34 46 C-22 36, -12 36, 0 44 C12 52, 22 52, 34 42" fill="none" stroke="rgba(246,209,93,0.9)" strokeWidth="6" strokeLinecap="round" />
-      </g>
-
-      <path
-        d="M84 346 C188 312, 288 304, 392 318 S606 348, 734 332 S884 302, 938 314"
-        fill="none"
-        stroke="rgba(255,255,255,0.08)"
-        strokeWidth="18"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 
@@ -443,11 +362,15 @@ function ActivityHubPageInner() {
 
           <ActivityDisclosure title="HELP NEEDED">
             <div className="activity-hub-help-needed">
-              <HelpNeededIllustration />
+              <div className="activity-hub-help-image-wrap">
+                <Image
+                  alt="Help wanted illustration"
+                  className="activity-hub-help-image"
+                  src={helpImage}
+                />
+              </div>
               <p className="portal-card-copy activity-hub-help-copy">
-                We could use a few extra hands to keep the party feeling warm and alive. If you
-                love the energy of a music night or a football match, we would be so grateful for
-                help with snacks, setup, and small touches that make the room feel special.
+                can we get some help with food, cutleries, and set up, please?
               </p>
             </div>
             <Link
