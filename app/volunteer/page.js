@@ -135,7 +135,7 @@ function VolunteerPageInner() {
           <div className="portal-card-body volunteer-form-body">
             <label className="volunteer-question">
               <span className="portal-card-copy volunteer-question-text">
-                What are you interested in bringing to the party?
+                What are you interested in bringing to the party? (serving for 10 people)
               </span>
               <select
                 className="survey-control volunteer-multiselect"

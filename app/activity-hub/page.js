@@ -11,8 +11,10 @@ import { usePersistentInviteToken } from "../../components/use-persistent-invite
 import glutenFreeSausagesImage from "../../gluten-free-sausages.webp";
 import chickenImage from "../../chicken.webp";
 import fruitSaladImage from "../../fruit-salad.webp";
-import skewersImage from "../../skewers.jpg";
+import skewersImage from "../../skewers.jpeg";
 import salmonRiceImage from "../../salmon-rice.webp";
+import cardGameImage from "../../card-game.jpeg";
+import soccerImage from "../../soccer.webp";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -32,9 +34,9 @@ const providedItems = [
     image: chickenImage,
   },
   {
-    name: "Fruit salad",
-    description: "Bright, chilled, and palate-cleansing.",
-    image: fruitSaladImage,
+    name: "Salmon rice",
+    description: "A warm main with a refined, comforting feel.",
+    image: salmonRiceImage,
   },
   {
     name: "Skewers",
@@ -42,9 +44,21 @@ const providedItems = [
     image: skewersImage,
   },
   {
-    name: "Salmon rice",
-    description: "A warm main with a refined, comforting feel.",
-    image: salmonRiceImage,
+    name: "Fruit salad",
+    description: "Bright, chilled, and palate-cleansing.",
+    image: fruitSaladImage,
+  },
+];
+const entertainmentItems = [
+  {
+    name: "Card game",
+    description: "A cozy table-side game for people who want to linger and laugh.",
+    image: cardGameImage,
+  },
+  {
+    name: "Soccer",
+    description: "A playful nod to the match-day energy that keeps the room alive.",
+    image: soccerImage,
   },
 ];
 
@@ -108,8 +122,10 @@ function ActivityDisclosure({ title, children }) {
           ⌄
         </span>
       </summary>
-      <div className="portal-things-card-body">
-        <div className="activity-hub-card-copy">{children}</div>
+      <div className="activity-hub-disclosure-panel">
+        <div className="portal-things-card-body">
+          <div className="activity-hub-card-copy">{children}</div>
+        </div>
       </div>
     </details>
   );
@@ -117,95 +133,98 @@ function ActivityDisclosure({ title, children }) {
 
 function VenueMapPreview() {
   return (
-    <Link
-      aria-label="Open venue in maps"
-      className="activity-hub-venue-map-link"
-      href={venueMapUrl}
-      rel="noreferrer"
-      target="_blank"
-    >
-      <div className="activity-hub-venue-map" role="img" aria-label="Stylized map preview of the venue">
-        <svg
-          aria-hidden="true"
-          className="activity-hub-map-svg"
-          viewBox="0 0 1200 700"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="mapBg" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#1d242a" />
-              <stop offset="100%" stopColor="#0e1419" />
-            </linearGradient>
-            <linearGradient id="road" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="#8c9197" />
-              <stop offset="100%" stopColor="#c2c7cc" />
-            </linearGradient>
-          </defs>
+    <div className="activity-hub-venue-map">
+      <iframe
+        className="activity-hub-map-iframe"
+        title="Google map of 138 Downes Street, Toronto, ON"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        src={`https://www.google.com/maps?q=${encodeURIComponent(venueAddress)}&z=16&output=embed`}
+        allowFullScreen
+      />
+    </div>
+  );
+}
 
-          <rect width="1200" height="700" fill="url(#mapBg)" />
-          <path
-            d="M84 112 C210 142, 300 170, 430 188 S684 226, 798 276 S1002 390, 1120 444"
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth="46"
-            strokeLinecap="round"
-          />
-          <path
-            d="M82 110 C208 140, 300 168, 430 186 S684 224, 798 274 S1002 388, 1120 442"
-            fill="none"
-            stroke="url(#road)"
-            strokeWidth="14"
-            strokeLinecap="round"
-            strokeDasharray="22 16"
-          />
-          <path
-            d="M126 586 C236 516, 298 468, 402 422 S612 344, 724 316 S932 286, 1068 222"
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth="36"
-            strokeLinecap="round"
-          />
-          <path
-            d="M126 586 C236 516, 298 468, 402 422 S612 344, 724 316 S932 286, 1068 222"
-            fill="none"
-            stroke="url(#road)"
-            strokeWidth="10"
-            strokeLinecap="round"
-          />
-          <path d="M146 170 L324 170" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
-          <path d="M266 170 L266 364" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
-          <path d="M744 180 L744 500" stroke="rgba(255,255,255,0.16)" strokeWidth="10" />
-          <path d="M744 500 L1002 500" stroke="rgba(255,255,255,0.16)" strokeWidth="10" />
-          <circle cx="744" cy="500" r="26" fill="#f6d15d" />
-          <circle cx="744" cy="500" r="44" fill="none" stroke="rgba(246,209,93,0.26)" strokeWidth="18" />
-          <path
-            d="M744 454 C727 454, 713 469, 713 486 C713 511, 744 545, 744 545 C744 545, 775 511, 775 486 C775 469, 761 454, 744 454 Z"
-            fill="#f4fff8"
-          />
-          <circle cx="744" cy="486" r="14" fill="#0e1419" />
-          <text
-            x="70"
-            y="82"
-            fill="rgba(244,255,248,0.78)"
-            fontFamily="Iowan Old Style, Georgia, serif"
-            fontSize="30"
-            letterSpacing="4"
-          >
-            VENUE MAP
-          </text>
-          <text
-            x="70"
-            y="622"
-            fill="rgba(244,255,248,0.56)"
-            fontFamily="Iowan Old Style, Georgia, serif"
-            fontSize="22"
-            letterSpacing="2"
-          >
-            138 DOWNES STREET, TORONTO, ON
-          </text>
-        </svg>
-      </div>
-    </Link>
+function HelpNeededIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="activity-hub-help-illustration"
+      viewBox="0 0 960 420"
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <linearGradient id="helpSky" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stopColor="#111820" />
+          <stop offset="100%" stopColor="#091015" />
+        </linearGradient>
+        <linearGradient id="helpGlow" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stopColor="#f6d15d" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#f19c6b" stopOpacity="0.9" />
+        </linearGradient>
+      </defs>
+
+      <rect width="960" height="420" rx="36" fill="url(#helpSky)" />
+      <circle cx="156" cy="86" r="38" fill="rgba(246,209,93,0.16)" />
+      <circle cx="156" cy="86" r="18" fill="rgba(246,209,93,0.34)" />
+      <circle cx="784" cy="94" r="48" fill="rgba(255,255,255,0.05)" />
+      <path
+        d="M746 292 C784 210, 854 200, 900 230"
+        fill="none"
+        stroke="rgba(255,255,255,0.12)"
+        strokeWidth="26"
+        strokeLinecap="round"
+      />
+      <path
+        d="M64 304 C112 236, 178 206, 244 212"
+        fill="none"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="22"
+        strokeLinecap="round"
+      />
+      <path d="M130 292 C176 244, 220 224, 274 220" fill="none" stroke="#f6d15d" strokeWidth="6" strokeLinecap="round" />
+      <path d="M666 270 C700 250, 728 240, 756 240" fill="none" stroke="#f19c6b" strokeWidth="6" strokeLinecap="round" />
+
+      <g transform="translate(210 154)">
+        <circle cx="0" cy="0" r="28" fill="#f5e7c5" />
+        <path d="M-26 36 C-22 92, 22 92, 26 36" fill="#d96f5f" />
+        <path d="M-54 60 C-96 84, -106 128, -88 166" fill="none" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <path d="M54 60 C96 84, 106 128, 88 166" fill="none" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <path d="M-48 166 L-24 250" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <path d="M48 166 L24 250" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <path d="M-38 250 L-68 338" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <path d="M38 250 L68 338" stroke="#f5e7c5" strokeWidth="20" strokeLinecap="round" />
+        <circle cx="-9" cy="-4" r="3.5" fill="#0f1418" />
+        <circle cx="9" cy="-4" r="3.5" fill="#0f1418" />
+        <path d="M-8 10 C-2 16, 2 16, 8 10" fill="none" stroke="#0f1418" strokeWidth="4" strokeLinecap="round" />
+        <path d="M-8 46 L-22 98" stroke="rgba(15,20,24,0.22)" strokeWidth="5" />
+        <path d="M8 46 L22 98" stroke="rgba(15,20,24,0.22)" strokeWidth="5" />
+      </g>
+
+      <g transform="translate(682 168)">
+        <circle cx="0" cy="0" r="74" fill="rgba(255,255,255,0.05)" />
+        <circle cx="0" cy="0" r="60" fill="#f5f7f8" />
+        <path d="M0 -60 L24 -22 L0 0 L-24 -22 Z" fill="#202a31" />
+        <path d="M-52 -18 L-24 -22 L0 0 L-16 34 L-52 18 Z" fill="#202a31" />
+        <path d="M52 -18 L24 -22 L0 0 L16 34 L52 18 Z" fill="#202a31" />
+        <path d="M-16 34 L0 60 L16 34 L0 0 Z" fill="#202a31" />
+      </g>
+
+      <g transform="translate(442 110)">
+        <path d="M0 0 L18 24 L-18 24 Z" fill="url(#helpGlow)" />
+        <rect x="-10" y="24" width="20" height="54" rx="10" fill="url(#helpGlow)" />
+        <path d="M-34 46 C-22 36, -12 36, 0 44 C12 52, 22 52, 34 42" fill="none" stroke="rgba(246,209,93,0.9)" strokeWidth="6" strokeLinecap="round" />
+      </g>
+
+      <path
+        d="M84 346 C188 312, 288 304, 392 318 S606 348, 734 332 S884 302, 938 314"
+        fill="none"
+        stroke="rgba(255,255,255,0.08)"
+        strokeWidth="18"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -376,6 +395,32 @@ function ActivityHubPageInner() {
             </div>
           </ActivityDisclosure>
 
+          <ActivityDisclosure title="Entertainment">
+            <div className="activity-hub-menu">
+              <p className="portal-card-copy activity-hub-menu-intro">
+                A playful party corner with a table game and a soccer nod to keep the room buzzing
+                between bites and laughs.
+              </p>
+              <div className="activity-hub-menu-grid">
+                {entertainmentItems.map((item) => (
+                  <article className="activity-hub-food-card" key={item.name}>
+                    <div className="activity-hub-food-photo-wrap">
+                      <Image alt={item.name} className="activity-hub-food-photo" src={item.image} />
+                    </div>
+                    <div className="activity-hub-food-copy">
+                      <strong className="activity-hub-food-name">{item.name}</strong>
+                      <p>{item.description}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p className="portal-card-copy activity-hub-menu-footnote">
+                Perfect for the in-between moments when guests want to mingle, smile, and stay in
+                the party mood.
+              </p>
+            </div>
+          </ActivityDisclosure>
+
           <ActivityDisclosure title="About the venue">
             <VenueMapPreview />
             <p className="portal-card-copy activity-hub-venue-copy">
@@ -396,12 +441,15 @@ function ActivityHubPageInner() {
             </dl>
           </ActivityDisclosure>
 
-          <ActivityDisclosure title="Bring Your Own">
-            <p className="portal-card-copy">
-              We are looking for a volunteer who is willing to bring some corn, mushrooms,
-              cutleries, napkins, beverages, etc. Should you wish to share some snacks, please let
-              us know as well using the form below:
-            </p>
+          <ActivityDisclosure title="HELP NEEDED">
+            <div className="activity-hub-help-needed">
+              <HelpNeededIllustration />
+              <p className="portal-card-copy activity-hub-help-copy">
+                We could use a few extra hands to keep the party feeling warm and alive. If you
+                love the energy of a music night or a football match, we would be so grateful for
+                help with snacks, setup, and small touches that make the room feel special.
+              </p>
+            </div>
             <Link
               className="portal-action-button activity-hub-volunteer-link"
               href={`/volunteer?invite=${encodeURIComponent(inviteToken)}`}
