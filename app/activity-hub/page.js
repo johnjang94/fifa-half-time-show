@@ -1,13 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
-import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
 import { SESSION_KEY } from "../../components/session-lifecycle";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
+import glutenFreeSausagesImage from "../../gluten-free-sausages.webp";
+import chickenImage from "../../chicken.webp";
+import fruitSaladImage from "../../fruit-salad.webp";
+import skewersImage from "../../skewers.jpg";
+import salmonRiceImage from "../../salmon-rice.webp";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
@@ -15,8 +20,33 @@ const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const venueAddress = "138 Downes Street, Toronto, ON M5E 0E4";
 const venueMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`;
-const venueMapThumbnailUrl =
-  "https://staticmap.openstreetmap.de/staticmap.php?center=43.6448,-79.3722&zoom=15&size=900x520&markers=43.6448,-79.3722,red-pushpin";
+const providedItems = [
+  {
+    name: "Gluten free sausages",
+    description: "Charred, fragrant, and served warm.",
+    image: glutenFreeSausagesImage,
+  },
+  {
+    name: "Chicken",
+    description: "Tender pieces with a polished finish.",
+    image: chickenImage,
+  },
+  {
+    name: "Fruit salad",
+    description: "Bright, chilled, and palate-cleansing.",
+    image: fruitSaladImage,
+  },
+  {
+    name: "Skewers",
+    description: "Grilled and plated for easy grazing.",
+    image: skewersImage,
+  },
+  {
+    name: "Salmon rice",
+    description: "A warm main with a refined, comforting feel.",
+    image: salmonRiceImage,
+  },
+];
 
 function normalize(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -24,11 +54,6 @@ function normalize(value) {
 
 function readInviteField(invite, camelKey, snakeKey) {
   return normalize(invite?.[camelKey] ?? invite?.[snakeKey]);
-}
-
-function sanitizeBarcode(value) {
-  const digits = normalize(value).replace(/\D/g, "");
-  return digits.length === 5 ? digits : "";
 }
 
 function savePortalProfile(profile) {
@@ -90,6 +115,100 @@ function ActivityDisclosure({ title, children }) {
   );
 }
 
+function VenueMapPreview() {
+  return (
+    <Link
+      aria-label="Open venue in maps"
+      className="activity-hub-venue-map-link"
+      href={venueMapUrl}
+      rel="noreferrer"
+      target="_blank"
+    >
+      <div className="activity-hub-venue-map" role="img" aria-label="Stylized map preview of the venue">
+        <svg
+          aria-hidden="true"
+          className="activity-hub-map-svg"
+          viewBox="0 0 1200 700"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id="mapBg" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#1d242a" />
+              <stop offset="100%" stopColor="#0e1419" />
+            </linearGradient>
+            <linearGradient id="road" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stopColor="#8c9197" />
+              <stop offset="100%" stopColor="#c2c7cc" />
+            </linearGradient>
+          </defs>
+
+          <rect width="1200" height="700" fill="url(#mapBg)" />
+          <path
+            d="M84 112 C210 142, 300 170, 430 188 S684 226, 798 276 S1002 390, 1120 444"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="46"
+            strokeLinecap="round"
+          />
+          <path
+            d="M82 110 C208 140, 300 168, 430 186 S684 224, 798 274 S1002 388, 1120 442"
+            fill="none"
+            stroke="url(#road)"
+            strokeWidth="14"
+            strokeLinecap="round"
+            strokeDasharray="22 16"
+          />
+          <path
+            d="M126 586 C236 516, 298 468, 402 422 S612 344, 724 316 S932 286, 1068 222"
+            fill="none"
+            stroke="rgba(255,255,255,0.08)"
+            strokeWidth="36"
+            strokeLinecap="round"
+          />
+          <path
+            d="M126 586 C236 516, 298 468, 402 422 S612 344, 724 316 S932 286, 1068 222"
+            fill="none"
+            stroke="url(#road)"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+          <path d="M146 170 L324 170" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
+          <path d="M266 170 L266 364" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
+          <path d="M744 180 L744 500" stroke="rgba(255,255,255,0.16)" strokeWidth="10" />
+          <path d="M744 500 L1002 500" stroke="rgba(255,255,255,0.16)" strokeWidth="10" />
+          <circle cx="744" cy="500" r="26" fill="#f6d15d" />
+          <circle cx="744" cy="500" r="44" fill="none" stroke="rgba(246,209,93,0.26)" strokeWidth="18" />
+          <path
+            d="M744 454 C727 454, 713 469, 713 486 C713 511, 744 545, 744 545 C744 545, 775 511, 775 486 C775 469, 761 454, 744 454 Z"
+            fill="#f4fff8"
+          />
+          <circle cx="744" cy="486" r="14" fill="#0e1419" />
+          <text
+            x="70"
+            y="82"
+            fill="rgba(244,255,248,0.78)"
+            fontFamily="Iowan Old Style, Georgia, serif"
+            fontSize="30"
+            letterSpacing="4"
+          >
+            VENUE MAP
+          </text>
+          <text
+            x="70"
+            y="622"
+            fill="rgba(244,255,248,0.56)"
+            fontFamily="Iowan Old Style, Georgia, serif"
+            fontSize="22"
+            letterSpacing="2"
+          >
+            138 DOWNES STREET, TORONTO, ON
+          </text>
+        </svg>
+      </div>
+    </Link>
+  );
+}
+
 export default function ActivityHubPage() {
   return (
     <Suspense fallback={null}>
@@ -108,7 +227,6 @@ function ActivityHubPageInner() {
     lastName: "",
     phoneNumber: "",
     rsvp: "Going",
-    barcode: "",
     checkedInAt: "",
     profilePhotoUrl: "",
     profilePhotoTag: "",
@@ -164,7 +282,6 @@ function ActivityHubPageInner() {
           const firstName = readInviteField(data.invite, "firstName", "first_name");
           const lastName = readInviteField(data.invite, "lastName", "last_name");
           const phoneNumber = readInviteField(data.invite, "phoneNumber", "phone_number");
-          const barcode = sanitizeBarcode(readInviteField(data.invite, "barcode", "barcode"));
           const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName || "guest";
           saveSupportAccessToken(data.supportAccessToken);
           const profilePhotoUrl = data.invite.profilePhotoUrl ?? "";
@@ -175,7 +292,6 @@ function ActivityHubPageInner() {
             firstName,
             lastName,
             phoneNumber,
-            barcode,
             checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
             profilePhotoUrl,
@@ -235,31 +351,33 @@ function ActivityHubPageInner() {
           <h1>{portalTitle}</h1>
         </header>
 
-        <section className="portal-qr-area" aria-label="Your QR code">
-          <QrCode token={inviteToken} caption="" barcode={invite.barcode} />
-        </section>
-
         <section className="portal-actions activity-hub-actions" aria-label="Activity hub actions">
           <ActivityDisclosure title="What is provided">
-            <p className="portal-card-copy">
-              Gluten free sausages, chicken, fruit salad, skewers, salmon rice, and more will be
-              provided.
-            </p>
+            <div className="activity-hub-menu">
+              <p className="portal-card-copy activity-hub-menu-intro">
+                An elevated spread of familiar favorites, plated with a relaxed restaurant feel.
+              </p>
+              <div className="activity-hub-menu-grid">
+                {providedItems.map((item) => (
+                  <article className="activity-hub-food-card" key={item.name}>
+                    <div className="activity-hub-food-photo-wrap">
+                      <Image alt={item.name} className="activity-hub-food-photo" src={item.image} />
+                    </div>
+                    <div className="activity-hub-food-copy">
+                      <strong className="activity-hub-food-name">{item.name}</strong>
+                      <p>{item.description}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p className="portal-card-copy activity-hub-menu-footnote">
+                Plus a few extra dishes to keep the table feeling generous.
+              </p>
+            </div>
           </ActivityDisclosure>
 
           <ActivityDisclosure title="About the venue">
-            <Link
-              className="activity-hub-venue-map-link"
-              href={venueMapUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              <img
-                alt="Map to the venue"
-                className="activity-hub-venue-map"
-                src={venueMapThumbnailUrl}
-              />
-            </Link>
+            <VenueMapPreview />
             <p className="portal-card-copy activity-hub-venue-copy">
               we are going to have our party <Link className="activity-hub-inline-link" href={venueMapUrl} rel="noreferrer" target="_blank">here</Link>.
             </p>
