@@ -8,14 +8,11 @@ import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
 import { SESSION_KEY, clearSessionState } from "../../components/session-lifecycle";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
-import loungeImage from "../../lounge.jpg";
 
 const controlBaseUrl =
   process.env.NEXT_PUBLIC_CONTROL_URL ?? "https://fifa-control.onrender.com";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
-const venueAddress = "138 Downes Street, Toronto, ON M5E 0E4";
-const venueMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`;
 const RSVP_CHANGE_LOCK_AT = new Date("2026-07-17T00:00:00-04:00");
 
 async function recordActivity(eventType, extra = {}) {
@@ -122,36 +119,6 @@ function getPortalTitle(rsvp) {
   return "You are going";
 }
 
-function LockedNoticeModal({ onClose }) {
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  return (
-    <div className="portal-modal-backdrop" role="presentation" onClick={onClose}>
-      <article
-        aria-modal="true"
-        className="portal-modal"
-        role="dialog"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <p className="portal-modal-kicker">things to know</p>
-        <h2>stay tuned for future announcements!</h2>
-        <button className="portal-modal-close" onClick={onClose} type="button">
-          close
-        </button>
-      </article>
-    </div>
-  );
-}
-
 function PrivacyPolicyGateModal({ error, isSubmitting, onAgree }) {
   const bodyRef = useRef(null);
 
@@ -195,24 +162,6 @@ function PrivacyPolicyGateModal({ error, isSubmitting, onAgree }) {
         </button>
       </article>
     </div>
-  );
-}
-
-function ThingsToKnowCard({ onLockedClick }) {
-  return (
-    <article className="portal-card portal-things-card">
-      <button
-        aria-label="Things to know, locked"
-        className="portal-things-trigger"
-        onClick={onLockedClick}
-        type="button"
-      >
-        <span>things to know</span>
-        <span aria-hidden="true" className="portal-things-trigger-lock">
-          🔒
-        </span>
-      </button>
-    </article>
   );
 }
 
@@ -359,7 +308,6 @@ function PortalPageInner() {
   const searchParams = useSearchParams();
   const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.get("invite"));
   const [activePanel, setActivePanel] = useState(null);
-  const [showLockedNotice, setShowLockedNotice] = useState(false);
   const [privacyGateOpen, setPrivacyGateOpen] = useState(false);
   const [privacyGateSubmitting, setPrivacyGateSubmitting] = useState(false);
   const [privacyGateError, setPrivacyGateError] = useState("");
@@ -572,7 +520,9 @@ function PortalPageInner() {
             </button>
           )}
 
-          <ThingsToKnowCard onLockedClick={() => setShowLockedNotice(true)} />
+          <Link className="portal-action-button portal-action-link" href={`/activity-hub?invite=${encodeURIComponent(inviteToken)}`}>
+            things to know
+          </Link>
 
           <Link className="portal-action-button portal-action-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
             questions?
@@ -594,7 +544,6 @@ function PortalPageInner() {
           onAgree={handlePrivacyPolicyAgree}
         />
       ) : null}
-      {showLockedNotice ? <LockedNoticeModal onClose={() => setShowLockedNotice(false)} /> : null}
     </main>
   );
 }
