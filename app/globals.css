@@ -984,8 +984,7 @@ button {
   line-height: 1.45;
 }
 
-.register-privacy,
-.register-ai-consent {
+.register-privacy {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -3026,11 +3025,6 @@ button {
     margin-top: 14px;
     padding: 0.68rem 0.9rem;
   }
-
-  .register-ai-consent {
-    gap: 6px;
-  }
-
   .register-field input[type="file"]::file-selector-button {
     padding: 0.5rem 0.8rem;
   }

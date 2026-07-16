@@ -142,14 +142,11 @@ export function RegisterForm() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [hasReadPrivacyPolicy, setHasReadPrivacyPolicy] = useState(false);
-  const [isAiConsentAccepted, setIsAiConsentAccepted] = useState(false);
-  const [hasProfilePhoto, setHasProfilePhoto] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
     phoneNumber: "",
     privacyAccepted: "",
-    aiConsentAccepted: "",
   });
   const [formValues, setFormValues] = useState({
     firstName: "",
@@ -214,10 +211,6 @@ export function RegisterForm() {
     const lastName = String(formData.get("lastName") ?? "").trim();
     const phoneNumber = String(formData.get("phoneNumber") ?? "").replace(/\D/g, "");
     const privacyAccepted = formData.get("privacyAccepted") === "on";
-    const aiConsentAccepted = formData.get("aiConsentAccepted") === "on";
-    const profilePhoto = formData.get("profilePhoto");
-    const hasUploadedPhoto =
-      profilePhoto instanceof File && typeof profilePhoto.size === "number" && profilePhoto.size > 0;
 
     const nextFieldErrors = {
       firstName:
@@ -233,10 +226,6 @@ export function RegisterForm() {
           ? ""
           : "Please enter a 10-digit phone number, like 5551234567.",
       privacyAccepted: privacyAccepted ? "" : "Please accept the privacy policy before signing up.",
-      aiConsentAccepted:
-        hasUploadedPhoto || aiConsentAccepted
-          ? ""
-          : "Please upload a photo or agree to use AI avatar if no photo is uploaded.",
     };
 
     return {
@@ -251,8 +240,7 @@ export function RegisterForm() {
       NAME_PATTERN.test(values.lastName.trim()) &&
       PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
       isPrivacyAccepted &&
-      hasReadPrivacyPolicy &&
-      (hasProfilePhoto || isAiConsentAccepted)
+      hasReadPrivacyPolicy
     );
   }
 
@@ -324,8 +312,12 @@ export function RegisterForm() {
       form.reset();
       setIsPrivacyAccepted(false);
       setHasReadPrivacyPolicy(false);
-      setIsAiConsentAccepted(false);
-      setHasProfilePhoto(false);
+      setFieldErrors({
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        privacyAccepted: "",
+      });
       setIsPrivacyPolicyOpen(false);
       setIsSuccess(true);
       window.setTimeout(() => {
@@ -411,11 +403,6 @@ export function RegisterForm() {
         <input
           accept="image/jpeg,image/png,image/webp"
           name="profilePhoto"
-          onChange={(event) => {
-            const hasFile = Boolean(event.currentTarget.files?.length);
-            setHasProfilePhoto(hasFile);
-            setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
-          }}
           type="file"
         />
       </label>
@@ -435,26 +422,8 @@ export function RegisterForm() {
         </button>
       </div>
 
-      <div className="register-ai-consent">
-        <input name="aiConsentAccepted" type="hidden" value={isAiConsentAccepted ? "on" : ""} />
-        <button
-          aria-pressed={isAiConsentAccepted}
-          className={`register-consent-button ${isAiConsentAccepted ? "is-checked" : ""}`}
-          type="button"
-          onClick={() => {
-            setIsAiConsentAccepted((current) => !current);
-            setFieldErrors((current) => ({ ...current, aiConsentAccepted: "" }));
-          }}
-        >
-          <span className="register-consent-checkbox" aria-hidden="true" />
-          <span className="register-consent-text">I agree to use AI avatar if no photo is uploaded</span>
-        </button>
-      </div>
-
-      {fieldErrors.privacyAccepted || fieldErrors.aiConsentAccepted ? (
-        <p className="register-field-error">
-          {fieldErrors.privacyAccepted || fieldErrors.aiConsentAccepted}
-        </p>
+      {fieldErrors.privacyAccepted ? (
+        <p className="register-field-error">{fieldErrors.privacyAccepted}</p>
       ) : null}
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
@@ -467,8 +436,7 @@ export function RegisterForm() {
           isSubmitting ||
           isSuccess ||
           !isPrivacyAccepted ||
-          !hasReadPrivacyPolicy ||
-          (!hasProfilePhoto && !isAiConsentAccepted)
+          !hasReadPrivacyPolicy
         }
         type="submit"
       >
@@ -512,10 +480,6 @@ export function RegisterForm() {
               <p>
                 We keep it only as long as needed for event operations, safety, and legal or
                 security requirements.
-              </p>
-              <p>
-                If you choose not to upload a photo, we may generate a refined AI avatar for your
-                profile. That avatar will be labeled AI.
               </p>
               <p className="register-privacy-scroll-note">
                 Scroll to the end to unlock the agreement button.
