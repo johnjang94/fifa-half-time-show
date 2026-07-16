@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
@@ -146,6 +146,52 @@ function LockedNoticeModal({ onClose }) {
         <h2>stay tuned for future announcements!</h2>
         <button className="portal-modal-close" onClick={onClose} type="button">
           close
+        </button>
+      </article>
+    </div>
+  );
+}
+
+function PrivacyPolicyGateModal({ error, isSubmitting, onAgree }) {
+  const bodyRef = useRef(null);
+
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (body) {
+      body.scrollTop = 0;
+    }
+  }, []);
+
+  return (
+    <div className="portal-modal-backdrop" role="presentation">
+      <article aria-modal="true" className="portal-modal portal-privacy-modal" role="dialog">
+        <p className="portal-modal-kicker">privacy policy</p>
+        <h2>please agree to continue</h2>
+        <div className="portal-privacy-copy" ref={bodyRef}>
+          <p>
+            We use your name, phone number, profile photo, RSVP, and support details to manage
+            your registration and event communications.
+          </p>
+          <p>
+            We do not sell your information. We share it only with trusted service providers who
+            help us run the event.
+          </p>
+          <p>
+            We keep it only as long as needed for event operations, safety, and legal or security
+            requirements.
+          </p>
+          <p className="portal-privacy-scroll-note">
+            Scroll to the end to unlock the agreement button.
+          </p>
+        </div>
+        {error ? <p className="portal-privacy-error">{error}</p> : null}
+        <button
+          className="portal-modal-close portal-privacy-agree"
+          disabled={isSubmitting}
+          onClick={onAgree}
+          type="button"
+        >
+          {isSubmitting ? "agreeing..." : "i agree"}
         </button>
       </article>
     </div>
@@ -314,6 +360,9 @@ function PortalPageInner() {
   const { inviteToken, isResolved } = usePersistentInviteToken(searchParams?.get("invite"));
   const [activePanel, setActivePanel] = useState(null);
   const [showLockedNotice, setShowLockedNotice] = useState(false);
+  const [privacyGateOpen, setPrivacyGateOpen] = useState(false);
+  const [privacyGateSubmitting, setPrivacyGateSubmitting] = useState(false);
+  const [privacyGateError, setPrivacyGateError] = useState("");
   const [invite, setInvite] = useState({
     firstName: "",
     lastName: "",
@@ -324,6 +373,8 @@ function PortalPageInner() {
     profilePhotoUrl: "",
     profilePhotoTag: "",
     profilePhotoAiGenerated: false,
+    privacyPolicyAccepted: true,
+    privacyPolicyAcceptedAt: "",
   });
   const portalTitle = getPortalTitle(invite.rsvp);
   const isCheckedIn = Boolean(invite.checkedInAt);
@@ -377,6 +428,14 @@ function PortalPageInner() {
           const barcode = sanitizeBarcode(readInviteField(data.invite, "barcode", "barcode"));
           const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || firstName || "guest";
           saveSupportAccessToken(data.supportAccessToken);
+          const profilePhotoUrl = data.invite.profilePhotoUrl ?? "";
+          const profilePhotoTag = data.invite.profilePhotoTag ?? "";
+          const profilePhotoAiGenerated = Boolean(data.invite.profilePhotoAiGenerated);
+          const privacyPolicyAccepted = Boolean(
+            data.invite.privacyPolicyAccepted ?? data.invite.privacyAccepted ?? false,
+          );
+          const privacyPolicyAcceptedAt =
+            data.invite.privacyPolicyAcceptedAt ?? data.invite.privacyAcceptedAt ?? "";
 
           setInvite({
             firstName,
@@ -385,18 +444,22 @@ function PortalPageInner() {
             barcode,
             checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
-            profilePhotoUrl: data.invite.profilePhotoUrl ?? "",
-            profilePhotoTag: data.invite.profilePhotoTag ?? "",
-            profilePhotoAiGenerated: Boolean(data.invite.profilePhotoAiGenerated),
+            profilePhotoUrl,
+            profilePhotoTag,
+            profilePhotoAiGenerated,
+            privacyPolicyAccepted,
+            privacyPolicyAcceptedAt,
           });
           savePortalProfile({
             firstName,
             lastName,
             displayName,
             phoneNumber,
-            photoUrl: photoUrl || storedProfile.photoUrl,
-            photoTag: normalize(data.invite?.profilePhotoTag) || storedProfile.photoTag || "",
+            photoUrl: profilePhotoUrl,
+            photoTag: profilePhotoTag,
           });
+          setPrivacyGateOpen(!privacyPolicyAccepted);
+          setPrivacyGateError("");
         }
       } catch {
         // Best effort only.
@@ -409,6 +472,42 @@ function PortalPageInner() {
       cancelled = true;
     };
   }, [inviteToken, isResolved]);
+
+  async function handlePrivacyPolicyAgree() {
+    if (privacyGateSubmitting || !inviteToken) {
+      return;
+    }
+
+    setPrivacyGateSubmitting(true);
+    setPrivacyGateError("");
+
+    try {
+      const response = await fetch(`${controlBaseUrl}/api/invites/privacy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inviteToken }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.ok || !data.invite) {
+        throw new Error(data.error ?? "Unable to save your agreement.");
+      }
+
+      setInvite((current) => ({
+        ...current,
+        privacyPolicyAccepted: true,
+        privacyPolicyAcceptedAt: data.invite.privacyPolicyAcceptedAt ?? new Date().toISOString(),
+      }));
+      setPrivacyGateOpen(false);
+      void recordActivity("privacy-policy-accepted", { inviteToken });
+    } catch (error) {
+      setPrivacyGateError(error instanceof Error ? error.message : "Unable to save your agreement.");
+    } finally {
+      setPrivacyGateSubmitting(false);
+    }
+  }
 
   if (!isResolved) {
     return null;
@@ -450,19 +549,19 @@ function PortalPageInner() {
 
         <section className="portal-actions" aria-label="Portal actions">
           {activePanel === "ticket" ? (
-          <PortalTicketCard
-            displayName={displayName}
-            inviteToken={inviteToken}
-            phoneNumber={invite.phoneNumber}
-            rsvp={invite.rsvp}
-            profilePhotoUrl={invite.profilePhotoUrl}
-            profilePhotoTag={invite.profilePhotoTag}
-            profilePhotoAiGenerated={invite.profilePhotoAiGenerated}
-            onRsvpChange={(nextRsvp) =>
-              setInvite((current) => ({ ...current, rsvp: normalizeRsvp(nextRsvp) }))
-            }
-            onClose={() => setActivePanel(null)}
-          />
+            <PortalTicketCard
+              displayName={displayName}
+              inviteToken={inviteToken}
+              phoneNumber={invite.phoneNumber}
+              rsvp={invite.rsvp}
+              profilePhotoUrl={invite.profilePhotoUrl}
+              profilePhotoTag={invite.profilePhotoTag}
+              profilePhotoAiGenerated={invite.profilePhotoAiGenerated}
+              onRsvpChange={(nextRsvp) =>
+                setInvite((current) => ({ ...current, rsvp: normalizeRsvp(nextRsvp) }))
+              }
+              onClose={() => setActivePanel(null)}
+            />
           ) : (
             <button
               className="portal-action-button"
@@ -488,6 +587,13 @@ function PortalPageInner() {
           </button>
         </section>
       </section>
+      {privacyGateOpen ? (
+        <PrivacyPolicyGateModal
+          error={privacyGateError}
+          isSubmitting={privacyGateSubmitting}
+          onAgree={handlePrivacyPolicyAgree}
+        />
+      ) : null}
       {showLockedNotice ? <LockedNoticeModal onClose={() => setShowLockedNotice(false)} /> : null}
     </main>
   );
