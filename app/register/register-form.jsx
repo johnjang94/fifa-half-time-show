@@ -156,42 +156,6 @@ export function RegisterForm() {
   const privacyPolicyBodyRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [inviteCount, setInviteCount] = useState(0);
-  const [capacity, setCapacity] = useState(null);
-  const [isFull, setIsFull] = useState(false);
-  const [availabilityLoaded, setAvailabilityLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAvailability() {
-      try {
-        const response = await fetch(`${controlBaseUrl}/api/invites`, {
-          cache: "no-store",
-        });
-        const data = await response.json();
-
-        if (!cancelled && response.ok && data.ok) {
-          setInviteCount(Number(data.registeredCount ?? data.inviteCount ?? 0));
-          setCapacity(
-            data.capacity === null || data.capacity === undefined
-              ? null
-              : Number(data.capacity),
-          );
-          setIsFull(Boolean(data.isFull));
-          setAvailabilityLoaded(true);
-        }
-      } catch {
-        // Best effort only. Fall back to the default CTA text.
-      }
-    }
-
-    void loadAvailability();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!isPrivacyPolicyOpen) {
@@ -245,19 +209,11 @@ export function RegisterForm() {
   }
 
   const isReady = isFormComplete(formValues);
-  const isWaitlistMode = availabilityLoaded && isFull;
-  const spotsLeft =
-    availabilityLoaded && capacity !== null ? Math.max(0, Number(capacity) - Number(inviteCount)) : null;
-  const shouldShowSpotWarning = spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5;
   const submitLabel = isSuccess
     ? "redirecting..."
     : isSubmitting
-      ? isWaitlistMode
-        ? "joining waitlist..."
-        : "signing up..."
-      : isWaitlistMode
-        ? "join the waitlist"
-        : "sign up";
+      ? "signing up..."
+      : "sign up";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -427,8 +383,6 @@ export function RegisterForm() {
       ) : null}
 
       {error ? <p className="register-status register-status-error">{error}</p> : null}
-
-      {shouldShowSpotWarning ? <p className="register-capacity-warning">only 5 spots left!!</p> : null}
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}

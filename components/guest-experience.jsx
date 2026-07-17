@@ -211,14 +211,8 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
   const [phoneStatus, setPhoneStatus] = useState("");
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState("");
-  const [inviteCount, setInviteCount] = useState(0);
-  const [capacity, setCapacity] = useState(null);
-  const [availabilityLoaded, setAvailabilityLoaded] = useState(false);
   const phoneInputRef = useRef(null);
-  const spotsLeft =
-    availabilityLoaded && capacity !== null ? Math.max(0, Number(capacity) - Number(inviteCount)) : null;
-  const shouldShowSpotWarning = spotsLeft !== null && spotsLeft > 0 && spotsLeft <= 5;
-  const joinLinkLabel = spotsLeft === 0 ? "join the waitlist" : "join the watch party";
+  const joinLinkLabel = "join the watch party";
 
   useEffect(() => {
     const reason = sessionStorage.getItem(LOGOUT_REASON_KEY);
@@ -248,35 +242,6 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
       setIsLoginPanelOpen(true);
     }
   }, [initialLoginOpen]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAvailability() {
-      try {
-        const response = await fetch(`${controlBaseUrl}/api/invites`, {
-          cache: "no-store",
-        });
-        const data = await response.json();
-
-        if (!cancelled && response.ok && data.ok) {
-          setInviteCount(Number(data.registeredCount ?? data.inviteCount ?? 0));
-          setCapacity(
-            data.capacity === null || data.capacity === undefined ? null : Number(data.capacity),
-          );
-          setAvailabilityLoaded(true);
-        }
-      } catch {
-        // Best effort only.
-      }
-    }
-
-    void loadAvailability();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   function handleLoginSuccess({ inviteToken, phoneNumber, supportAccessToken }) {
     const sessionId = String(Date.now());
@@ -363,13 +328,6 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
               <p className="login-status" role="status">
                 {logoutNotice}
               </p>
-            ) : null}
-
-            {shouldShowSpotWarning ? (
-              <div className="login-warning" role="status" aria-live="polite">
-                <strong>{spotsLeft} spots left</strong>
-                <span>Hurry, the guest list is nearly full.</span>
-              </div>
             ) : null}
 
             <Link className="join-link" href="/overview">
