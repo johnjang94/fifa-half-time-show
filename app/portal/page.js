@@ -502,6 +502,10 @@ function PortalPageInner() {
           />
         </section>
 
+        <Link className="portal-inline-link portal-see-coming-link" href={`/list?invite=${encodeURIComponent(inviteToken)}`}>
+          See who&apos;s coming
+        </Link>
+
         <section className="portal-actions" aria-label="Portal actions">
           {activePanel === "ticket" ? (
             <PortalTicketCard

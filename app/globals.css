@@ -1707,6 +1707,187 @@ button {
   gap: 12px;
 }
 
+.portal-inline-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245, 231, 197, 0.95);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  opacity: 0.88;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.portal-inline-link:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.portal-inline-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+.portal-see-coming-link {
+  margin-top: -2px;
+}
+
+.list-page {
+  overflow-x: hidden;
+}
+
+.list-shell {
+  align-items: stretch;
+  text-align: left;
+}
+
+.list-header {
+  padding-top: clamp(4px, 2vh, 24px);
+}
+
+.list-header h1 {
+  font-size: clamp(1.9rem, 5.2vw, 3rem);
+}
+
+.list-actions {
+  gap: 0;
+}
+
+.portal-list {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.portal-list-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0 12px;
+}
+
+.portal-list-item + .portal-list-item {
+  margin-top: 2px;
+}
+
+.portal-list-item::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: -2px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(245, 231, 197, 0.55), rgba(255, 255, 255, 0.08));
+}
+
+.portal-list-item:last-child::after {
+  bottom: 18px;
+}
+
+.portal-list-thread {
+  position: relative;
+  width: 24px;
+  height: 100%;
+  min-height: 58px;
+}
+
+.portal-list-rail {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(245, 231, 197, 0.54), rgba(255, 255, 255, 0.06));
+}
+
+.portal-list-node {
+  position: absolute;
+  left: 12px;
+  top: 18px;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.32) 42%, rgba(245, 231, 197, 0.92) 100%);
+  box-shadow:
+    0 0 0 3px rgba(245, 231, 197, 0.08),
+    0 0 16px rgba(245, 231, 197, 0.22);
+}
+
+.portal-list-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 0;
+}
+
+.portal-list-photo-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.portal-list-photo {
+  object-fit: cover;
+}
+
+.portal-list-photo-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(245, 231, 197, 0.92);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.portal-list-name {
+  min-width: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-list-empty {
+  padding: 16px 0 18px 36px;
+  color: rgba(255, 255, 255, 0.58);
+  text-transform: lowercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+}
+
+.list-back-link {
+  justify-content: flex-start;
+}
+
 .activity-hub-top-row {
   width: 100%;
   display: flex;
@@ -3457,6 +3638,44 @@ button {
   .portal-header,
   .support-header {
     padding-top: clamp(4px, 2vh, 20px);
+  }
+
+  .list-shell {
+    gap: 14px;
+  }
+
+  .portal-list-item {
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 10px;
+    padding-block: 8px 10px;
+  }
+
+  .portal-list-thread {
+    width: 22px;
+  }
+
+  .portal-list-rail,
+  .portal-list-item::after {
+    left: 11px;
+  }
+
+  .portal-list-node {
+    left: 11px;
+  }
+
+  .portal-list-person {
+    gap: 10px;
+    padding-block: 8px;
+  }
+
+  .portal-list-photo-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .portal-list-name {
+    font-size: 0.96rem;
   }
 
   .chatbot-shell {
