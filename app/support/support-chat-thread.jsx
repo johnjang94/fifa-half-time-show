@@ -23,8 +23,24 @@ const QUICK_REPLIES = [
     message: "How do I register?",
   },
   {
-    label: "What happens after survey?",
+    label: "Activity hub help",
+    message: "I need help with the activity hub.",
+  },
+  {
+    label: "Information section",
+    message: "Where is the information section?",
+  },
+  {
+    label: "Privacy policy",
+    message: "Can you explain the privacy policy?",
+  },
+  {
+    label: "About my ticket",
+    message: "I need help with my ticket.",
+  },
+  {
     message: "What happens after the survey?",
+    label: "After survey",
   },
   {
     label: "Help with login",
@@ -109,7 +125,7 @@ function createInitialMessages(name = "there") {
     {
       role: "assistant",
       name: SUPPORT_ASSISTANT_NAME,
-      text: `Hi ${name}, welcome to FIFA X BTS support. My name is Miranda. How can I help you today?`,
+      text: `Hi ${name}, welcome to FIFA X BTS support. My name is Miranda. I can help with registration, the waitlist, survey, login, the activity hub, the information section, privacy policy questions, ticket details, and general event navigation. What do you need help with today?`,
       createdAt,
     },
   ];
