@@ -33,6 +33,8 @@ async function recordActivity(eventType, extra = {}) {
         pathname: window.location.pathname,
         userAgent: window.navigator.userAgent,
         ...extra,
+        inviteToken: String(extra.inviteToken ?? "").trim(),
+        phoneNumber: String(extra.phoneNumber ?? "").trim(),
       }),
     });
   } catch {

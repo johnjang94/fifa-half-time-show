@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "../../components/qr-code";
 import { SessionGuard } from "../../components/session-guard";
 import { SESSION_KEY, clearSessionState } from "../../components/session-lifecycle";
+import { readStoredInviteToken } from "../../components/invite-storage";
 import { usePersistentInviteToken } from "../../components/use-persistent-invite-token";
 
 const controlBaseUrl =
@@ -17,6 +18,7 @@ const RSVP_CHANGE_LOCK_AT = new Date("2026-07-17T00:00:00-04:00");
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
+  const inviteToken = String(extra.inviteToken ?? readStoredInviteToken() ?? "").trim();
 
   if (!sessionId) {
     return;
@@ -34,6 +36,7 @@ async function recordActivity(eventType, extra = {}) {
         pathname: window.location.pathname,
         userAgent: window.navigator.userAgent,
         ...extra,
+        inviteToken,
       }),
     });
   } catch {
@@ -352,6 +355,7 @@ function PortalPageInner() {
 
     void recordActivity("portal-view", {
       inviteToken,
+      phoneNumber: invite.phoneNumber,
     });
   }, [inviteToken, isResolved, router]);
 
@@ -449,7 +453,10 @@ function PortalPageInner() {
         privacyPolicyAcceptedAt: data.invite.privacyPolicyAcceptedAt ?? new Date().toISOString(),
       }));
       setPrivacyGateOpen(false);
-      void recordActivity("privacy-policy-accepted", { inviteToken });
+      void recordActivity("privacy-policy-accepted", {
+        inviteToken,
+        phoneNumber: invite.phoneNumber,
+      });
     } catch (error) {
       setPrivacyGateError(error instanceof Error ? error.message : "Unable to save your agreement.");
     } finally {
@@ -470,7 +477,7 @@ function PortalPageInner() {
   }
 
   function handleLogout() {
-    void recordActivity("logout", { reason: "manual" });
+    void recordActivity("logout", { inviteToken, reason: "manual" });
     clearSessionState();
     router.replace("/");
   }

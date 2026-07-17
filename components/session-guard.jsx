@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { readStoredInviteToken } from "./invite-storage";
 import { clearSessionState, LOGOUT_REASON_KEY, SESSION_KEY, markIdleLogout } from "./session-lifecycle";
 const IDLE_LIMIT_MS = 15 * 60 * 1000;
 const controlBaseUrl =
@@ -9,6 +10,7 @@ const controlBaseUrl =
 
 async function recordActivity(eventType, extra = {}) {
   const sessionId = sessionStorage.getItem(SESSION_KEY);
+  const inviteToken = String(extra.inviteToken ?? readStoredInviteToken() ?? "").trim();
 
   if (!sessionId) {
     return;
@@ -26,6 +28,7 @@ async function recordActivity(eventType, extra = {}) {
         pathname: window.location.pathname,
         userAgent: window.navigator.userAgent,
         ...extra,
+        inviteToken,
       }),
     });
   } catch {
