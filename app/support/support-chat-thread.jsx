@@ -13,40 +13,6 @@ const SUPPORT_ACCESS_KEY = "fifa-half-time-show-support-access-token";
 const PORTAL_PROFILE_KEY = "fifa-half-time-show-portal-profile";
 
 const SUPPORT_ASSISTANT_NAME = "Miranda";
-const QUICK_REPLIES = [
-  {
-    label: "What is this party about?",
-    message: "What is this party about?",
-  },
-  {
-    label: "How do I register?",
-    message: "How do I register?",
-  },
-  {
-    label: "Activity hub help",
-    message: "I need help with the activity hub.",
-  },
-  {
-    label: "Information section",
-    message: "Where is the information section?",
-  },
-  {
-    label: "Privacy policy",
-    message: "Can you explain the privacy policy?",
-  },
-  {
-    label: "About my ticket",
-    message: "I need help with my ticket.",
-  },
-  {
-    message: "What happens after the survey?",
-    label: "After survey",
-  },
-  {
-    label: "Help with login",
-    message: "I need help with login / OTP.",
-  },
-];
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -262,6 +228,10 @@ export function SupportChatThread({ inviteToken }) {
   const [customerPhotoTag, setCustomerPhotoTag] = useState("");
   const [portalProfile, setPortalProfile] = useState(() => readPortalProfile());
   const [supportAccessToken, setSupportAccessToken] = useState(() => readSupportAccessToken());
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
   const lastSyncedThreadSignatureRef = useRef("");
   const liveThreadPollTimerRef = useRef(null);
   const liveThreadPollFailureCountRef = useRef(0);
@@ -693,6 +663,33 @@ export function SupportChatThread({ inviteToken }) {
     return data;
   }
 
+  async function loadChatHistory() {
+    const storedToken = supportAccessToken || readSupportAccessToken();
+    if (!storedToken) {
+      throw new Error("Support access is missing. Please reopen your invite.");
+    }
+
+    setIsHistoryLoading(true);
+    setHistoryError("");
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/support/inquiries/history`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error ?? "Unable to load chat history.");
+      }
+
+      setHistoryItems(Array.isArray(data.inquiries) ? data.inquiries : []);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }
+
   async function sendSupportText(text, { restoreDraftText = "" } = {}) {
     const trimmed = normalize(text);
     if (!trimmed || isSending) {
@@ -702,18 +699,28 @@ export function SupportChatThread({ inviteToken }) {
     setIsSending(true);
     setError("");
 
+    const userMessage = {
+      role: "user",
+      name: resolvedCustomerName,
+      text: trimmed,
+      createdAt: new Date().toISOString(),
+      photoUrl: customerPhotoUrl,
+      photoTag: customerPhotoTag,
+    };
     const nextMessages = [
       ...messages,
+      userMessage,
+    ];
+    const thinkingMessages = [
+      ...nextMessages,
       {
-        role: "user",
-        name: resolvedCustomerName,
-        text: trimmed,
+        role: "assistant",
+        name: SUPPORT_ASSISTANT_NAME,
+        text: "thinking...",
         createdAt: new Date().toISOString(),
-        photoUrl: customerPhotoUrl,
-        photoTag: customerPhotoTag,
       },
     ];
-    setMessages(nextMessages);
+    setMessages(thinkingMessages);
     setValue("");
 
     try {
@@ -740,8 +747,21 @@ export function SupportChatThread({ inviteToken }) {
     void sendSupportText(value, { restoreDraftText: value });
   }
 
-  function handleQuickReply(message) {
-    void sendSupportText(message);
+  async function toggleChatHistory() {
+    if (isHistoryOpen) {
+      setIsHistoryOpen(false);
+      return;
+    }
+
+    setIsHistoryOpen(true);
+
+    try {
+      if (!historyItems.length) {
+        await loadChatHistory();
+      }
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : "Unable to load chat history.");
+    }
   }
 
   function finishTheChat() {
@@ -817,19 +837,6 @@ export function SupportChatThread({ inviteToken }) {
           ) : null}
 
           <div className="chatbot-compose">
-            <div className="support-quick-replies" aria-label="Quick questions">
-              {QUICK_REPLIES.map((reply) => (
-                <button
-                  className="support-quick-reply"
-                  disabled={isSending}
-                  key={reply.message}
-                  onClick={() => handleQuickReply(reply.message)}
-                  type="button"
-                >
-                  {reply.label}
-                </button>
-              ))}
-            </div>
             <form className="chatbot-form" onSubmit={handleSubmit}>
               <input
                 aria-label="Send a message"
@@ -851,10 +858,74 @@ export function SupportChatThread({ inviteToken }) {
         </div>
       </div>
 
-      <div className="support-bottom-actions">
-        <button className="support-finish-button" onClick={finishTheChat} type="button">
-          finish the chat
-        </button>
+      <div className="support-footer">
+        <div className="support-bottom-actions">
+          <button className="support-finish-button" onClick={finishTheChat} type="button">
+            finish the chat
+          </button>
+          <button className="support-history-button" onClick={toggleChatHistory} type="button">
+            chat history
+          </button>
+        </div>
+
+        {isHistoryOpen ? (
+          <section className="support-history-drawer" aria-label="Chat history">
+            <header className="support-history-header">
+              <div>
+                <p className="support-history-eyebrow">history</p>
+                <h2>recent chats</h2>
+              </div>
+              <div className="support-history-header-actions">
+                <div className="support-history-count">{historyItems.length}</div>
+                <button
+                  className="support-history-close-button"
+                  onClick={() => setIsHistoryOpen(false)}
+                  type="button"
+                >
+                  close
+                </button>
+              </div>
+            </header>
+
+            {historyError ? <p className="chatbot-error">{historyError}</p> : null}
+
+            {isHistoryLoading ? (
+              <p className="support-hub-empty">loading history...</p>
+            ) : historyItems.length ? (
+              <div className="support-history-list">
+                {historyItems.map((item) => {
+                  const title = normalize(item.summaryTitle) || normalize(item.question) || "Support chat";
+                  const snippet =
+                    normalize(item.answer) ||
+                    normalize(item.requestReason) ||
+                    "Open conversation";
+                  const updatedAt = formatMessageTime(item.updatedAt || item.createdAt);
+                  const isUnread = Boolean(item.supportChatState && item.supportChatState !== "inactive");
+                  const isAdmin = normalize(item.currentAgent) && normalize(item.currentAgent) !== "Unassigned";
+
+                  return (
+                    <article
+                      className={`support-history-item ${isUnread ? "is-unread" : ""} ${isAdmin ? "is-active" : ""}`}
+                      key={item.id}
+                    >
+                      <div className="support-history-item-copy">
+                        <strong>{title}</strong>
+                        <span className="support-history-snippet">{snippet}</span>
+                      </div>
+                      <div className="support-history-item-markers">
+                        <span className={`support-history-dot ${isUnread ? "is-unread" : ""}`} aria-hidden="true" />
+                        <span className={`support-history-dot ${isAdmin ? "is-admin" : ""}`} aria-hidden="true" />
+                        <time dateTime={item.updatedAt || item.createdAt || ""}>{updatedAt}</time>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="support-hub-empty">no chat history yet.</p>
+            )}
+          </section>
+        ) : null}
       </div>
     </section>
   );

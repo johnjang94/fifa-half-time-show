@@ -2754,6 +2754,11 @@ button {
   flex-wrap: wrap;
 }
 
+.support-footer {
+  display: grid;
+  gap: 12px;
+}
+
 .support-back-button,
 .support-new-chat-button {
   display: inline-flex;
@@ -2776,17 +2781,42 @@ button {
 
 .support-back-button:focus-visible,
 .support-new-chat-button:focus-visible,
-.support-history-button:focus-visible {
+.support-history-button:focus-visible,
+.support-history-close-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.support-history-panel {
+.support-history-drawer {
   display: grid;
   gap: 14px;
-  flex: 1;
-  min-height: 0;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.26);
+  max-height: min(42svh, 420px);
   overflow: hidden;
+  animation: support-drawer-rise 180ms ease-out;
+}
+
+.support-history-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.support-history-close-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  min-height: 36px;
+  padding: 0.48rem 0.8rem;
+  text-transform: lowercase;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
 }
 
 .support-hub-panel {
@@ -2850,7 +2880,7 @@ button {
 .support-history-list {
   display: grid;
   gap: 10px;
-  max-height: 28vh;
+  max-height: 24svh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-right: 2px;
@@ -2943,6 +2973,18 @@ button {
 .support-history-empty {
   margin: 0;
   color: var(--muted);
+}
+
+@keyframes support-drawer-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chatbot-messages {
