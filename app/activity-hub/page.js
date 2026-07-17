@@ -115,9 +115,11 @@ function normalizeRsvp(value) {
 }
 
 function ActivityDisclosure({ title, children }) {
+  const isHelpNeeded = title === "HELP NEEDED";
+
   return (
     <details className="portal-card portal-things-card activity-hub-disclosure">
-      <summary className="portal-things-trigger">
+      <summary className={`portal-things-trigger ${isHelpNeeded ? "is-help-needed" : ""}`}>
         <span>{title}</span>
         <span aria-hidden="true" className="portal-things-trigger-lock">
           ⌄

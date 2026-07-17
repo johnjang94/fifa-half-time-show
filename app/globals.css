@@ -2017,15 +2017,6 @@ button {
 .activity-hub-help-needed {
   display: grid;
   gap: 14px;
-  padding: 14px;
-  border-radius: 22px;
-  border: 1px solid rgba(196, 171, 255, 0.2);
-  background:
-    radial-gradient(circle at top left, rgba(219, 199, 255, 0.2), transparent 42%),
-    linear-gradient(180deg, rgba(142, 104, 196, 0.28), rgba(86, 61, 132, 0.18));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .activity-hub-help-image-wrap {
@@ -2033,8 +2024,8 @@ button {
   min-height: 180px;
   overflow: hidden;
   border-radius: 18px;
-  border: 1px solid rgba(225, 208, 255, 0.24);
-  background: rgba(226, 212, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -2179,6 +2170,25 @@ button {
   border-color: rgba(255, 255, 255, 0.18);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+.portal-things-trigger.is-help-needed {
+  border-color: rgba(196, 171, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(180, 150, 255, 0.28) 0%, rgba(120, 90, 190, 0.22) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(62, 40, 120, 0.18);
+}
+
+.portal-things-trigger.is-help-needed:hover {
+  border-color: rgba(212, 190, 255, 0.54);
+  background:
+    linear-gradient(180deg, rgba(193, 167, 255, 0.34) 0%, rgba(132, 98, 208, 0.28) 100%);
+}
+
+.portal-things-trigger.is-help-needed:focus-visible {
+  outline-color: rgba(212, 190, 255, 0.95);
 }
 
 .portal-things-trigger:focus-visible {
