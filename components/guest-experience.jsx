@@ -372,6 +372,10 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
               </div>
             ) : null}
 
+            <Link className="join-link" href="/overview">
+              {joinLinkLabel}
+            </Link>
+
             <div className={`auth-switch ${isLoginPanelOpen ? "is-open" : ""}`}>
               <div className="auth-state auth-state-login" aria-hidden={isLoginPanelOpen}>
                 <button className="login-button" onClick={() => setIsLoginPanelOpen(true)} type="button">
@@ -409,10 +413,6 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
                 </button>
               </form>
             </div>
-
-            <Link className="join-link" href="/overview">
-              {joinLinkLabel}
-            </Link>
           </div>
         </div>
       </section>
