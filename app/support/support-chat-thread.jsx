@@ -91,7 +91,7 @@ function createInitialMessages(name = "there") {
     {
       role: "assistant",
       name: SUPPORT_ASSISTANT_NAME,
-      text: `Hi ${name}, welcome to FIFA X BTS support. My name is Miranda. I can help with registration, the waitlist, survey, login, the activity hub, the information section, privacy policy questions, ticket details, and general event navigation. What do you need help with today?`,
+      text: `Hi ${name}, welcome to FIFA X BTS Half-Time Show Watch Party support. My name is Miranda. How can I help you today?`,
       createdAt,
     },
   ];
