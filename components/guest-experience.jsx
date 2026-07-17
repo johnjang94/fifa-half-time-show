@@ -205,13 +205,16 @@ function LoginOtpModal({ isOpen, phoneNumber, onClose, onVerified }) {
 export function GuestExperience({ initialLoginOpen = false } = {}) {
   const router = useRouter();
   const [isLoginPanelOpen, setIsLoginPanelOpen] = useState(Boolean(initialLoginOpen));
+  const [loginMode, setLoginMode] = useState("phone");
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-  const [phoneStatus, setPhoneStatus] = useState("");
+  const [barcode, setBarcode] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authStatus, setAuthStatus] = useState("");
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [logoutNotice, setLogoutNotice] = useState("");
   const phoneInputRef = useRef(null);
+  const barcodeInputRef = useRef(null);
   const joinLinkLabel = "join the watch party";
 
   useEffect(() => {
@@ -229,13 +232,18 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
     }
 
     const frame = window.requestAnimationFrame(() => {
+      if (loginMode === "barcode") {
+        barcodeInputRef.current?.focus?.();
+        return;
+      }
+
       phoneInputRef.current?.focus?.();
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [isLoginPanelOpen]);
+  }, [isLoginPanelOpen, loginMode]);
 
   useEffect(() => {
     if (initialLoginOpen) {
@@ -243,7 +251,7 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
     }
   }, [initialLoginOpen]);
 
-  function handleLoginSuccess({ inviteToken, phoneNumber, supportAccessToken }) {
+  function handleLoginSuccess({ inviteToken, phoneNumber, supportAccessToken, method = "otp", barcode: inviteBarcode = "" }) {
     const sessionId = String(Date.now());
     sessionStorage.setItem(SESSION_KEY, sessionId);
     saveStoredInviteToken(inviteToken);
@@ -255,14 +263,21 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
     void recordActivity("login", {
       phoneNumber,
       inviteToken,
-      method: "otp",
+      method,
+      barcode: inviteBarcode,
     });
 
     setIsOtpModalOpen(false);
     router.push(`/portal?invite=${encodeURIComponent(inviteToken)}`);
   }
 
-  async function handleSendCode(event) {
+  function handleModeChange(nextMode) {
+    setLoginMode(nextMode);
+    setAuthError("");
+    setAuthStatus("");
+  }
+
+  async function handleLoginSubmit(event) {
     event.preventDefault();
 
     if (!isLoginPanelOpen) {
@@ -270,17 +285,52 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
       return;
     }
 
-    const digitsOnly = normalizePhoneNumber(phoneNumber);
-    if (digitsOnly.length !== PHONE_NUMBER_LENGTH || isSendingCode) {
-      setPhoneError("Please enter the 10-digit phone number you used to register.");
+    if (isSendingCode) {
       return;
     }
 
     setIsSendingCode(true);
-    setPhoneError("");
-    setPhoneStatus("");
+    setAuthError("");
+    setAuthStatus("");
 
     try {
+      if (loginMode === "barcode") {
+        const safeBarcode = String(barcode ?? "").replace(/\D/g, "").slice(0, 5);
+
+        if (safeBarcode.length !== 5) {
+          setAuthError("Please enter the 5-digit barcode.");
+          return;
+        }
+
+        const response = await fetch(`${controlBaseUrl}/api/auth/barcode/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ barcode: safeBarcode }),
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.ok || !data.inviteToken) {
+          throw new Error(data.error ?? "Unable to log in with barcode.");
+        }
+
+        handleLoginSuccess({
+          inviteToken: data.inviteToken,
+          phoneNumber: data.invite?.phoneNumber ?? "",
+          supportAccessToken: data.supportAccessToken ?? "",
+          method: "barcode",
+          barcode: safeBarcode,
+        });
+        return;
+      }
+
+      const digitsOnly = normalizePhoneNumber(phoneNumber);
+      if (digitsOnly.length !== PHONE_NUMBER_LENGTH) {
+        setAuthError("Please enter the 10-digit phone number you used to register.");
+        return;
+      }
+
       const response = await fetch(`${controlBaseUrl}/api/auth/otp/start`, {
         method: "POST",
         headers: {
@@ -294,14 +344,14 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
         throw new Error(data.error ?? "Unable to send verification code.");
       }
 
-      setPhoneStatus(
+      setAuthStatus(
         data.delivered
           ? `We sent a ${OTP_CODE_LENGTH}-digit code to your phone.`
           : "If that number is registered, a verification code has been sent.",
       );
       setIsOtpModalOpen(true);
     } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : "Unable to send verification code.");
+      setAuthError(err instanceof Error ? err.message : "Unable to send verification code.");
     } finally {
       setIsSendingCode(false);
     }
@@ -341,28 +391,52 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
                 </button>
               </div>
 
-              <form className="auth-state auth-state-form login-panel" onSubmit={handleSendCode}>
+              <form className="auth-state auth-state-form login-panel" onSubmit={handleLoginSubmit}>
+                <div className="login-mode-tabs" role="tablist" aria-label="Login method">
+                  <button
+                    aria-pressed={loginMode === "phone"}
+                    className={`login-mode-tab ${loginMode === "phone" ? "is-active" : ""}`}
+                    onClick={() => handleModeChange("phone")}
+                    type="button"
+                  >
+                    phone
+                  </button>
+                  <button
+                    aria-pressed={loginMode === "barcode"}
+                    className={`login-mode-tab ${loginMode === "barcode" ? "is-active" : ""}`}
+                    onClick={() => handleModeChange("barcode")}
+                    type="button"
+                  >
+                    barcode
+                  </button>
+                </div>
+
                 <label className="login-field">
-                  <span>phone number</span>
+                  <span>{loginMode === "barcode" ? "barcode" : "phone number"}</span>
                   <input
-                    autoComplete="tel"
-                    inputMode="tel"
-                    name="phoneNumber"
-                    onChange={(event) => setPhoneNumber(event.target.value)}
-                    placeholder="Enter phone number"
-                    ref={phoneInputRef}
+                    autoComplete={loginMode === "barcode" ? "off" : "tel"}
+                    inputMode={loginMode === "barcode" ? "numeric" : "tel"}
+                    maxLength={loginMode === "barcode" ? 5 : PHONE_NUMBER_LENGTH}
+                    name={loginMode === "barcode" ? "barcode" : "phoneNumber"}
+                    onChange={(event) =>
+                      loginMode === "barcode"
+                        ? setBarcode(event.target.value.replace(/\D/g, "").slice(0, 5))
+                        : setPhoneNumber(event.target.value)
+                    }
+                    placeholder={loginMode === "barcode" ? "Enter barcode" : "Enter phone number"}
+                    ref={loginMode === "barcode" ? barcodeInputRef : phoneInputRef}
                     type="tel"
-                    value={phoneNumber}
+                    value={loginMode === "barcode" ? barcode : phoneNumber}
                   />
                 </label>
 
-                {phoneError ? (
+                {authError ? (
                   <p className="login-status is-error" role="status">
-                    {phoneError}
+                    {authError}
                   </p>
-                ) : phoneStatus ? (
+                ) : authStatus ? (
                   <p className="login-status" role="status">
-                    {phoneStatus}
+                    {authStatus}
                   </p>
                 ) : null}
 
