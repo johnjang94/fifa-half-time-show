@@ -21,12 +21,8 @@ function ParticipantCard({ participant }) {
 
   return (
     <li className="portal-list-item" role="listitem" aria-label={firstName}>
-      <div className="portal-list-thread" aria-hidden="true">
-        <span className="portal-list-rail" />
-        <span className="portal-list-node" />
-      </div>
-      <div className="portal-list-person">
-        <div className="portal-list-photo-wrap" aria-hidden="true">
+      <div className="portal-action-button portal-list-button" aria-hidden="true">
+        <div className="portal-list-photo-wrap">
           {profilePhotoUrl ? (
             <Image alt="" fill className="portal-list-photo" src={profilePhotoUrl} />
           ) : (

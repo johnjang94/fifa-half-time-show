@@ -1739,74 +1739,34 @@ button {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .portal-list-item {
-  position: relative;
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  padding: 10px 0 12px;
-}
-
-.portal-list-item + .portal-list-item {
-  margin-top: 2px;
-}
-
-.portal-list-item::after {
-  content: "";
-  position: absolute;
-  left: 12px;
-  top: 0;
-  bottom: -2px;
-  width: 1px;
-  background: linear-gradient(180deg, rgba(245, 231, 197, 0.55), rgba(255, 255, 255, 0.08));
-}
-
-.portal-list-item:last-child::after {
-  bottom: 18px;
-}
-
-.portal-list-thread {
-  position: relative;
-  width: 24px;
-  height: 100%;
-  min-height: 58px;
-}
-
-.portal-list-rail {
-  position: absolute;
-  left: 12px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(245, 231, 197, 0.54), rgba(255, 255, 255, 0.06));
-}
-
-.portal-list-node {
-  position: absolute;
-  left: 12px;
-  top: 18px;
-  width: 9px;
-  height: 9px;
-  transform: translate(-50%, -50%);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.32) 42%, rgba(245, 231, 197, 0.92) 100%);
-  box-shadow:
-    0 0 0 3px rgba(245, 231, 197, 0.08),
-    0 0 16px rgba(245, 231, 197, 0.22);
-}
-
-.portal-list-person {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 14px;
   min-width: 0;
-  padding: 10px 0;
+  text-align: left;
+}
+
+.portal-list-button {
+  justify-content: flex-start;
+  gap: 14px;
+  min-height: 72px;
+  padding-inline: 1rem;
+  border-radius: 22px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.portal-list-button:hover {
+  transform: translateY(-1px);
+}
+
+.portal-list-button:focus-visible {
+  outline-offset: 4px;
 }
 
 .portal-list-photo-wrap {
@@ -1839,7 +1799,7 @@ button {
 .portal-list-name {
   min-width: 0;
   color: var(--text);
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.2;
   letter-spacing: -0.02em;
   text-transform: lowercase;
@@ -2057,6 +2017,15 @@ button {
 .activity-hub-help-needed {
   display: grid;
   gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(196, 171, 255, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(219, 199, 255, 0.2), transparent 42%),
+    linear-gradient(180deg, rgba(142, 104, 196, 0.28), rgba(86, 61, 132, 0.18));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .activity-hub-help-image-wrap {
@@ -2064,8 +2033,8 @@ button {
   min-height: 180px;
   overflow: hidden;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(225, 208, 255, 0.24);
+  background: rgba(226, 212, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -3617,27 +3586,13 @@ button {
   }
 
   .portal-list-item {
-    grid-template-columns: 22px minmax(0, 1fr);
-    gap: 10px;
-    padding-block: 8px 10px;
+    width: 100%;
   }
 
-  .portal-list-thread {
-    width: 22px;
-  }
-
-  .portal-list-rail,
-  .portal-list-item::after {
-    left: 11px;
-  }
-
-  .portal-list-node {
-    left: 11px;
-  }
-
-  .portal-list-person {
-    gap: 10px;
-    padding-block: 8px;
+  .portal-list-button {
+    min-height: 68px;
+    gap: 12px;
+    padding-inline: 0.95rem;
   }
 
   .portal-list-photo-wrap {
