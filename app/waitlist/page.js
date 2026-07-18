@@ -24,7 +24,7 @@ function WaitlistPageInner() {
     <main className={`app-frame thank-you-page ${isVisible ? "is-visible" : ""}`}>
       <section className="thank-you-shell">
         <header className="thank-you-header">
-          <h1>waitlist</h1>
+          <h1>Hold On!</h1>
         </header>
 
         <div className="thank-you-qr-stack waitlist-stack">
