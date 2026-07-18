@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveStoredInviteToken } from "../../components/invite-storage";
 
@@ -141,7 +141,6 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
-  const [hasReadPrivacyPolicy, setHasReadPrivacyPolicy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
@@ -153,22 +152,8 @@ export function RegisterForm() {
     lastName: "",
     phoneNumber: "",
   });
-  const privacyPolicyBodyRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  useEffect(() => {
-    if (!isPrivacyPolicyOpen) {
-      return;
-    }
-
-    const body = privacyPolicyBodyRef.current;
-    if (!body) {
-      return;
-    }
-
-    body.scrollTop = 0;
-  }, [isPrivacyPolicyOpen]);
 
   function validateForm(formData) {
     const firstName = String(formData.get("firstName") ?? "").trim();
@@ -203,8 +188,7 @@ export function RegisterForm() {
       NAME_PATTERN.test(values.firstName.trim()) &&
       NAME_PATTERN.test(values.lastName.trim()) &&
       PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
-      isPrivacyAccepted &&
-      hasReadPrivacyPolicy
+      isPrivacyAccepted
     );
   }
 
@@ -267,7 +251,6 @@ export function RegisterForm() {
       saveStoredInviteToken(qrToken);
       form.reset();
       setIsPrivacyAccepted(false);
-      setHasReadPrivacyPolicy(false);
       setFieldErrors({
         firstName: "",
         lastName: "",
@@ -386,12 +369,7 @@ export function RegisterForm() {
 
       <button
         className={`register-button ${isReady ? "is-ready" : ""}`}
-        disabled={
-          isSubmitting ||
-          isSuccess ||
-          !isPrivacyAccepted ||
-          !hasReadPrivacyPolicy
-        }
+        disabled={isSubmitting || isSuccess || !isPrivacyAccepted}
         type="submit"
       >
         {submitLabel}
@@ -410,19 +388,7 @@ export function RegisterForm() {
             onClick={(event) => event.stopPropagation()}
           >
             <p className="register-privacy-title">privacy policy</p>
-            <div
-              className="register-privacy-copy"
-              ref={privacyPolicyBodyRef}
-              onScroll={(event) => {
-                const body = event.currentTarget;
-                const hasReachedEnd =
-                  body.scrollTop + body.clientHeight >= body.scrollHeight - 8;
-
-                if (hasReachedEnd) {
-                  setHasReadPrivacyPolicy(true);
-                }
-              }}
-            >
+            <div className="register-privacy-copy">
               <p>
                 We use your name, phone number, and profile photo to manage your registration and
                 event communications.
@@ -435,18 +401,13 @@ export function RegisterForm() {
                 We keep it only as long as needed for event operations, safety, and legal or
                 security requirements.
               </p>
-              <p className="register-privacy-scroll-note">
-                Scroll to the end to unlock the agreement button.
-              </p>
             </div>
             <div className="register-privacy-actions">
               <button
                 className="register-privacy-close register-privacy-agree"
-                disabled={!hasReadPrivacyPolicy}
                 type="button"
                 onClick={() => {
                   setIsPrivacyAccepted(true);
-                  setHasReadPrivacyPolicy(true);
                   setFieldErrors((current) => ({
                     ...current,
                     privacyAccepted: "",
