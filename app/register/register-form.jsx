@@ -141,6 +141,8 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
+  const [isConsentPulseActive, setIsConsentPulseActive] = useState(false);
+  const [isConsentConfirming, setIsConsentConfirming] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
     firstName: "",
     lastName: "",
@@ -190,6 +192,13 @@ export function RegisterForm() {
       PHONE_PATTERN.test(values.phoneNumber.replace(/\D/g, "")) &&
       isPrivacyAccepted
     );
+  }
+
+  function pulseConsentFeedback() {
+    setIsConsentPulseActive(true);
+    window.setTimeout(() => {
+      setIsConsentPulseActive(false);
+    }, 320);
   }
 
   const isReady = isFormComplete(formValues);
@@ -348,17 +357,32 @@ export function RegisterForm() {
 
       <div className="register-privacy">
         <input name="privacyAccepted" type="hidden" value={isPrivacyAccepted ? "on" : ""} />
-        <button
-          aria-label="By using this platform, you agree to our Privacy Policy"
-          className={`register-consent-button ${isPrivacyAccepted ? "is-checked" : ""}`}
-          type="button"
-          onClick={() => setIsPrivacyPolicyOpen(true)}
+        <label
+          className={[
+            "register-consent-button",
+            isPrivacyAccepted ? "is-checked" : "",
+            isConsentPulseActive ? "is-pulsing" : "",
+            isConsentConfirming ? "is-confirming" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
+          <input
+            aria-label="By using this platform, you agree to our Privacy Policy"
+            checked={isPrivacyAccepted}
+            className="register-consent-input"
+            name="privacyConsentCheckbox"
+            type="checkbox"
+            onChange={() => {
+              setIsPrivacyPolicyOpen(true);
+              pulseConsentFeedback();
+            }}
+          />
           <span className="register-consent-checkbox" aria-hidden="true" />
           <span className="register-consent-text">
             By using this platform, you agree to our Privacy Policy
           </span>
-        </button>
+        </label>
       </div>
 
       {fieldErrors.privacyAccepted ? (
@@ -407,12 +431,17 @@ export function RegisterForm() {
                 className="register-privacy-close register-privacy-agree"
                 type="button"
                 onClick={() => {
+                  setIsConsentConfirming(true);
                   setIsPrivacyAccepted(true);
                   setFieldErrors((current) => ({
                     ...current,
                     privacyAccepted: "",
                   }));
+                  pulseConsentFeedback();
                   setIsPrivacyPolicyOpen(false);
+                  window.setTimeout(() => {
+                    setIsConsentConfirming(false);
+                  }, 420);
                 }}
               >
                 I agree
