@@ -137,10 +137,11 @@ async function compressProfilePhoto(file) {
   }
 }
 
-export function RegisterForm({ isPrivacyPolicyOpen, setIsPrivacyPolicyOpen }) {
+export function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
+  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isConsentPulseActive, setIsConsentPulseActive] = useState(false);
   const [isConsentConfirming, setIsConsentConfirming] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
