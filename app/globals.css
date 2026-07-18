@@ -1267,10 +1267,8 @@ button {
   display: grid;
   place-items: center;
   padding: 24px;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.3), transparent 36%),
-    rgba(4, 8, 12, 0.58);
-  backdrop-filter: blur(18px) saturate(120%);
+  background: transparent;
+  backdrop-filter: blur(16px) saturate(115%);
   z-index: 1000;
 }
 
@@ -1280,19 +1278,19 @@ button {
   max-height: calc(100svh - 48px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 30px;
   padding: 24px 22px 18px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.26), transparent 34%),
-    radial-gradient(circle at 82% 88%, rgba(208, 188, 255, 0.16), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1)),
-    rgba(11, 14, 20, 0.18);
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 82% 88%, rgba(208, 188, 255, 0.1), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06)),
+    rgba(11, 14, 20, 0.35);
   box-shadow:
     0 38px 100px rgba(0, 0, 0, 0.6),
-    0 14px 34px rgba(124, 86, 212, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-    0 1px 0 rgba(255, 255, 255, 0.22) inset;
+    0 14px 34px rgba(124, 86, 212, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.16) inset;
   color: #121820;
   transform: translateY(-2px);
 }
@@ -1304,7 +1302,7 @@ button {
   border-radius: inherit;
   padding: 1px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.06) 48%, rgba(255, 255, 255, 0.14));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 48%, rgba(255, 255, 255, 0.1));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -1319,9 +1317,9 @@ button {
   inset: 14px;
   border-radius: calc(30px - 14px);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 28%),
-    radial-gradient(circle at 50% 110%, rgba(124, 86, 212, 0.2), transparent 58%);
-  opacity: 0.55;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 28%),
+    radial-gradient(circle at 50% 110%, rgba(124, 86, 212, 0.14), transparent 58%);
+  opacity: 0.42;
   filter: blur(10px);
   pointer-events: none;
 }

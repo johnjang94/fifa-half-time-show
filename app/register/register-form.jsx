@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveStoredInviteToken } from "../../components/invite-storage";
@@ -136,11 +137,10 @@ async function compressProfilePhoto(file) {
   }
 }
 
-export function RegisterForm() {
+export function RegisterForm({ isPrivacyPolicyOpen, setIsPrivacyPolicyOpen }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
-  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isConsentPulseActive, setIsConsentPulseActive] = useState(false);
   const [isConsentConfirming, setIsConsentConfirming] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({
@@ -457,6 +457,12 @@ export function RegisterForm() {
           </div>
         </div>
       ) : null}
+
+      {isPrivacyPolicyOpen ? null : (
+        <Link className="register-back" href="/overview">
+          back to overview
+        </Link>
+      )}
     </form>
   );
 }

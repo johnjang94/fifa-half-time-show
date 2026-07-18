@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import heroImage from "../../image.png";
 import { RegisterForm } from "./register-form";
 
@@ -28,10 +27,6 @@ export default function RegisterPage() {
 
         <div className="register-body">
           <RegisterForm />
-
-          <Link className="register-back" href="/overview">
-            back to overview
-          </Link>
         </div>
       </section>
     </main>
