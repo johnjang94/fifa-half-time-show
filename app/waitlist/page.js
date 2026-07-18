@@ -8,7 +8,12 @@ function WaitlistPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { inviteToken } = usePersistentInviteToken(searchParams?.get("invite"));
+  const barcodeParam = searchParams?.get("barcode");
   const [isVisible, setIsVisible] = useState(false);
+
+  const ticketNumber =
+    String(barcodeParam ?? "").trim() ||
+    `BTS-${String(inviteToken ?? "00000000").replace(/[^0-9A-Za-z]/g, "").slice(-8).padStart(8, "0")}`;
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setIsVisible(true));
@@ -28,7 +33,10 @@ function WaitlistPageInner() {
         </header>
 
         <div className="thank-you-qr-stack waitlist-stack">
-          <p className="waitlist-copy">this needs to be completed to join the party</p>
+          <div className="waitlist-copy">
+            <p>Your registration (barcode) ticket number is: <strong>{ticketNumber}</strong></p>
+            <p>You also need to complete the following survey to join the party.</p>
+          </div>
           <button className="thank-you-return is-visible waitlist-action" onClick={handleSurveyClick} type="button">
             Take a quick survey
           </button>

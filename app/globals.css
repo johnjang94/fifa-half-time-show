@@ -1798,6 +1798,18 @@ button {
   transform: translateY(0);
 }
 
+.portal-waitlist-barcode-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.2rem 0 0.8rem;
+}
+
+.portal-waitlist-barcode {
+  max-width: 100%;
+  text-align: center;
+}
+
 .portal-accordion {
   width: 100%;
   display: flex;
@@ -2619,6 +2631,23 @@ button {
 .portal-rsvp-select:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.portal-rsvp-waitlist {
+  flex: 1;
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(245, 231, 197, 0.18) 0%, rgba(255, 255, 255, 0.05) 100%);
+  color: var(--text);
+  padding: 0.75rem 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .portal-rsvp-note {

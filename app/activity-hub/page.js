@@ -114,6 +114,11 @@ function normalizeRsvp(value) {
   return "Going";
 }
 
+function isWaitlistedInvite(invite) {
+  const status = normalize(invite?.status ?? invite?.attendance).toLowerCase();
+  return status === "waitlist";
+}
+
 function ActivityDisclosure({ title, children }) {
   const isHelpNeeded = title === "HELP NEEDED";
 
@@ -167,6 +172,7 @@ function ActivityHubPageInner() {
     lastName: "",
     phoneNumber: "",
     rsvp: "Going",
+    status: "",
     checkedInAt: "",
     profilePhotoUrl: "",
     profilePhotoTag: "",
@@ -174,6 +180,7 @@ function ActivityHubPageInner() {
   });
   const portalTitle = "Information";
   const isCheckedIn = Boolean(invite.checkedInAt);
+  const isWaitlisted = isWaitlistedInvite(invite);
 
   const displayName = (() => {
     const fullName = [normalize(invite.firstName), normalize(invite.lastName)]
@@ -232,6 +239,7 @@ function ActivityHubPageInner() {
             firstName,
             lastName,
             phoneNumber,
+            status: String(data.invite.status ?? data.invite.attendance ?? ""),
             checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
             profilePhotoUrl,
@@ -342,12 +350,14 @@ function ActivityHubPageInner() {
             </div>
           </ActivityDisclosure>
 
-          <ActivityDisclosure title="About the venue">
-            <VenueMapPreview />
-            <p className="portal-card-copy activity-hub-venue-copy">
-              we are going to have our party <Link className="activity-hub-inline-link" href={venueMapUrl} rel="noreferrer" target="_blank">here</Link>.
-            </p>
-          </ActivityDisclosure>
+          {isWaitlisted ? null : (
+            <ActivityDisclosure title="About the venue">
+              <VenueMapPreview />
+              <p className="portal-card-copy activity-hub-venue-copy">
+                we are going to have our party <Link className="activity-hub-inline-link" href={venueMapUrl} rel="noreferrer" target="_blank">here</Link>.
+              </p>
+            </ActivityDisclosure>
+          )}
 
           <ActivityDisclosure title="Date &amp; Time">
             <dl className="activity-hub-datetime">
@@ -362,26 +372,28 @@ function ActivityHubPageInner() {
             </dl>
           </ActivityDisclosure>
 
-          <ActivityDisclosure title="HELP NEEDED">
-            <div className="activity-hub-help-needed">
-              <div className="activity-hub-help-image-wrap">
-                <Image
-                  alt="Help wanted illustration"
-                  className="activity-hub-help-image"
-                  src={helpImage}
-                />
+          {isWaitlisted ? null : (
+            <ActivityDisclosure title="HELP NEEDED">
+              <div className="activity-hub-help-needed">
+                <div className="activity-hub-help-image-wrap">
+                  <Image
+                    alt="Help wanted illustration"
+                    className="activity-hub-help-image"
+                    src={helpImage}
+                  />
+                </div>
+                <p className="portal-card-copy activity-hub-help-copy">
+                  can we get some help with food, cutleries, and set up, please?
+                </p>
               </div>
-              <p className="portal-card-copy activity-hub-help-copy">
-                can we get some help with food, cutleries, and set up, please?
-              </p>
-            </div>
-            <Link
-              className="portal-action-button activity-hub-volunteer-link"
-              href={`/volunteer?invite=${encodeURIComponent(inviteToken)}`}
-            >
-              Volunteer Application
-            </Link>
-          </ActivityDisclosure>
+              <Link
+                className="portal-action-button activity-hub-volunteer-link"
+                href={`/volunteer?invite=${encodeURIComponent(inviteToken)}`}
+              >
+                Volunteer Application
+              </Link>
+            </ActivityDisclosure>
+          )}
         </section>
       </section>
     </main>

@@ -48,6 +48,10 @@ function normalize(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeStatus(value) {
+  return normalize(value).toLowerCase();
+}
+
 function readInviteField(invite, camelKey, snakeKey) {
   return normalize(invite?.[camelKey] ?? invite?.[snakeKey]);
 }
@@ -122,6 +126,10 @@ function getPortalTitle(rsvp) {
   return "You are going";
 }
 
+function isWaitlistedInvite(invite) {
+  return normalizeStatus(invite.status) === "waitlist" || normalizeStatus(invite.attendance) === "waitlist";
+}
+
 function PrivacyPolicyGateModal({ error, isSubmitting, onAgree }) {
   const bodyRef = useRef(null);
 
@@ -173,6 +181,7 @@ function PortalTicketCard({
   inviteToken,
   phoneNumber,
   rsvp,
+  isWaitlisted = false,
   profilePhotoUrl,
   profilePhotoTag,
   profilePhotoAiGenerated,
@@ -276,23 +285,33 @@ function PortalTicketCard({
           </div>
         </dl>
 
-        <div className="portal-rsvp-row">
-          <select
-            aria-label="RSVP"
-            className="portal-rsvp-select"
-            value={rsvp}
-            disabled={locked}
-            onChange={(event) => handleRsvpChange(event.target.value)}
-          >
-            <option value="Going">Going</option>
-            <option value="maybe">maybe</option>
-            <option value="not going">not going</option>
-          </select>
-        </div>
+        {isWaitlisted ? (
+          <div className="portal-rsvp-row">
+            <div className="portal-rsvp-waitlist" aria-label="RSVP status">
+              waitlist
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="portal-rsvp-row">
+              <select
+                aria-label="RSVP"
+                className="portal-rsvp-select"
+                value={rsvp}
+                disabled={locked}
+                onChange={(event) => handleRsvpChange(event.target.value)}
+              >
+                <option value="Going">Going</option>
+                <option value="maybe">maybe</option>
+                <option value="not going">not going</option>
+              </select>
+            </div>
 
-        <p className="portal-rsvp-note">
-          make sure you finalize whether you can make it or not in 48 hours prior to the event day.
-        </p>
+            <p className="portal-rsvp-note">
+              make sure you finalize whether you can make it or not in 48 hours prior to the event day.
+            </p>
+          </>
+        )}
       </div>
     </article>
   );
@@ -320,6 +339,7 @@ function PortalPageInner() {
     phoneNumber: "",
     rsvp: "Going",
     barcode: "",
+    status: "",
     checkedInAt: "",
     profilePhotoUrl: "",
     profilePhotoTag: "",
@@ -328,6 +348,7 @@ function PortalPageInner() {
     privacyPolicyAcceptedAt: "",
   });
   const portalTitle = getPortalTitle(invite.rsvp);
+  const isWaitlisted = isWaitlistedInvite(invite);
   const isCheckedIn = Boolean(invite.checkedInAt);
 
   const displayName = (() => {
@@ -394,6 +415,7 @@ function PortalPageInner() {
             lastName,
             phoneNumber,
             barcode,
+            status: String(data.invite.status ?? data.invite.attendance ?? ""),
             checkedInAt: data.invite.checkedInAt ?? data.invite.checked_in_at ?? "",
             rsvp: normalizeRsvp(data.invite.rsvp ?? data.invite.RSVP),
             profilePhotoUrl,
@@ -491,16 +513,24 @@ function PortalPageInner() {
         ) : null}
 
         <header className="portal-header">
-          <h1>{portalTitle}</h1>
+          <h1>{isWaitlisted ? "You are waitlisted" : portalTitle}</h1>
         </header>
 
-        <section className="portal-qr-area" aria-label="Your QR code">
-          <QrCode
-            token={inviteToken}
-            caption=""
-            barcode={invite.barcode}
-          />
-        </section>
+        {isWaitlisted ? (
+          <div className="portal-waitlist-barcode-wrap">
+            <p className={`qr-barcode portal-waitlist-barcode ${invite.barcode ? "is-visible" : ""}`}>
+              barcode: {invite.barcode || inviteToken}
+            </p>
+          </div>
+        ) : (
+          <section className="portal-qr-area" aria-label="Your QR code">
+            <QrCode
+              token={inviteToken}
+              caption=""
+              barcode={invite.barcode}
+            />
+          </section>
+        )}
 
         <Link className="portal-inline-link portal-see-coming-link" href={`/list?invite=${encodeURIComponent(inviteToken)}`}>
           See who&apos;s coming
@@ -513,6 +543,7 @@ function PortalPageInner() {
               inviteToken={inviteToken}
               phoneNumber={invite.phoneNumber}
               rsvp={invite.rsvp}
+              isWaitlisted={isWaitlisted}
               profilePhotoUrl={invite.profilePhotoUrl}
               profilePhotoTag={invite.profilePhotoTag}
               profilePhotoAiGenerated={invite.profilePhotoAiGenerated}
@@ -527,16 +558,16 @@ function PortalPageInner() {
               onClick={() => setActivePanel("ticket")}
               type="button"
             >
-              about my ticket
+              Your Ticket
             </button>
           )}
 
           <Link className="portal-action-button portal-action-link" href={`/activity-hub?invite=${encodeURIComponent(inviteToken)}`}>
-            things to know
+            Things to know
           </Link>
 
           <Link className="portal-action-button portal-action-link" href={`/support?invite=${encodeURIComponent(inviteToken)}`}>
-            questions?
+            Questions?
           </Link>
 
           <button
@@ -544,7 +575,7 @@ function PortalPageInner() {
             onClick={handleLogout}
             type="button"
           >
-            Log out
+            Logout
           </button>
         </section>
       </section>
