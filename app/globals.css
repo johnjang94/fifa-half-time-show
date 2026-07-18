@@ -1731,6 +1731,11 @@ button {
   text-align: center;
 }
 
+.portal-shell.is-waitlisted {
+  justify-content: center;
+  padding-block: clamp(24px, 7vh, 72px);
+}
+
 .portal-checkin-banner {
   margin: 0;
   width: 100%;
@@ -1755,6 +1760,19 @@ button {
   font-size: clamp(2rem, 4.6vw, 3rem);
   line-height: 1;
   letter-spacing: -0.04em;
+}
+
+.portal-shell.is-waitlisted .portal-header {
+  padding-top: 0;
+}
+
+.portal-shell.is-waitlisted .portal-actions {
+  align-items: stretch;
+}
+
+.portal-shell.is-waitlisted .portal-action-button,
+.portal-shell.is-waitlisted .portal-action-link {
+  width: 100%;
 }
 
 .portal-qr-area {

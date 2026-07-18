@@ -505,9 +505,9 @@ function PortalPageInner() {
   }
 
   return (
-    <main className="app-frame portal-page">
+    <main className={`app-frame portal-page ${isWaitlisted ? "is-waitlisted" : ""}`}>
       <SessionGuard />
-      <section className="portal-shell">
+      <section className={`portal-shell ${isWaitlisted ? "is-waitlisted" : ""}`}>
         {isCheckedIn ? (
           <p className="portal-checkin-banner">You have been checked-in</p>
         ) : null}
@@ -532,9 +532,11 @@ function PortalPageInner() {
           </section>
         )}
 
-        <Link className="portal-inline-link portal-see-coming-link" href={`/list?invite=${encodeURIComponent(inviteToken)}`}>
-          See who&apos;s coming
-        </Link>
+        {isWaitlisted ? null : (
+          <Link className="portal-inline-link portal-see-coming-link" href={`/list?invite=${encodeURIComponent(inviteToken)}`}>
+            See who&apos;s coming
+          </Link>
+        )}
 
         <section className="portal-actions" aria-label="Portal actions">
           {activePanel === "ticket" ? (
