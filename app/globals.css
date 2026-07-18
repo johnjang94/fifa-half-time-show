@@ -1127,7 +1127,7 @@ button {
 
 .register-privacy-copy p {
   margin: 0;
-  color: rgba(17, 24, 30, 0.92);
+  color: rgba(255, 250, 243, 0.95);
   line-height: 1.55;
   font-size: 0.94rem;
 }
@@ -1268,7 +1268,6 @@ button {
   place-items: center;
   padding: 24px;
   background: transparent;
-  backdrop-filter: blur(16px) saturate(115%);
   z-index: 1000;
 }
 
@@ -1291,7 +1290,7 @@ button {
     0 14px 34px rgba(124, 86, 212, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
     0 1px 0 rgba(255, 255, 255, 0.16) inset;
-  color: #121820;
+  color: var(--text);
   transform: translateY(-2px);
 }
 
