@@ -1268,6 +1268,7 @@ button {
   place-items: center;
   padding: 24px;
   background: transparent;
+  backdrop-filter: blur(16px) saturate(115%);
   z-index: 1000;
 }
 
@@ -1281,10 +1282,10 @@ button {
   border-radius: 30px;
   padding: 24px 22px 18px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 82% 88%, rgba(208, 188, 255, 0.1), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06)),
-    rgba(11, 14, 20, 0.35);
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.235), transparent 34%),
+    radial-gradient(circle at 82% 88%, rgba(208, 188, 255, 0.13), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08)),
+    rgba(11, 14, 20, 0.28);
   box-shadow:
     0 38px 100px rgba(0, 0, 0, 0.6),
     0 14px 34px rgba(124, 86, 212, 0.1),
