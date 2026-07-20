@@ -236,7 +236,7 @@ function IntroNoticeModal({ isOpen, onContinue }) {
     <div className="notice-modal-backdrop" role="presentation">
       <section aria-labelledby="notice-modal-title" aria-modal="true" className="notice-modal" role="dialog">
         <p className="notice-modal-eyebrow">watch party</p>
-        <h2 id="notice-modal-title">Service notice</h2>
+        <h2 id="notice-modal-title">Thank you for joining the watch party</h2>
         <p className="notice-modal-copy">
           Hello. Thank you for being with Watch Party. Have a great day.
         </p>
