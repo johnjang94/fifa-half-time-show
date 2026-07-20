@@ -202,9 +202,56 @@ function LoginOtpModal({ isOpen, phoneNumber, onClose, onVerified }) {
   );
 }
 
-export function GuestExperience({ initialLoginOpen = false } = {}) {
+function IntroNoticeModal({ isOpen, onContinue }) {
+  const okButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      okButtonRef.current?.focus?.();
+    });
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onContinue();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onContinue]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="notice-modal-backdrop" role="presentation">
+      <section aria-labelledby="notice-modal-title" aria-modal="true" className="notice-modal" role="dialog">
+        <p className="notice-modal-eyebrow">watch party</p>
+        <h2 id="notice-modal-title">Service notice</h2>
+        <p className="notice-modal-copy">
+          Hello. Thank you for being with Watch Party. Have a great day.
+        </p>
+        <button className="notice-modal-button" onClick={onContinue} ref={okButtonRef} type="button">
+          OK
+        </button>
+      </section>
+    </div>
+  );
+}
+
+export function GuestExperience({ initialLoginOpen = false, showIntroNotice = false } = {}) {
   const router = useRouter();
   const [isLoginPanelOpen, setIsLoginPanelOpen] = useState(Boolean(initialLoginOpen));
+  const [isIntroNoticeOpen, setIsIntroNoticeOpen] = useState(Boolean(showIntroNotice));
   const [loginMode, setLoginMode] = useState("phone");
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -251,6 +298,12 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
     }
   }, [initialLoginOpen]);
 
+  useEffect(() => {
+    if (showIntroNotice) {
+      setIsIntroNoticeOpen(true);
+    }
+  }, [showIntroNotice]);
+
   function handleLoginSuccess({ inviteToken, phoneNumber, supportAccessToken, method = "otp", barcode: inviteBarcode = "" }) {
     const sessionId = String(Date.now());
     sessionStorage.setItem(SESSION_KEY, sessionId);
@@ -289,72 +342,20 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
       return;
     }
 
-    setIsSendingCode(true);
-    setAuthError("");
-    setAuthStatus("");
+    const digitsOnly = loginMode === "barcode" ? String(barcode ?? "").replace(/\D/g, "").slice(0, 5) : normalizePhoneNumber(phoneNumber);
 
-    try {
-      if (loginMode === "barcode") {
-        const safeBarcode = String(barcode ?? "").replace(/\D/g, "").slice(0, 5);
-
-        if (safeBarcode.length !== 5) {
-          setAuthError("Please enter the 5-digit barcode.");
-          return;
-        }
-
-        const response = await fetch(`${controlBaseUrl}/api/auth/barcode/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ barcode: safeBarcode }),
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok || !data.ok || !data.inviteToken) {
-          throw new Error(data.error ?? "Unable to log in with barcode.");
-        }
-
-        handleLoginSuccess({
-          inviteToken: data.inviteToken,
-          phoneNumber: data.invite?.phoneNumber ?? "",
-          supportAccessToken: data.supportAccessToken ?? "",
-          method: "barcode",
-          barcode: safeBarcode,
-        });
-        return;
-      }
-
-      const digitsOnly = normalizePhoneNumber(phoneNumber);
-      if (digitsOnly.length !== PHONE_NUMBER_LENGTH) {
-        setAuthError("Please enter the 10-digit phone number you used to register.");
-        return;
-      }
-
-      const response = await fetch(`${controlBaseUrl}/api/auth/otp/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber: digitsOnly }),
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error ?? "Unable to send verification code.");
-      }
-
-      setAuthStatus(
-        data.delivered
-          ? `We sent a ${OTP_CODE_LENGTH}-digit code to your phone.`
-          : "If that number is registered, a verification code has been sent.",
-      );
-      setIsOtpModalOpen(true);
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "Unable to send verification code.");
-    } finally {
-      setIsSendingCode(false);
+    if ((loginMode === "barcode" && digitsOnly.length !== 5) || (loginMode === "phone" && digitsOnly.length !== PHONE_NUMBER_LENGTH)) {
+      setAuthError("Sorry, we couldn't find that user.");
+      return;
     }
+
+    setAuthError("Sorry, we couldn't find that user.");
+    setAuthStatus("");
+  }
+
+  function handleContinueFromNotice() {
+    setIsIntroNoticeOpen(false);
+    setIsLoginPanelOpen(true);
   }
 
   return (
@@ -455,6 +456,8 @@ export function GuestExperience({ initialLoginOpen = false } = {}) {
         onVerified={handleLoginSuccess}
         phoneNumber={phoneNumber}
       />
+
+      <IntroNoticeModal isOpen={isIntroNoticeOpen} onContinue={handleContinueFromNotice} />
     </main>
   );
 }

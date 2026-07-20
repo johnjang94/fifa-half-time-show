@@ -3,5 +3,5 @@ import { GuestExperience } from "../components/guest-experience";
 export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  return <GuestExperience />;
+  return <GuestExperience showIntroNotice />;
 }
